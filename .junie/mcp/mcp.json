@@ -1,0 +1,11 @@
+{
+    "mcpServers": {
+        "laravel-boost": {
+            "command": "/Users/bambamboole/Library/Application Support/Herd/bin/php82",
+            "args": [
+                "/Users/bambamboole/Projects/laravel-api/vendor/orchestra/testbench-core/laravel/artisan",
+                "boost:mcp"
+            ]
+        }
+    }
+}

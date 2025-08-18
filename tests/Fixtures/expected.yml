@@ -1,0 +1,286 @@
+openapi: 3.1.0
+info:
+  title: 'My API'
+  description: 'Developer API'
+  contact:
+    name: 'API Support'
+    url: 'https://.example.com'
+    email: api@example.com
+  version: 1.0.0
+servers:
+  -
+    url: 'https://.example.com'
+    description: 'Your API environment'
+paths:
+  /api/v1/test-models:
+    get:
+      description: "This endpoint is only available if the feature flag `beta-users` is enabled.\n\nThis endpoint requires the following scopes: `test-models:read`.\n\nList test resources"
+      operationId: 'GET::api-v1-test-models'
+      parameters:
+        -
+          name: filter
+          in: query
+          description: "The filter parameter is used to filter the results of the given endpoint. \n\n\n**Supported filter operators by key:** \n\n`id`: *equals*, *notEquals*, *in*, *notIn* \n\n`name`: *equals*, *notEquals*, *in*, *notIn*, *contains*, *notContains*, *startsWith*, *endsWith* \n\n`status`: *equals*, *notEquals*, *in*, *notIn*, *contains*, *notContains*, *startsWith*, *endsWith* \n\n`created_at`:  \n\n`updated_at`: "
+          required: false
+          style: deepObject
+          schema:
+            type: array
+            items:
+              properties:
+                key:
+                  type: string
+                  enum: [id, name, status, created_at, updated_at]
+                op:
+                  description: operator
+                  type: string
+                  enum: [equals, notEquals, in, notIn, contains, notContains, startsWith, endsWith]
+                value:
+                  description: 'value oder so'
+                  oneOf: [{ title: String, type: string }, { title: Array, type: array, items: { type: string } }]
+              type: object
+              additionalProperties: false
+        -
+          name: include
+          in: query
+          required: false
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - 'test model'
+        -
+          name: per_page
+          in: query
+          description: 'Number of items per page. Default: 15, Max: 1337'
+          required: false
+          schema:
+            type: integer
+            example: 15
+        -
+          name: page
+          in: query
+          description: 'Page number.'
+          required: false
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: 'List test resources'
+          content:
+            application/json:
+              schema:
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/TestResource' } }
+                  meta: { properties: { current_page: { type: integer }, from: { type: [integer, 'null'] }, path: { type: string }, per_page: { type: integer }, last_page: { type: integer }, to: { type: [integer, 'null'] }, total: { type: integer }, links: { type: array, items: { type: object } } }, type: object }
+                type: object
+        '401':
+          description: Unauthorized
+        '403':
+          description: Unauthorized
+      x-feature_flag: beta-users
+      x-scopes:
+        - 'test-models:read'
+    post:
+      description: 'update test resource'
+      operationId: 'POST::api-v1-test-models'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTestModelRequest'
+      responses:
+        '200':
+          description: 'update test resource'
+          content:
+            application/json:
+              schema:
+                properties:
+                  data: { $ref: '#/components/schemas/TestResource' }
+                type: object
+        '422':
+          description: 'Failed validation'
+          content:
+            application/problem+json:
+              schema:
+                properties:
+                  message: { type: string, example: 'The name is invalid.' }
+                  errors: { type: object, example: { name: ['The name is invalid.'], status: ['The status is invalid.'] } }
+                type: object
+        '401':
+          description: Unauthorized
+        '403':
+          description: Unauthorized
+  '/api/v1/test-models/{id}':
+    get:
+      description: 'get test resource'
+      operationId: 'GET::api-v1-test-models-id'
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        -
+          name: include
+          in: query
+          required: false
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - 'test resource'
+      responses:
+        '200':
+          description: 'get test resource'
+          content:
+            application/json:
+              schema:
+                properties:
+                  data: { $ref: '#/components/schemas/TestResource' }
+                type: object
+        '401':
+          description: Unauthorized
+        '403':
+          description: Unauthorized
+        '404':
+          description: 'Not Found'
+    delete:
+      description: 'delete test resource'
+      operationId: 'DELETE::api-v1-test-models-id'
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: 'Resource successfully deleted'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Unauthorized
+        '404':
+          description: 'Not Found'
+    patch:
+      description: 'update test resource'
+      operationId: 'PATCH::api-v1-test-models-id'
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTestModelRequest'
+      responses:
+        '200':
+          description: 'update test resource'
+          content:
+            application/json:
+              schema:
+                properties:
+                  data: { $ref: '#/components/schemas/TestResource' }
+                type: object
+        '422':
+          description: 'Failed validation'
+          content:
+            application/problem+json:
+              schema:
+                properties:
+                  message: { type: string, example: 'The property is required.' }
+                  errors: { type: object, example: { property: ['The property is required.'] } }
+                type: object
+        '401':
+          description: Unauthorized
+        '403':
+          description: Unauthorized
+  '/api/v1/test-models/{id}/actions/test':
+    patch:
+      description: 'Execute test action on test resource'
+      operationId: 'PATCH::api-v1-test-models-id-actions-test'
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: 'No Content'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Unauthorized
+components:
+  schemas:
+    CreateTestModelRequest:
+      properties:
+        name:
+          type: string
+        status:
+          enum:
+            - active
+            - inactive
+            - pending
+      type: object
+      additionalProperties: false
+    TestResource:
+      required:
+        - id
+        - name
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        status:
+          enum:
+            - active
+            - inactive
+            - pending
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      type: object
+      additionalProperties: false
+    UpdateTestModelRequest:
+      properties:
+        name:
+          type:
+            - string
+            - 'null'
+        status:
+          type:
+            - string
+            - 'null'
+          enum:
+            - active
+            - inactive
+            - pending
+      type: object
+      additionalProperties: false
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+security:
+  -
+    BearerAuth: []

@@ -1,0 +1,12 @@
+{
+  "env": {
+    "AWS_BEARER_TOKEN_BEDROCK": "<CHANGEME>"
+  },
+  "permissions": {
+    "defaultMode": "acceptEdits"
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "laravel-boost"
+  ]
+}

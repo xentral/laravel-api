@@ -1,0 +1,24 @@
+name: run-tests
+
+on: [push, pull_request]
+
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: PHP 8.2 test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.2
+          coverage: xdebug
+      - name: Install dependencies
+        run: |
+          composer install
+      - name: Execute phpstan
+        run: composer phpstan:analyse
+      - name: Execute tests
+        run: composer test:ci
