@@ -3,7 +3,6 @@ namespace Xentral\LaravelApi\Http;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Collection;
-use Xentral\LaravelApi\QueryBuilderRequest;
 
 abstract class ApiResource extends JsonResource
 {

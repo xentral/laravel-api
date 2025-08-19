@@ -106,8 +106,8 @@ paths:
             application/problem+json:
               schema:
                 properties:
-                  message: { type: string, example: 'The name is invalid.' }
-                  errors: { type: object, example: { name: ['The name is invalid.'], status: ['The status is invalid.'] } }
+                  message: { type: string, example: 'The name field must be a string.' }
+                  errors: { type: object, example: { name: ['The name field must be a string.'], status: ['The selected status is invalid.'] } }
                 type: object
         '401':
           description: Unauthorized

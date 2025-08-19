@@ -13,5 +13,7 @@ it('can extract validation rules from a form request', function () {
     expect($rules)
         ->toHaveKeys(['name', 'status'])
         ->and($rules['status'])
+        ->toBeArray()
+        ->and($rules['status'][0])
         ->toBeInstanceOf(Enum::class);
 });

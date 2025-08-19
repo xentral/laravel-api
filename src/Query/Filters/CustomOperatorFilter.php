@@ -5,7 +5,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\ValidationException;
 use Spatie\QueryBuilder\Filters\FiltersExact;
-use Xentral\LaravelApi\Enum\FilterOperator;
 
 class CustomOperatorFilter extends FiltersExact
 {
@@ -103,14 +102,15 @@ class CustomOperatorFilter extends FiltersExact
 
         $mappedValue = null;
         foreach ($map as $key => $val) {
-            if ($value === $val->value) {
+            $enumValue = $val instanceof \BackedEnum ? $val->value : $val->name;
+            if ($value === $enumValue) {
                 $mappedValue = $key;
                 break;
             }
         }
         if (! $mappedValue) {
             throw ValidationException::withMessages([
-                $property => 'Invalid value: '.$value.'. Valid values are: '.implode(', ', array_map(fn ($v) => $v->value, $this->enum::cases()))]);
+                $property => 'Invalid value: '.$value.'. Valid values are: '.implode(', ', array_map(fn ($v) => $v instanceof \BackedEnum ? $v->value : $v->name, $this->enum::cases()))]);
         }
 
         return $mappedValue;

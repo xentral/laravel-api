@@ -1,5 +1,4 @@
 <?php declare(strict_types=1);
-
 namespace Workbench\App\Http\Controller;
 
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;

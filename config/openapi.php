@@ -12,6 +12,15 @@ return [
             'ruleset' => null,
             'folders' => [base_path('app')],
             'output' => base_path('openapi.yml'),
+            'casing' => 'snake_case',
+            'validation_response' => [
+                'status_code' => 422,
+                'content_type' => 'application/json',
+                'content' => [
+                    'message' => 'The given data was invalid.',
+                    'errors' => '{{errors}}',
+                ],
+            ],
             'deprecation_filter' => [
                 'enabled' => true,
                 'months_before_removal' => 6,

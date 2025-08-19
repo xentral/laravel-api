@@ -2,6 +2,7 @@
 namespace Xentral\LaravelApi;
 
 use Illuminate\Support\ServiceProvider;
+use Xentral\LaravelApi\Http\QueryBuilderRequest;
 
 class ApiServiceProvider extends ServiceProvider
 {

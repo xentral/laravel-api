@@ -9,12 +9,14 @@ use OpenApi\Attributes\MediaType;
 use OpenApi\Attributes\Property;
 use OpenApi\Attributes\Response;
 use OpenApi\Attributes\Schema;
-use ReflectionClass;
-use ReflectionMethod;
+use Xentral\LaravelApi\OpenApi\ValidationRuleExtractor;
 
 class ValidationResponseProcessor
 {
-    public function __construct(private readonly int $validationStatusCode = 422) {}
+    public function __construct(
+        private readonly int $validationStatusCode = 422,
+        private readonly ValidationRuleExtractor $ruleExtractor = new ValidationRuleExtractor
+    ) {}
 
     public function __invoke(Analysis $analysis): void
     {
@@ -30,7 +32,7 @@ class ValidationResponseProcessor
             if ($validationResponse !== null) {
                 // Insert validation response at the beginning of error responses
                 // Find the position to insert (after success responses, before auth errors)
-                $responses = $operation->responses ?? [];
+                $responses = $operation->responses;
                 $insertPosition = 1; // After the first response (usually 200/201/204)
 
                 array_splice($responses, $insertPosition, 0, [$validationResponse]);
@@ -42,6 +44,9 @@ class ValidationResponseProcessor
 
         // Update existing validation response status codes to use the configured status code
         foreach ($allOperations as $operation) {
+            if (! isset($operation->responses)) {
+                continue;
+            }
             foreach ($operation->responses as $response) {
                 $status = (int) $response->response;
                 if ($status === 422 || $status === 400) {
@@ -58,12 +63,12 @@ class ValidationResponseProcessor
         }
         try {
             if (is_string($request)) {
-                $validationData = $this->extractValidationInfo($request);
+                $rulesWithMessages = $this->ruleExtractor->extractRulesWithMessages($request);
 
-                // Generate realistic error messages
+                // Generate error messages from the extracted rules and messages
                 $errorMessages = [];
-                foreach ($validationData as $key => $rules) {
-                    $errorMessages[$key] = [$this->generateLaravelLikeValidationMessage($key, $rules)];
+                foreach ($rulesWithMessages as $field => $data) {
+                    $errorMessages[$field] = [$data['message']];
                 }
             } elseif (is_array($request)) {
                 $errorMessages = [];
@@ -182,20 +187,9 @@ class ValidationResponseProcessor
     public function extractValidationInfo(string $requestClass): array
     {
         try {
-            if (! class_exists($requestClass)) {
-                return ['keys' => [], 'rules' => []];
-            }
+            $rules = $this->ruleExtractor->extractRules($requestClass);
 
-            $reflection = new ReflectionClass($requestClass);
-
-            if (! $reflection->hasMethod('rules')) {
-                return ['keys' => [], 'rules' => []];
-            }
-
-            $rulesMethod = new ReflectionMethod($requestClass, 'rules');
-            $rules = $rulesMethod->invoke($reflection->newInstanceWithoutConstructor());
-
-            // Get the first two rules
+            // Get the first two rules for example purposes
             return array_slice($rules, 0, 2, true);
         } catch (\Throwable) {
             // Silently fail and return empty array

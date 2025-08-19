@@ -5,6 +5,7 @@ namespace Xentral\LaravelApi\Tests;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Orchestra\Testbench\TestCase as Orchestra;
+use Spatie\LaravelData\LaravelDataServiceProvider;
 use Workbench\App\Http\Controller\TestController;
 use Workbench\App\Providers\WorkbenchServiceProvider;
 use Xentral\LaravelApi\ApiServiceProvider;
@@ -43,6 +44,7 @@ class TestCase extends Orchestra
     {
         return [
             ApiServiceProvider::class,
+            LaravelDataServiceProvider::class,
             WorkbenchServiceProvider::class,
         ];
     }

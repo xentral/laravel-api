@@ -1,5 +1,4 @@
 <?php declare(strict_types=1);
-
 namespace Workbench\App\Http\Filter;
 
 use Xentral\LaravelApi\OpenApi\Filters\FilterProperty;

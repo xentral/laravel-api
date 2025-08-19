@@ -62,7 +62,7 @@
       "@rector"
     ],
     "test": [
-      "@php artisan package:test --parallel"
+      "@php artisan package:test"
     ]
   },
   "config": {
