@@ -4,7 +4,6 @@ namespace Xentral\LaravelApi\Attributes;
 
 use OpenApi\Annotations\Delete;
 use OpenApi\Generator;
-use Xentral\LaravelApi\AttributeFactory;
 
 #[\Attribute(\Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD)]
 class DeleteEndpoint extends Delete
@@ -29,9 +28,6 @@ class DeleteEndpoint extends Delete
             $this->response('204', 'Resource successfully deleted'),
             ...$this->makeNegativeResponses(with404: true),
         ];
-        if (! empty($validates)) {
-            $responses[] = AttributeFactory::createValidationResponse($validates);
-        }
 
         $parameters = $this->makeParameters($parameters, $path);
 
@@ -45,7 +41,7 @@ class DeleteEndpoint extends Delete
             'tags' => $tags ?? Generator::UNDEFINED,
             'callbacks' => Generator::UNDEFINED,
             'deprecated' => $deprecated !== null ? true : Generator::UNDEFINED,
-            'x' => $this->compileX($isInternal, $deprecated, $featureFlag, $scopes),
+            'x' => $this->compileX($isInternal, $deprecated, $featureFlag, $scopes, ! empty($validates) ? $validates : null),
             'value' => $this->combine($responses, $parameters),
         ]);
     }

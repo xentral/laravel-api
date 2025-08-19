@@ -4,9 +4,10 @@ namespace Xentral\LaravelApi\Attributes;
 
 use OpenApi\Annotations\Get;
 use OpenApi\Attributes\Items;
+use OpenApi\Attributes\Parameter;
 use OpenApi\Attributes\Property;
+use OpenApi\Attributes\Schema;
 use OpenApi\Generator;
-use Xentral\LaravelApi\AttributeFactory;
 use Xentral\LaravelApi\Enum\PaginationType;
 
 #[\Attribute(\Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD)]
@@ -41,7 +42,7 @@ class ListEndpoint extends Get
             ...$this->makeNegativeResponses(),
         ];
         $parameters = $this->makeParameters($parameters, $path, $filters, $includes);
-        $parameters = array_merge($parameters, AttributeFactory::createPaginationParameters($defaultPageSize, $maxPageSize, $paginationType));
+        $parameters = array_merge($parameters, $this->createPaginationParameters($defaultPageSize, $maxPageSize, $paginationType));
 
         parent::__construct([
             'path' => $path,
@@ -56,6 +57,39 @@ class ListEndpoint extends Get
             'x' => $this->compileX($isInternal, $deprecated, $featureFlag, $scopes),
             'value' => $this->combine($responses, $parameters),
         ]);
+    }
+
+    private function createPaginationParameters(int $defaultPageSize, int $maxPageSize, PaginationType $type): array
+    {
+        $params = [
+            new Parameter(
+                name: 'per_page',
+                description: sprintf('Number of items per page. Default: %d, Max: %d', $defaultPageSize, $maxPageSize),
+                in: 'query',
+                required: false,
+                schema: new Schema(type: 'integer', example: $defaultPageSize),
+            ),
+        ];
+        if ($type === PaginationType::CURSOR) {
+            $params[] = new Parameter(
+                name: 'cursor',
+                description: 'The cursor to use for the paginated call.',
+                in: 'query',
+                required: false,
+                schema: new Schema(type: 'string', example: 'eyJpZCI6MTUsIl9wb2ludHNUb05leHRJdGVtcyI6dHJ1ZX0'),
+            );
+        }
+        if ($type === PaginationType::SIMPLE || $type === PaginationType::TABLE) {
+            $params[] = new Parameter(
+                name: 'page',
+                description: 'Page number.',
+                in: 'query',
+                required: false,
+                schema: new Schema(type: 'integer', example: 1),
+            );
+        }
+
+        return $params;
     }
 
     private function getPaginationProperties(PaginationType $paginationType): array

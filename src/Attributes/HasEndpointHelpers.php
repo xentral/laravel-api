@@ -3,13 +3,14 @@
 namespace Xentral\LaravelApi\Attributes;
 
 use Illuminate\Support\Arr;
+use OpenApi\Attributes\Items;
 use OpenApi\Attributes\JsonContent;
 use OpenApi\Attributes\MediaType;
+use OpenApi\Attributes\Parameter;
 use OpenApi\Attributes\RequestBody;
 use OpenApi\Attributes\Response;
 use OpenApi\Attributes\Schema;
 use OpenApi\Generator;
-use Xentral\LaravelApi\AttributeFactory;
 
 trait HasEndpointHelpers
 {
@@ -38,10 +39,9 @@ trait HasEndpointHelpers
         return new Response(response: '404', description: 'Not Found');
     }
 
-    protected function makeNegativeResponses(?string $request = null, bool $with404 = false): array
+    protected function makeNegativeResponses(bool $with404 = false): array
     {
         return array_filter([
-            $request ? AttributeFactory::createValidationResponse($request) : null,
             $this->response401(),
             $this->response403(),
             $with404 ? $this->response404() : null,
@@ -50,15 +50,55 @@ trait HasEndpointHelpers
 
     protected function makeParameters(array $parameters, string $path, array $filters = [], array $includes = []): array
     {
-        $parameters = array_merge($parameters, AttributeFactory::createMissingPathParameters($path, $parameters));
+        $parameters = array_merge($parameters, $this->createMissingPathParameters($path, $parameters));
         if (! empty($filters)) {
-            $parameters[] = AttributeFactory::createFilterParameter($filters);
+            $parameters[] = new Parameter(
+                name: 'filter',
+                in: 'query',
+                required: false,
+                schema: new Schema(
+                    properties: $filters,
+                    type: 'object',
+                ),
+                style: 'deepObject',
+            );
         }
         if (! empty($includes)) {
-            $parameters[] = AttributeFactory::createIncludeParameter($includes);
+            $parameters[] = new Parameter(
+                name: 'include',
+                in: 'query',
+                required: false,
+                schema: new Schema(
+                    type: 'array',
+                    items: new Items(type: 'string', enum: $includes),
+                ),
+                explode: false,
+            );
         }
 
         return $parameters;
+    }
+
+    protected function createMissingPathParameters(string $path, array $parameters): array
+    {
+        preg_match_all('/{([^}]+)}/', $path, $matches);
+        $missing = [];
+        foreach ($matches[1] as $match) {
+            $hasParam = count(
+                array_filter($parameters, fn (Parameter $parameter) => $parameter->name === $match)
+            ) > 0;
+            if ($hasParam) {
+                continue;
+            }
+            $missing[] = new Parameter(
+                name: $match,
+                in: 'path',
+                required: true,
+                schema: new Schema(type: 'string')
+            );
+        }
+
+        return $missing;
     }
 
     protected function makeRequestBody(?string $request = null, string $contentType = 'application/json'): ?RequestBody

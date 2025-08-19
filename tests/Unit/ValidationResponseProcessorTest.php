@@ -2,12 +2,13 @@
 
 use Illuminate\Validation\Rules\Enum;
 use Workbench\App\Http\Requests\CreateTestModelRequest;
-use Xentral\LaravelApi\AttributeFactory;
+use Xentral\LaravelApi\PostProcessors\ValidationResponseProcessor;
 
 it('can extract validation rules from a form request', function () {
     $request = CreateTestModelRequest::class;
 
-    $rules = AttributeFactory::extractValidationInfo($request);
+    $processor = new ValidationResponseProcessor;
+    $rules = $processor->extractValidationInfo($request);
 
     expect($rules)
         ->toHaveKeys(['name', 'status'])

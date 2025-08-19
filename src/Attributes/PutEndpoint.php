@@ -30,7 +30,7 @@ class PutEndpoint extends Put
             $resource
                 ? $this->response('200', $description, [new Property('data', ref: $resource)])
                 : $this->response204(),
-            ...$this->makeNegativeResponses($request),
+            ...$this->makeNegativeResponses(),
         ];
 
         $parameters = $this->makeParameters($parameters, $path);
