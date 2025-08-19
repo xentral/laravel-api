@@ -2,7 +2,7 @@
 
 use Illuminate\Validation\Rules\Enum;
 use Workbench\App\Http\Requests\CreateTestModelRequest;
-use Xentral\LaravelApi\PostProcessors\ValidationResponseProcessor;
+use Xentral\LaravelApi\OpenApi\PostProcessors\ValidationResponseProcessor;
 
 it('can extract validation rules from a form request', function () {
     $request = CreateTestModelRequest::class;

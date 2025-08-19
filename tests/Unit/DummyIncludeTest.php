@@ -2,7 +2,7 @@
 
 use Illuminate\Database\Eloquent\Builder;
 use Spatie\QueryBuilder\AllowedInclude;
-use Xentral\LaravelApi\Http\DummyInclude;
+use Xentral\LaravelApi\Query\DummyInclude;
 
 it('returns an allowed include', function () {
     $include = DummyInclude::make('foo')->first();

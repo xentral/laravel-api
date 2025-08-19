@@ -9,17 +9,17 @@ use Workbench\App\Http\Requests\CreateTestModelRequest;
 use Workbench\App\Http\Requests\UpdateTestModelRequest;
 use Workbench\App\Http\Resources\TestResource;
 use Workbench\App\Models\TestModel;
-use Xentral\LaravelApi\Attributes\ActionEndpoint;
-use Xentral\LaravelApi\Attributes\DeleteEndpoint;
-use Xentral\LaravelApi\Attributes\FilterParameter;
-use Xentral\LaravelApi\Attributes\GetEndpoint;
-use Xentral\LaravelApi\Attributes\IdFilter;
-use Xentral\LaravelApi\Attributes\ListEndpoint;
-use Xentral\LaravelApi\Attributes\PatchEndpoint;
-use Xentral\LaravelApi\Attributes\PostEndpoint;
-use Xentral\LaravelApi\Attributes\StringFilter;
-use Xentral\LaravelApi\Http\Filters\QueryFilter;
-use Xentral\LaravelApi\QueryBuilder;
+use Xentral\LaravelApi\OpenApi\Endpoints\ActionEndpoint;
+use Xentral\LaravelApi\OpenApi\Endpoints\DeleteEndpoint;
+use Xentral\LaravelApi\OpenApi\Endpoints\GetEndpoint;
+use Xentral\LaravelApi\OpenApi\Endpoints\ListEndpoint;
+use Xentral\LaravelApi\OpenApi\Endpoints\PatchEndpoint;
+use Xentral\LaravelApi\OpenApi\Endpoints\PostEndpoint;
+use Xentral\LaravelApi\OpenApi\Filters\FilterParameter;
+use Xentral\LaravelApi\OpenApi\Filters\IdFilter;
+use Xentral\LaravelApi\OpenApi\Filters\StringFilter;
+use Xentral\LaravelApi\Query\Filters\QueryFilter;
+use Xentral\LaravelApi\Query\QueryBuilder;
 
 class TestController
 {

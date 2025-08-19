@@ -118,14 +118,13 @@ define a list endpoint for sales orders.
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\AllowedSort;
-use Xentral\LaravelApi\Attributes\ListEndpoint;
-use Xentral\LaravelApi\Attributes\IdFilter;
-use Xentral\LaravelApi\Attributes\StringFilter;
-use Xentral\LaravelApi\Attributes\DateFilter;
-use Xentral\LaravelApi\Attributes\QuerySort;
-use Xentral\LaravelApi\Http\Filters\QueryFilter;
-use Xentral\LaravelApi\QueryBuilder;
-    #[ListEndpoint(
+use Xentral\LaravelApi\Query\Filters\QueryFilter;
+use Xentral\LaravelApi\OpenApi\Filters\DateFilter;
+use Xentral\LaravelApi\OpenApi\Filters\IdFilter;
+use Xentral\LaravelApi\OpenApi\Filters\StringFilter;
+use Xentral\LaravelApi\OpenApi\QuerySort;
+use Xentral\LaravelApi\Query\QueryBuilder;
+#[ListEndpoint(
         path: '/api/v1/sales-orders',
         resource: SalesOrderResource::class,
         description: 'Paginated list of sales orders',
@@ -187,9 +186,8 @@ endpoint for retrieving a single sales order.
 ```php
 <?php
 
-use Xentral\LaravelApi\Attributes\GetEndpoint;
-use Xentral\LaravelApi\QueryBuilder;  
-    #[GetEndpoint(
+use Xentral\LaravelApi\Query\QueryBuilder;
+#[GetEndpoint(
         path: '/api/v1/sales-orders/{id}',
         resource: SalesOrderResource::class,
         description: 'View a single sales order',
@@ -271,9 +269,7 @@ endpoint for a sales order.
 ```php
 <?php
 
-use Xentral\LaravelApi\Attributes\PostEndpoint;
-
-    #[PostEndpoint(
+#[PostEndpoint(
         path: '/api/v1/sales-orders',
         request: CreateSalesOrderRequest::class,
         resource: SalesOrderResource::class,
@@ -303,9 +299,7 @@ for a sales order.
 ```php
 <?php
 
-use Xentral\LaravelApi\Attributes\PatchEndpoint;
-
-    #[PatchEndpoint(
+#[PatchEndpoint(
         path: '/api/v1/sales-orders/{id}',
         request: UpdateSalesOrderRequest::class,
         resource: SalesOrderResource::class,
@@ -335,7 +329,6 @@ When a sales order is not in a pending state, a validation exception is thrown w
 
 use Illuminate\Http\Response;
 use Illuminate\Validation\ValidationException;
-use Xentral\LaravelApi\Attributes\DeleteEndpoint;
 
     #[DeleteEndpoint(
         path: '/api/v1/sales-orders/{id}',
@@ -471,11 +464,7 @@ that implements the `FilterSpecCollection` interface. Here's an example:
 
 namespace App\OpenApi\Filters;
 
-use Attribute;
-
-use Xentral\LaravelApi\Attributes\FilterProperty;
-use Xentral\LaravelApi\Attributes\FilterSpecCollection;
-use Xentral\LaravelApi\Enum\FilterType;
+use Xentral\LaravelApi\Query\Filters\FilterType;use Xentral\LaravelApi\OpenApi\Filters\FilterProperty;use Xentral\LaravelApi\OpenApi\Filters\FilterSpecCollection;
 
 #[\Attribute(\Attribute::TARGET_METHOD | \Attribute::IS_REPEATABLE)]
 class UserFilters implements FilterSpecCollection

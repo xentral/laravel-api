@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
-use Xentral\LaravelApi\QueryBuilder;
-use Xentral\LaravelApi\QueryBuilderRequest;
+use Xentral\LaravelApi\Http\QueryBuilderRequest;
+use Xentral\LaravelApi\Query\QueryBuilder;
 
 it('uses our custom query builder request', function () {
     $qb = new QueryBuilder(

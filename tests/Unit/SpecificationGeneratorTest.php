@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 
 use Symfony\Component\Finder\Finder;
-use Xentral\LaravelApi\OpenApiGeneratorFactory;
+use Xentral\LaravelApi\OpenApi\OpenApiGeneratorFactory;
 
 it('matches the fixture', function () {
     $factory = new OpenApiGeneratorFactory;

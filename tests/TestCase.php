@@ -8,7 +8,7 @@ use Orchestra\Testbench\TestCase as Orchestra;
 use Workbench\App\Http\Controller\TestController;
 use Workbench\App\Providers\WorkbenchServiceProvider;
 use Xentral\LaravelApi\ApiServiceProvider;
-use Xentral\LaravelApi\QueryBuilderRequest;
+use Xentral\LaravelApi\Http\QueryBuilderRequest;
 
 class TestCase extends Orchestra
 {

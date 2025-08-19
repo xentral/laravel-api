@@ -1,5 +1,4 @@
 <?php declare(strict_types=1);
-
 namespace Xentral\LaravelApi\Commands;
 
 use Illuminate\Console\Command;

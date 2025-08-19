@@ -2,10 +2,10 @@
 
 namespace Workbench\App\Http\Filter;
 
-use Xentral\LaravelApi\Attributes\FilterProperty;
-use Xentral\LaravelApi\Attributes\FilterSpecCollection;
-use Xentral\LaravelApi\Http\Filters\QueryBuilderFilterCollection;
-use Xentral\LaravelApi\Http\Filters\QueryFilter;
+use Xentral\LaravelApi\OpenApi\Filters\FilterProperty;
+use Xentral\LaravelApi\OpenApi\Filters\FilterSpecCollection;
+use Xentral\LaravelApi\Query\Filters\QueryBuilderFilterCollection;
+use Xentral\LaravelApi\Query\Filters\QueryFilter;
 
 class FilterCollection implements FilterSpecCollection, QueryBuilderFilterCollection
 {

@@ -2,7 +2,7 @@
 
 use Illuminate\Http\Request;
 use Workbench\App\Models\TestModel;
-use Xentral\LaravelApi\QueryBuilder;
+use Xentral\LaravelApi\Query\QueryBuilder;
 use Xentral\LaravelApi\Tests\TestCase;
 
 uses(TestCase::class)->in(__DIR__.'/Feature');

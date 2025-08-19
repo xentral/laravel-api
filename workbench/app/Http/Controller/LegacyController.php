@@ -4,7 +4,7 @@ namespace Workbench\App\Http\Controller;
 
 use Workbench\App\Http\Resources\TestResource;
 use Workbench\App\Models\TestModel;
-use Xentral\LaravelApi\Attributes\GetEndpoint;
+use Xentral\LaravelApi\OpenApi\Endpoints\GetEndpoint;
 
 class LegacyController
 {
