@@ -5,10 +5,11 @@ use Illuminate\Support\Carbon;
 use OpenApi\Analysis;
 use OpenApi\Annotations as OA;
 use OpenApi\Generator;
+use Xentral\LaravelApi\OpenApi\SchemaConfig;
 
 class FilterDeprecationsProcessor
 {
-    public function __construct(public int $monthBeforeRemoval = 6) {}
+    public function __construct(private readonly SchemaConfig $config) {}
 
     public function __invoke(Analysis $analysis)
     {
@@ -18,7 +19,7 @@ class FilterDeprecationsProcessor
                 if ($operation->deprecated !== Generator::UNDEFINED && $operation->deprecated === true) {
                     $date = Carbon::createFromFormat('Y-m-d', $operation->x['deprecated_on'] ?? 'now');
                     // compare the deprecation date with the current date minus the monthBeforeRemoval
-                    if ($date->addMonths($this->monthBeforeRemoval)->isBefore(now())) {
+                    if ($date->addMonths($this->config->deprecationFilter->monthsBeforeRemoval)->isBefore(now())) {
                         // Remove deprecated operations that are past the removal date
                         $path->{$operation->method} = Generator::UNDEFINED;
                     }

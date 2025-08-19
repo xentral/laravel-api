@@ -1,0 +1,33 @@
+<?php declare(strict_types=1);
+
+namespace Xentral\LaravelApi\OpenApi;
+
+use Xentral\LaravelApi\OpenApi\Config\DeprecationFilterConfig;
+use Xentral\LaravelApi\OpenApi\Config\FeatureFlagsConfig;
+use Xentral\LaravelApi\OpenApi\Config\ValidationResponseConfig;
+
+readonly class SchemaConfig
+{
+    public function __construct(
+        public string $oasVersion,
+        public array $folders,
+        public string $output,
+        public ValidationResponseConfig $validationResponse,
+        public DeprecationFilterConfig $deprecationFilter,
+        public FeatureFlagsConfig $featureFlags,
+        public array $validationCommands,
+    ) {}
+
+    public static function fromArray(array $config): self
+    {
+        return new self(
+            oasVersion: $config['oas_version'],
+            folders: $config['folders'],
+            output: $config['output'],
+            validationResponse: ValidationResponseConfig::fromArray($config['validation_response']),
+            deprecationFilter: DeprecationFilterConfig::fromArray($config['deprecation_filter']),
+            featureFlags: FeatureFlagsConfig::fromArray($config['feature_flags']),
+            validationCommands: $config['validation_commands'],
+        );
+    }
+}

@@ -7,7 +7,7 @@ it('matches the fixture', function () {
     $factory = new OpenApiGeneratorFactory;
     $config = require fixture('config.php');
     $generator = $factory->create($config);
-    $actualYaml = $generator->generate(Finder::create()->in($config['folders'])->files())->toYaml();
+    $actualYaml = $generator->generate(Finder::create()->in($config['config']['folders'])->files())->toYaml();
     $expectedYamlPath = fixture('expected.yml');
     if (! file_exists($expectedYamlPath)) {
         file_put_contents($expectedYamlPath, $actualYaml);

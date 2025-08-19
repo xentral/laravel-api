@@ -1,5 +1,4 @@
 <?php declare(strict_types=1);
-
 namespace Xentral\LaravelApi\OpenApi;
 
 use Illuminate\Foundation\Http\FormRequest;
@@ -39,7 +38,7 @@ class ValidationRuleExtractor
         foreach ($limitedRules as $field => $rules) {
             $result[$field] = [
                 'rules' => $rules,
-                'message' => $this->generateValidationMessage($field, $rules),
+                'message' => $this->generateValidationMessage((string) $field, $rules),
             ];
         }
 
@@ -81,6 +80,9 @@ class ValidationRuleExtractor
         $filtered = [];
 
         foreach ($rules as $field => $fieldRules) {
+            if (is_numeric($field)) {
+                continue;
+            }
             $hasDatabaseRule = false;
 
             // Check if any rule in this field is a database rule
@@ -102,7 +104,6 @@ class ValidationRuleExtractor
 
     private function isDatabaseRule(mixed $rule): bool
     {
-        // Handle string rules
         if (is_string($rule)) {
             $databaseRules = ['exists', 'unique'];
             foreach ($databaseRules as $dbRule) {
@@ -114,7 +115,6 @@ class ValidationRuleExtractor
             return false;
         }
 
-        // Handle Rule objects
         if (is_object($rule)) {
             $className = $rule::class;
             $databaseRuleClasses = [
@@ -132,19 +132,13 @@ class ValidationRuleExtractor
         return false;
     }
 
-    /**
-     * Generate a realistic validation message for a field and its rules using Laravel's Validator
-     */
     private function generateValidationMessage(string $field, array $rules): string
     {
-        // Create dummy data that will fail validation to trigger error messages
         $dummyValue = $this->getDummyValueForRules($rules);
         $dummyData = [$field => $dummyValue];
 
-        // Create validator with the rules
         $validator = Validator::make($dummyData, [$field => $rules]);
 
-        // Get the first error message for this field
         if ($validator->fails()) {
             $messages = $validator->errors();
             $firstMessage = $messages->first($field);
@@ -154,15 +148,11 @@ class ValidationRuleExtractor
             }
         }
 
-        // Fallback message
         $formattedField = str_replace('_', ' ', $field);
 
         return "The {$formattedField} field is invalid.";
     }
 
-    /**
-     * Get a dummy value that will likely trigger validation errors for the given rules
-     */
     private function getDummyValueForRules(array $rules): mixed
     {
         // Check for required rule - use null to trigger required error
@@ -221,9 +211,6 @@ class ValidationRuleExtractor
         return 123;
     }
 
-    /**
-     * Normalize validation rules to ensure they are always arrays
-     */
     private function normalizeRules(array $rules): array
     {
         $normalized = [];

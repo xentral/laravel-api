@@ -5,10 +5,11 @@ use Illuminate\Support\Str;
 use OpenApi\Analysis;
 use OpenApi\Annotations as OA;
 use OpenApi\Generator;
+use Xentral\LaravelApi\OpenApi\SchemaConfig;
 
 class FeatureFlagProcessor
 {
-    public function __construct(private readonly string $descriptionPrefix) {}
+    public function __construct(private readonly SchemaConfig $config) {}
 
     public function __invoke(Analysis $analysis): void
     {
@@ -19,7 +20,7 @@ class FeatureFlagProcessor
             if (isset($operation->x['feature_flag'])) {
                 $description = $operation->description !== Generator::UNDEFINED ? $operation->description : '';
                 $operation->description = Str::of($description)
-                    ->prepend(str_replace('{flag}', $operation->x['feature_flag'], $this->descriptionPrefix))
+                    ->prepend(str_replace('{flag}', $operation->x['feature_flag'], $this->config->featureFlags->descriptionPrefix))
                     ->toString();
             }
         }

@@ -25,14 +25,14 @@ class GenerateOpenApiSpecCommand extends Command
         }
 
         foreach ($schemas as $config) {
-            $this->components->info('Generating OpenAPI spec for '.$config['name']);
+            $this->components->info('Generating OpenAPI spec for '.$config['info']['name']);
 
             $generator = $factory->create($config);
-            $openApi = $generator->generate(Util::finder($config['folders']));
+            $openApi = $generator->generate(Util::finder($config['config']['folders']));
 
-            $openApi->saveAs($config['output']);
-            $this->components->info('Generated OpenAPI spec and stored in '.$config['output']);
-            foreach ($config['validation_commands'] as $cmd) {
+            $openApi->saveAs($config['config']['output']);
+            $this->components->info('Generated OpenAPI spec and stored in '.$config['config']['output']);
+            foreach ($config['config']['validation_commands'] as $cmd) {
                 $this->components->info('Running validation command: '.$cmd);
                 $result = Process::run($cmd, function (string $type, string $output) {
                     echo $output;

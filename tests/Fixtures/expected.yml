@@ -103,10 +103,10 @@ paths:
         '422':
           description: 'Failed validation'
           content:
-            application/problem+json:
+            application/json:
               schema:
                 properties:
-                  message: { type: string, example: 'The name field must be a string.' }
+                  message: { type: string, example: 'The given data was invalid.' }
                   errors: { type: object, example: { name: ['The name field must be a string.'], status: ['The selected status is invalid.'] } }
                 type: object
         '401':
@@ -196,11 +196,11 @@ paths:
         '422':
           description: 'Failed validation'
           content:
-            application/problem+json:
+            application/json:
               schema:
                 properties:
-                  message: { type: string, example: 'The property is required.' }
-                  errors: { type: object, example: { property: ['The property is required.'] } }
+                  message: { type: string, example: 'The given data was invalid.' }
+                  errors: { type: object, example: { name: ['The name field is invalid.'], status: ['The status field is invalid.'] } }
                 type: object
         '401':
           description: Unauthorized
