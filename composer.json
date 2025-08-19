@@ -19,9 +19,10 @@
   "require": {
     "php": "^8.2",
     "illuminate/console": "^10.0|^11.0|^12.0",
-    "illuminate/validation": "^10.0|^11.0|^12.0",
     "illuminate/http": "^10.0|^11.0|^12.0",
     "illuminate/support": "^10.0|^11.0|^12.0",
+    "illuminate/validation": "^10.0|^11.0|^12.0",
+    "spatie/laravel-data": "^4.17",
     "spatie/laravel-query-builder": "^6.3",
     "swagger-api/swagger-ui": "^5.21",
     "zircote/swagger-php": "^5.1"

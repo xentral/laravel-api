@@ -27,9 +27,8 @@ class OpenApiGeneratorFactory
         $generator->getProcessorPipeline()->remove(OperationId::class);
         $generator->getProcessorPipeline()->add(new OperationIdProcessor);
         $generator->getProcessorPipeline()->add(new TokenScopeProcessor);
-        $generator->getProcessorPipeline()->add(new ValidationResponseProcessor);
+        $generator->getProcessorPipeline()->add(new ValidationResponseProcessor(Arr::get($config, 'validation_status_code', 422)));
         $generator->getProcessorPipeline()->add(new FeatureFlagProcessor(Arr::get($config, 'feature_flags.description_prefix', "This endpoint is only available if the feature flag `{flag}` is enabled.\n\n")));
-        $generator->getProcessorPipeline()->add(new ValidationResponseStatusCodeProcessor(Arr::get($config, 'validation_status_code', 422)));
         $generator->getProcessorPipeline()->add(new SortComponentsProcessor);
         if (Arr::get($config, 'deprecation_filter.enabled', false)) {
             $generator->getProcessorPipeline()->add(new FilterDeprecationsProcessor(Arr::get($config, 'deprecation_filter.months_before_removal', 6)));

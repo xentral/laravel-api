@@ -15,6 +15,8 @@ use ReflectionMethod;
 
 class ValidationResponseProcessor
 {
+    public function __construct(private readonly int $validationStatusCode = 422) {}
+
     public function __invoke(Analysis $analysis): void
     {
         $allOperations = $analysis->getAnnotationsOfType(OA\Operation::class);
@@ -37,6 +39,16 @@ class ValidationResponseProcessor
             }
 
             unset($operation->x['request']);
+        }
+
+        // Update existing validation response status codes to use the configured status code
+        foreach ($allOperations as $operation) {
+            foreach ($operation->responses as $response) {
+                $status = (int) $response->response;
+                if ($status === 422 || $status === 400) {
+                    $response->response = (string) $this->validationStatusCode;
+                }
+            }
         }
     }
 
@@ -81,7 +93,7 @@ class ValidationResponseProcessor
         }
 
         return new Response(
-            response: '422',
+            response: (string) $this->validationStatusCode,
             description: 'Failed validation',
             content: new MediaType(
                 mediaType: 'application/problem+json',
