@@ -27,7 +27,7 @@ class ListEndpoint extends Get
         ?string $operationId = null,
         int $defaultPageSize = 15,
         int $maxPageSize = 100,
-        PaginationType $paginationType = PaginationType::SIMPLE,
+        PaginationType|array $paginationType = PaginationType::SIMPLE,
         bool $isInternal = false,
         ?\DateTimeInterface $deprecated = null,
         \BackedEnum|string|null $featureFlag = null,
@@ -36,7 +36,6 @@ class ListEndpoint extends Get
         $responses = [
             $this->response('200', $description, [
                 new Property('data', type: 'array', items: new Items(ref: $resource)),
-                ...$this->getPaginationProperties($paginationType),
             ]),
             ...$this->makeNegativeResponses(),
         ];
@@ -53,13 +52,17 @@ class ListEndpoint extends Get
             'tags' => $tags ?? Generator::UNDEFINED,
             'callbacks' => Generator::UNDEFINED,
             'deprecated' => $deprecated !== null ? true : Generator::UNDEFINED,
-            'x' => $this->compileX($isInternal, $deprecated, $featureFlag, $scopes),
+            'x' => $this->mergeX($this->compileX($isInternal, $deprecated, $featureFlag, $scopes), [
+                'pagination_type' => $paginationType,
+            ]),
             'value' => $this->combine($responses, $parameters),
         ]);
     }
 
-    private function createPaginationParameters(int $defaultPageSize, int $maxPageSize, PaginationType $type): array
+    private function createPaginationParameters(int $defaultPageSize, int $maxPageSize, PaginationType|array $type): array
     {
+        $types = is_array($type) ? $type : [$type];
+
         $params = [
             new Parameter(
                 name: 'per_page',
@@ -69,7 +72,11 @@ class ListEndpoint extends Get
                 schema: new Schema(type: 'integer', example: $defaultPageSize),
             ),
         ];
-        if ($type === PaginationType::CURSOR) {
+
+        $hasCursor = in_array(PaginationType::CURSOR, $types, true);
+        $hasPageBased = in_array(PaginationType::SIMPLE, $types, true) || in_array(PaginationType::TABLE, $types, true);
+
+        if ($hasCursor) {
             $params[] = new Parameter(
                 name: 'cursor',
                 description: 'The cursor to use for the paginated call.',
@@ -78,7 +85,8 @@ class ListEndpoint extends Get
                 schema: new Schema(type: 'string', example: 'eyJpZCI6MTUsIl9wb2ludHNUb05leHRJdGVtcyI6dHJ1ZX0'),
             );
         }
-        if ($type === PaginationType::SIMPLE || $type === PaginationType::TABLE) {
+
+        if ($hasPageBased) {
             $params[] = new Parameter(
                 name: 'page',
                 description: 'Page number.',
@@ -91,80 +99,12 @@ class ListEndpoint extends Get
         return $params;
     }
 
-    private function getPaginationProperties(PaginationType $paginationType): array
+    private function mergeX(string|array $baseX, array $additionalX): string|array
     {
-        if ($paginationType === PaginationType::SIMPLE) {
-            return [
-                new Property(
-                    'meta',
-                    properties: [
-                        new Property(property: 'current_page', type: 'integer'),
-                        new Property(property: 'from', type: 'integer', nullable: true),
-                        new Property(property: 'path', type: 'string'),
-                        new Property(property: 'per_page', type: 'integer'),
-                        new Property(property: 'last_page', type: 'integer'),
-                        new Property(property: 'to', type: 'integer', nullable: true),
-                        new Property(property: 'total', type: 'integer'),
-                        new Property(property: 'links', type: 'array', items: new Items(type: 'object')),
-                    ],
-                    type: 'object',
-                ),
-            ];
-        }
-        if ($paginationType === PaginationType::CURSOR) {
-            return [
-                new Property(
-                    'links',
-                    properties: [
-                        new Property(property: 'first', type: 'string', nullable: true),
-                        new Property(property: 'last', type: 'string', nullable: true),
-                        new Property(property: 'prev', type: 'string', nullable: true),
-                        new Property(property: 'next', type: 'string', nullable: true),
-                    ],
-                    type: 'object',
-                ),
-                new Property(
-                    'meta',
-                    properties: [
-                        new Property(property: 'path', type: 'string'),
-                        new Property(property: 'per_page', type: 'integer'),
-                        new Property(property: 'next_cursor', type: 'string', nullable: true),
-                        new Property(property: 'prev_cursor', type: 'string', nullable: true),
-                    ],
-                    type: 'object',
-                ),
-            ];
+        if ($baseX === Generator::UNDEFINED) {
+            return $additionalX;
         }
 
-        return [
-            new Property(
-                'links',
-                properties: [
-                    new Property(property: 'first', type: 'string', nullable: true),
-                    new Property(property: 'last', type: 'string', nullable: true),
-                    new Property(property: 'prev', type: 'string', nullable: true),
-                    new Property(property: 'next', type: 'string', nullable: true),
-                ],
-                type: 'object',
-            ),
-            new Property(
-                'meta',
-                properties: [
-                    new Property(property: 'current_page', type: 'integer'),
-                    new Property(property: 'from', type: 'integer', nullable: true),
-                    new Property(property: 'last_page', type: 'integer'),
-                    new Property(property: 'links', type: 'array', items: new Items(properties: [
-                        new Property(property: 'url', type: 'string', nullable: true),
-                        new Property(property: 'label', type: 'string'),
-                        new Property(property: 'active', type: 'boolean'),
-                    ], type: 'object')),
-                    new Property(property: 'path', type: 'string'),
-                    new Property(property: 'per_page', type: 'integer'),
-                    new Property(property: 'to', type: 'integer', nullable: true),
-                    new Property(property: 'total', type: 'integer'),
-                ],
-                type: 'object',
-            ),
-        ];
+        return array_merge($baseX, $additionalX);
     }
 }

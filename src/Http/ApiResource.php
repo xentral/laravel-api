@@ -19,4 +19,9 @@ abstract class ApiResource extends JsonResource
 
         return empty($data['key']) ? null : $data['key'];
     }
+
+    public static function newCollection($resource): ApiResourceCollection
+    {
+        return new ApiResourceCollection($resource, static::class);
+    }
 }

@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 namespace Workbench\App\Http\Controller;
 
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Http\Response;
 use Workbench\App\Http\Filter\FilterCollection;
 use Workbench\App\Http\Requests\CreateTestModelRequest;
@@ -17,6 +17,7 @@ use Xentral\LaravelApi\OpenApi\Endpoints\PostEndpoint;
 use Xentral\LaravelApi\OpenApi\Filters\FilterParameter;
 use Xentral\LaravelApi\OpenApi\Filters\IdFilter;
 use Xentral\LaravelApi\OpenApi\Filters\StringFilter;
+use Xentral\LaravelApi\OpenApi\PaginationType;
 use Xentral\LaravelApi\Query\Filters\QueryFilter;
 use Xentral\LaravelApi\Query\QueryBuilder;
 
@@ -39,7 +40,7 @@ class TestController
         featureFlag: 'beta-users',
         scopes: 'test-models:read',
     )]
-    public function index(): AnonymousResourceCollection
+    public function index(): ResourceCollection
     {
         return TestResource::collection(
             QueryBuilder::for(TestModel::class)
@@ -49,7 +50,34 @@ class TestController
                     QueryFilter::string('status'),
                     new FilterCollection,
                 )
-                ->get()
+                ->apiPaginate()
+        );
+    }
+
+    #[ListEndpoint(
+        path: '/api/v1/test-models-multi-pagination',
+        resource: TestResource::class,
+        description: 'List test resources with multiple pagination options',
+        includes: ['test model'],
+        parameters: [
+            new FilterParameter([
+                new IdFilter,
+                new StringFilter(name: 'name'),
+                new StringFilter(name: 'status'),
+            ]),
+        ],
+        paginationType: [PaginationType::SIMPLE, PaginationType::TABLE, PaginationType::CURSOR],
+    )]
+    public function indexMultiPagination(): ResourceCollection
+    {
+        return TestResource::collection(
+            QueryBuilder::for(TestModel::class)
+                ->allowedFilters(
+                    QueryFilter::identifier(),
+                    QueryFilter::string('name'),
+                    QueryFilter::string('status'),
+                )
+                ->apiPaginate()
         );
     }
 

@@ -74,7 +74,7 @@ paths:
               schema:
                 properties:
                   data: { type: array, items: { $ref: '#/components/schemas/TestResource' } }
-                  meta: { properties: { current_page: { type: integer }, from: { type: [integer, 'null'] }, path: { type: string }, per_page: { type: integer }, last_page: { type: integer }, to: { type: [integer, 'null'] }, total: { type: integer }, links: { type: array, items: { type: object } } }, type: object }
+                  meta: { properties: { current_page: { type: integer }, from: { type: integer, nullable: true }, path: { type: string }, per_page: { type: integer }, last_page: { type: integer }, to: { type: integer, nullable: true }, total: { type: integer }, links: { type: array, items: { type: object } } }, type: object }
                 type: object
         '401':
           description: Unauthorized
@@ -109,6 +109,84 @@ paths:
                   message: { type: string, example: 'The given data was invalid.' }
                   errors: { type: object, example: { name: ['The name field must be a string.'], status: ['The selected status is invalid.'] } }
                 type: object
+        '401':
+          description: Unauthorized
+        '403':
+          description: Unauthorized
+  /api/v1/test-models-multi-pagination:
+    get:
+      description: 'List test resources with multiple pagination options'
+      operationId: 'GET::api-v1-test-models-multi-pagination'
+      parameters:
+        -
+          name: filter
+          in: query
+          description: "The filter parameter is used to filter the results of the given endpoint. \n\n\n**Supported filter operators by key:** \n\n`id`: *equals*, *notEquals*, *in*, *notIn* \n\n`name`: *equals*, *notEquals*, *in*, *notIn*, *contains*, *notContains*, *startsWith*, *endsWith* \n\n`status`: *equals*, *notEquals*, *in*, *notIn*, *contains*, *notContains*, *startsWith*, *endsWith*"
+          required: false
+          style: deepObject
+          schema:
+            type: array
+            items:
+              properties:
+                key:
+                  type: string
+                  enum: [id, name, status]
+                op:
+                  description: operator
+                  type: string
+                  enum: [equals, notEquals, in, notIn, contains, notContains, startsWith, endsWith]
+                value:
+                  description: 'value oder so'
+                  oneOf: [{ title: String, type: string }, { title: Array, type: array, items: { type: string } }]
+              type: object
+              additionalProperties: false
+        -
+          name: include
+          in: query
+          required: false
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - 'test model'
+        -
+          name: per_page
+          in: query
+          description: 'Number of items per page. Default: 15, Max: 100'
+          required: false
+          schema:
+            type: integer
+            example: 15
+        -
+          name: cursor
+          in: query
+          description: 'The cursor to use for the paginated call.'
+          required: false
+          schema:
+            type: string
+            example: eyJpZCI6MTUsIl9wb2ludHNUb05leHRJdGVtcyI6dHJ1ZX0
+        -
+          name: page
+          in: query
+          description: 'Page number.'
+          required: false
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: 'List test resources with multiple pagination options'
+          content:
+            application/json:
+              schema:
+                properties: {  }
+                type: null
+                oneOf:
+                  - { properties: { data: { type: array, items: { $ref: '#/components/schemas/TestResource' } }, meta: { properties: { current_page: { type: integer }, from: { type: integer, nullable: true }, path: { type: string }, per_page: { type: integer }, last_page: { type: integer }, to: { type: integer, nullable: true }, total: { type: integer }, links: { type: array, items: { type: object } } }, type: object } }, type: object }
+                  - { properties: { data: { type: array, items: { $ref: '#/components/schemas/TestResource' } }, links: { properties: { first: { type: string, nullable: true }, last: { type: string, nullable: true }, prev: { type: string, nullable: true }, next: { type: string, nullable: true } }, type: object }, meta: { properties: { current_page: { type: integer }, from: { type: integer, nullable: true }, last_page: { type: integer }, links: { type: array, items: { properties: { url: { type: string, nullable: true }, label: { type: string }, active: { type: boolean } }, type: object } }, path: { type: string }, per_page: { type: integer }, to: { type: integer, nullable: true }, total: { type: integer } }, type: object } }, type: object }
+                  - { properties: { data: { type: array, items: { $ref: '#/components/schemas/TestResource' } }, links: { properties: { first: { type: string, nullable: true }, last: { type: string, nullable: true }, prev: { type: string, nullable: true }, next: { type: string, nullable: true } }, type: object }, meta: { properties: { path: { type: string }, per_page: { type: integer }, next_cursor: { type: string, nullable: true }, prev_cursor: { type: string, nullable: true } }, type: object } }, type: object }
         '401':
           description: Unauthorized
         '403':

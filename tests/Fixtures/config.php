@@ -14,6 +14,9 @@ return [
                 'errors' => '{{errors}}',
             ],
         ],
+        'pagination_response' => [
+            'casing' => 'snake',
+        ],
         'deprecation_filter' => [
             'enabled' => true,
             'months_before_removal' => 6,

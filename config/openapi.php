@@ -12,6 +12,9 @@ return [
                 'oas_version' => '3.1.0',
                 'folders' => [base_path('app')],
                 'output' => base_path('openapi.yml'),
+                'pagination_response' => [
+                    'casing' => 'snake',
+                ],
                 'validation_response' => [
                     'status_code' => 422,
                     'content_type' => 'application/json',

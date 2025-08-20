@@ -21,6 +21,9 @@ it('can extract validation rules from a form request', function () {
                 'errors' => '{{errors}}',
             ],
         ],
+        'pagination_response' => [
+            'casing' => 'camel',
+        ],
         'deprecation_filter' => [
             'enabled' => true,
             'months_before_removal' => 6,
