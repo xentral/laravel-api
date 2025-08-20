@@ -34,6 +34,7 @@ class TestCase extends Orchestra
     protected function defineWebRoutes($router): void
     {
         $router->get('/api/v1/test-models', [TestController::class, 'index']);
+        $router->get('/api/v1/test-models-multi-pagination', [TestController::class, 'indexMultiPagination']);
         $router->get('/api/v1/test-models/{id}', [TestController::class, 'show']);
         $router->post('/api/v1/test-models', [TestController::class, 'create']);
         $router->patch('/api/v1/test-models/{id}', [TestController::class, 'update']);
