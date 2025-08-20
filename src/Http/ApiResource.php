@@ -17,11 +17,11 @@ abstract class ApiResource extends JsonResource
 
     protected function nullWhenEmpty(array|Collection $data, string $key): mixed
     {
-        if (! isset($data['key'])) {
+        if (! isset($data[$key])) {
             return null;
         }
 
-        return empty($data['key']) ? null : $data['key'];
+        return empty($data[$key]) ? null : $data[$key];
     }
 
     public function deprecatedSince(\DateTimeInterface $date): self
