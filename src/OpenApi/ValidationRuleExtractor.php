@@ -10,7 +10,8 @@ use Spatie\LaravelData\Data;
 class ValidationRuleExtractor
 {
     public function __construct(
-        private readonly int $maxRules = 3
+        private readonly int $maxRules = 3,
+        private readonly string $locale = 'en',
     ) {}
 
     public function extractRules(string $className): array
@@ -138,7 +139,7 @@ class ValidationRuleExtractor
         $dummyData = [$field => $dummyValue];
 
         $validator = Validator::make($dummyData, [$field => $rules]);
-
+        $validator->getTranslator()->setLocale($this->locale);
         if ($validator->fails()) {
             $messages = $validator->errors();
             $firstMessage = $messages->first($field);
