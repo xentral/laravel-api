@@ -11,7 +11,7 @@ readonly class FeatureFlagsConfig
     public static function fromArray(array $config): self
     {
         return new self(
-            descriptionPrefix: $config['description_prefix'],
+            descriptionPrefix: $config['description_prefix'] ?? "This endpoint is only available if the feature flag `{flag}` is enabled.\n\n",
         );
     }
 }

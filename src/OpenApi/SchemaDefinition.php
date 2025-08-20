@@ -13,7 +13,7 @@ readonly class SchemaDefinition
     {
         return new self(
             config: SchemaConfig::fromArray($schema['config']),
-            info: SchemaInfo::fromArray($schema['info']),
+            info: SchemaInfo::fromArray($schema['info'] ?? []),
         );
     }
 }

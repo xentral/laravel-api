@@ -9,8 +9,10 @@ readonly class PaginationResponseConfig
 
     public static function fromArray(array $config): self
     {
+        $casing = $config['casing'] ?? 'snake';
+
         return new self(
-            casing: $config['casing'] === 'camel' ? 'camel' : 'snake',
+            casing: $casing === 'camel' ? 'camel' : 'snake',
         );
     }
 }

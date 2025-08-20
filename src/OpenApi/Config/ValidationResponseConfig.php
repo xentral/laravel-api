@@ -14,10 +14,10 @@ readonly class ValidationResponseConfig
     public static function fromArray(array $config): self
     {
         return new self(
-            statusCode: $config['status_code'],
-            contentType: $config['content_type'],
-            maxErrors: $config['max_errors'],
-            content: $config['content'],
+            statusCode: $config['status_code'] ?? 422,
+            contentType: $config['content_type'] ?? 'application/json',
+            maxErrors: $config['max_errors'] ?? 3,
+            content: $config['content'] ?? ['message' => 'The given data was invalid.', 'errors' => '{{errors}}'],
         );
     }
 }

@@ -13,6 +13,7 @@ readonly class SchemaConfig
         public string $oasVersion,
         public array $folders,
         public string $output,
+        public string $locale,
         public ValidationResponseConfig $validationResponse,
         public PaginationResponseConfig $paginationResponse,
         public DeprecationFilterConfig $deprecationFilter,
@@ -23,14 +24,15 @@ readonly class SchemaConfig
     public static function fromArray(array $config): self
     {
         return new self(
-            oasVersion: $config['oas_version'],
+            oasVersion: $config['oas_version'] ?? '3.1.0',
             folders: $config['folders'],
             output: $config['output'],
-            validationResponse: ValidationResponseConfig::fromArray($config['validation_response']),
-            paginationResponse: PaginationResponseConfig::fromArray($config['pagination_response']),
-            deprecationFilter: DeprecationFilterConfig::fromArray($config['deprecation_filter']),
-            featureFlags: FeatureFlagsConfig::fromArray($config['feature_flags']),
-            validationCommands: $config['validation_commands'],
+            locale: $config['locale'] ?? 'en',
+            validationResponse: ValidationResponseConfig::fromArray($config['validation_response'] ?? []),
+            paginationResponse: PaginationResponseConfig::fromArray($config['pagination_response'] ?? []),
+            deprecationFilter: DeprecationFilterConfig::fromArray($config['deprecation_filter'] ?? []),
+            featureFlags: FeatureFlagsConfig::fromArray($config['feature_flags'] ?? []),
+            validationCommands: $config['validation_commands'] ?? [],
         );
     }
 }

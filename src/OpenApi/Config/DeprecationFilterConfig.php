@@ -12,8 +12,8 @@ readonly class DeprecationFilterConfig
     public static function fromArray(array $config): self
     {
         return new self(
-            enabled: $config['enabled'],
-            monthsBeforeRemoval: $config['months_before_removal'],
+            enabled: $config['enabled'] ?? true,
+            monthsBeforeRemoval: $config['months_before_removal'] ?? 6,
         );
     }
 }
