@@ -7,7 +7,7 @@ parameters:
 			path: src/Http/ApiDocsController.php
 
 		-
-			message: '#^Access to an undefined property UnitEnum\:\:\$value\.$#'
-			identifier: property.notFound
+			message: '#^Property OpenApi\\Annotations\\Schema\:\:\$properties \(array\<OpenApi\\Annotations\\Property\>\) does not accept string\.$#'
+			identifier: assign.propertyType
 			count: 1
-			path: src/Http/Filters/CustomOperatorFilter.php
+			path: src/OpenApi/PostProcessors/PaginationResponseProcessor.php

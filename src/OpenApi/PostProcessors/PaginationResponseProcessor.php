@@ -5,6 +5,7 @@ namespace Xentral\LaravelApi\OpenApi\PostProcessors;
 use OpenApi\Analysis;
 use OpenApi\Annotations as OA;
 use OpenApi\Attributes\Items;
+use OpenApi\Attributes\Parameter;
 use OpenApi\Attributes\Property;
 use OpenApi\Attributes\Schema;
 use OpenApi\Generator;
@@ -28,6 +29,10 @@ class PaginationResponseProcessor
             }
 
             $paginationType = $operation->x['pagination_type'];
+            $paginationConfig = $operation->x['pagination_config'] ?? [];
+
+            // Add pagination parameters
+            $this->addPaginationParameters($operation, $paginationType, $paginationConfig);
 
             // Find the 200 response to add pagination properties
             foreach ($operation->responses as $response) {
@@ -37,8 +42,8 @@ class PaginationResponseProcessor
                 }
             }
 
-            // Clean up the custom extension
-            unset($operation->x['pagination_type']);
+            // Clean up the custom extensions
+            unset($operation->x['pagination_type'], $operation->x['pagination_config']);
         }
     }
 
@@ -96,6 +101,7 @@ class PaginationResponseProcessor
             $properties = array_merge($properties, $paginationProperties);
 
             $oneOfSchemas[] = new Schema(
+                title: 'Paginated Response: '.$type->value,
                 properties: $properties,
                 type: 'object'
             );
@@ -103,7 +109,7 @@ class PaginationResponseProcessor
 
         // Replace the schema with oneOf
         $schema->oneOf = $oneOfSchemas;
-        $schema->properties = [];
+        $schema->properties = Generator::UNDEFINED;
         $schema->type = Generator::UNDEFINED;
     }
 
@@ -184,6 +190,94 @@ class PaginationResponseProcessor
                 type: 'object',
             ),
         ];
+    }
+
+    private function addPaginationParameters(OA\Operation $operation, PaginationType|array $paginationType, array $paginationConfig): void
+    {
+        $types = is_array($paginationType) ? $paginationType : [$paginationType];
+        $defaultPageSize = $paginationConfig['default_page_size'] ?? 15;
+        $maxPageSize = $paginationConfig['max_page_size'] ?? 100;
+
+        if (count($types) === 1) {
+            // Single pagination type - add parameters directly
+            $paginationParameters = $this->createPaginationParameters($types[0], $defaultPageSize, $maxPageSize);
+            $parameters = $operation->parameters === Generator::UNDEFINED ? [] : $operation->parameters;
+            $operation->parameters = array_merge($parameters, $paginationParameters);
+        } else {
+            // Multiple pagination types - create individual parameter sets but merge common ones
+            $this->addMultiTypePaginationParameters($operation, $types, $defaultPageSize, $maxPageSize);
+        }
+    }
+
+    private function addMultiTypePaginationParameters(OA\Operation $operation, array $types, int $defaultPageSize, int $maxPageSize): void
+    {
+        $hasCursor = in_array(PaginationType::CURSOR, $types, true);
+        $hasPageBased = in_array(PaginationType::SIMPLE, $types, true) || in_array(PaginationType::TABLE, $types, true);
+
+        $params = [
+            new Parameter(
+                name: $this->convertCase('per_page'),
+                description: sprintf('Number of items per page. Default: %d, Max: %d', $defaultPageSize, $maxPageSize),
+                in: 'query',
+                required: false,
+                schema: new Schema(type: 'integer', example: $defaultPageSize),
+            ),
+        ];
+        if ($hasPageBased) {
+            $params[] = new Parameter(
+                name: 'page',
+                description: 'Page number. Only used with simple and table pagination.',
+                in: 'query',
+                required: false,
+                schema: new Schema(type: 'integer', example: 1),
+            );
+        }
+        if ($hasCursor) {
+            $params[] = new Parameter(
+                name: 'cursor',
+                description: 'The cursor to use for the paginated call. Only used with cursor pagination. Not compatible with page parameter',
+                in: 'query',
+                required: false,
+                schema: new Schema(type: 'string', example: 'eyJpZCI6MTUsIl9wb2ludHNUb05leHRJdGVtcyI6dHJ1ZX0'),
+            );
+        }
+
+        $parameters = $operation->parameters === Generator::UNDEFINED ? [] : $operation->parameters;
+        $operation->parameters = array_merge($parameters, $params);
+    }
+
+    private function createPaginationParameters(PaginationType $type, int $defaultPageSize, int $maxPageSize): array
+    {
+        $params = [
+            new Parameter(
+                name: 'per_page',
+                description: sprintf('Number of items per page. Default: %d, Max: %d', $defaultPageSize, $maxPageSize),
+                in: 'query',
+                required: false,
+                schema: new Schema(type: 'integer', example: $defaultPageSize),
+            ),
+        ];
+
+        if ($type === PaginationType::CURSOR) {
+            $params[] = new Parameter(
+                name: 'cursor',
+                description: 'The cursor to use for the paginated call.',
+                in: 'query',
+                required: false,
+                schema: new Schema(type: 'string', example: 'eyJpZCI6MTUsIl9wb2ludHNUb05leHRJdGVtcyI6dHJ1ZX0'),
+            );
+        } else {
+            // Simple and Table both use page parameter
+            $params[] = new Parameter(
+                name: 'page',
+                description: 'Page number.',
+                in: 'query',
+                required: false,
+                schema: new Schema(type: 'integer', example: 1),
+            );
+        }
+
+        return $params;
     }
 
     private function convertCase(string $property): string

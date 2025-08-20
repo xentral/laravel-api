@@ -63,6 +63,11 @@
     ],
     "test": [
       "@php artisan package:test"
+    ],
+    "all": [
+      "@lint",
+      "@test",
+      "@phpstan:analyse"
     ]
   },
   "config": {

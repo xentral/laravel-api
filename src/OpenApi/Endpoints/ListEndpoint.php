@@ -3,9 +3,7 @@ namespace Xentral\LaravelApi\OpenApi\Endpoints;
 
 use OpenApi\Annotations\Get;
 use OpenApi\Attributes\Items;
-use OpenApi\Attributes\Parameter;
 use OpenApi\Attributes\Property;
-use OpenApi\Attributes\Schema;
 use OpenApi\Generator;
 use Xentral\LaravelApi\OpenApi\PaginationType;
 
@@ -40,7 +38,6 @@ class ListEndpoint extends Get
             ...$this->makeNegativeResponses(),
         ];
         $parameters = $this->makeParameters($parameters, $path, $filters, $includes);
-        $parameters = array_merge($parameters, $this->createPaginationParameters($defaultPageSize, $maxPageSize, $paginationType));
 
         parent::__construct([
             'path' => $path,
@@ -54,49 +51,13 @@ class ListEndpoint extends Get
             'deprecated' => $deprecated !== null ? true : Generator::UNDEFINED,
             'x' => $this->mergeX($this->compileX($isInternal, $deprecated, $featureFlag, $scopes), [
                 'pagination_type' => $paginationType,
+                'pagination_config' => [
+                    'default_page_size' => $defaultPageSize,
+                    'max_page_size' => $maxPageSize,
+                ],
             ]),
             'value' => $this->combine($responses, $parameters),
         ]);
-    }
-
-    private function createPaginationParameters(int $defaultPageSize, int $maxPageSize, PaginationType|array $type): array
-    {
-        $types = is_array($type) ? $type : [$type];
-
-        $params = [
-            new Parameter(
-                name: 'per_page',
-                description: sprintf('Number of items per page. Default: %d, Max: %d', $defaultPageSize, $maxPageSize),
-                in: 'query',
-                required: false,
-                schema: new Schema(type: 'integer', example: $defaultPageSize),
-            ),
-        ];
-
-        $hasCursor = in_array(PaginationType::CURSOR, $types, true);
-        $hasPageBased = in_array(PaginationType::SIMPLE, $types, true) || in_array(PaginationType::TABLE, $types, true);
-
-        if ($hasCursor) {
-            $params[] = new Parameter(
-                name: 'cursor',
-                description: 'The cursor to use for the paginated call.',
-                in: 'query',
-                required: false,
-                schema: new Schema(type: 'string', example: 'eyJpZCI6MTUsIl9wb2ludHNUb05leHRJdGVtcyI6dHJ1ZX0'),
-            );
-        }
-
-        if ($hasPageBased) {
-            $params[] = new Parameter(
-                name: 'page',
-                description: 'Page number.',
-                in: 'query',
-                required: false,
-                schema: new Schema(type: 'integer', example: 1),
-            );
-        }
-
-        return $params;
     }
 
     private function mergeX(string|array $baseX, array $additionalX): string|array
