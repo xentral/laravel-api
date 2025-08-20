@@ -36,9 +36,11 @@ class TestCase extends Orchestra
         $router->get('/api/v1/test-models', [TestController::class, 'index']);
         $router->get('/api/v1/test-models-multi-pagination', [TestController::class, 'indexMultiPagination']);
         $router->get('/api/v1/test-models/{id}', [TestController::class, 'show']);
+        $router->get('/api/v1/test-models/{id}/legacy', [TestController::class, 'legacyShow']);
         $router->post('/api/v1/test-models', [TestController::class, 'create']);
         $router->patch('/api/v1/test-models/{id}', [TestController::class, 'update']);
         $router->delete('/api/v1/test-models/{id}', [TestController::class, 'delete']);
+        $router->patch('/api/v1/test-models/{id}/actions/test', [TestController::class, 'testAction']);
     }
 
     protected function getPackageProviders($app): array

@@ -312,6 +312,40 @@ paths:
           description: Unauthorized
         '403':
           description: Unauthorized
+  '/api/v1/test-models/{id}/legacy':
+    get:
+      description: 'Legacy endpoint for test resource'
+      operationId: 'GET::api-v1-test-models-id-legacy'
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 'Legacy endpoint for test resource'
+          headers:
+            Sunset:
+              description: 'This endpoint is deprecated and will be sunset on the example date. If an endpoint is over this date but still accessible, it can be removed any time.'
+              schema:
+                type: string
+                format: http-date
+                example: 'Thu, 01 Jan 2026 00:00:00 GMT'
+          content:
+            application/json:
+              schema:
+                properties:
+                  data: { $ref: '#/components/schemas/TestResource' }
+                type: object
+        '401':
+          description: Unauthorized
+        '403':
+          description: Unauthorized
+        '404':
+          description: 'Not Found'
+      deprecated: true
 components:
   schemas:
     CreateTestModelRequest:

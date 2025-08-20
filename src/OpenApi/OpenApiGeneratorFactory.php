@@ -8,8 +8,8 @@ use OpenApi\Generator;
 use OpenApi\Loggers\ConsoleLogger;
 use OpenApi\Processors\OperationId;
 use Xentral\LaravelApi\OpenApi\PostProcessors\AddMetaInfoProcessor;
+use Xentral\LaravelApi\OpenApi\PostProcessors\DeprecationsProcessor;
 use Xentral\LaravelApi\OpenApi\PostProcessors\FeatureFlagProcessor;
-use Xentral\LaravelApi\OpenApi\PostProcessors\FilterDeprecationsProcessor;
 use Xentral\LaravelApi\OpenApi\PostProcessors\OperationIdProcessor;
 use Xentral\LaravelApi\OpenApi\PostProcessors\PaginationResponseProcessor;
 use Xentral\LaravelApi\OpenApi\PostProcessors\SortComponentsProcessor;
@@ -32,7 +32,7 @@ class OpenApiGeneratorFactory
         $generator->getProcessorPipeline()->add(new FeatureFlagProcessor($schemaDefinition->config));
         $generator->getProcessorPipeline()->add(new SortComponentsProcessor);
         if ($schemaDefinition->config->deprecationFilter->enabled) {
-            $generator->getProcessorPipeline()->add(new FilterDeprecationsProcessor($schemaDefinition->config));
+            $generator->getProcessorPipeline()->add(new DeprecationsProcessor($schemaDefinition->config));
         }
 
         $analyzer = new ReflectionAnalyser([new DocBlockAnnotationFactory, new AttributeAnnotationFactory]);

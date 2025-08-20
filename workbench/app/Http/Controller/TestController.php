@@ -139,4 +139,15 @@ class TestController
     {
         return response()->noContent();
     }
+
+    #[GetEndpoint(
+        path: '/api/v1/test-models/{id}/legacy',
+        resource: TestResource::class,
+        description: 'Legacy endpoint for test resource',
+        deprecated: new \DateTime('2025-07-01'),
+    )]
+    public function legacyShow(int $id): TestResource
+    {
+        return new TestResource(TestModel::query()->findOrFail($id));
+    }
 }
