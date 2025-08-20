@@ -214,7 +214,22 @@ class PaginationResponseProcessor
         $hasCursor = in_array(PaginationType::CURSOR, $types, true);
         $hasPageBased = in_array(PaginationType::SIMPLE, $types, true) || in_array(PaginationType::TABLE, $types, true);
 
+        // Add x-pagination header parameter to control pagination type
+        $typeValues = array_map(fn (PaginationType $type) => $type->value, $types);
+        $typesList = implode(', ', $typeValues);
+
         $params = [
+            new Parameter(
+                name: 'x-pagination',
+                description: "Controls the pagination format. Available types: {$typesList}. Defaults to 'simple' if not specified.",
+                in: 'header',
+                required: false,
+                schema: new Schema(
+                    type: 'string',
+                    enum: $typeValues,
+                    example: 'simple'
+                ),
+            ),
             new Parameter(
                 name: $this->convertCase('per_page'),
                 description: sprintf('Number of items per page. Default: %d, Max: %d', $defaultPageSize, $maxPageSize),
@@ -223,6 +238,7 @@ class PaginationResponseProcessor
                 schema: new Schema(type: 'integer', example: $defaultPageSize),
             ),
         ];
+
         if ($hasPageBased) {
             $params[] = new Parameter(
                 name: 'page',
@@ -250,7 +266,7 @@ class PaginationResponseProcessor
     {
         $params = [
             new Parameter(
-                name: 'per_page',
+                name: $this->convertCase('per_page'),
                 description: sprintf('Number of items per page. Default: %d, Max: %d', $defaultPageSize, $maxPageSize),
                 in: 'query',
                 required: false,

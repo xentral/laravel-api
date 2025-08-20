@@ -152,6 +152,18 @@ paths:
               enum:
                 - 'test model'
         -
+          name: x-pagination
+          in: header
+          description: "Controls the pagination format. Available types: simple, table, cursor. Defaults to 'simple' if not specified."
+          required: false
+          schema:
+            type: string
+            enum:
+              - simple
+              - table
+              - cursor
+            example: simple
+        -
           name: per_page
           in: query
           description: 'Number of items per page. Default: 15, Max: 100'
@@ -160,33 +172,31 @@ paths:
             type: integer
             example: 15
         -
-          name: cursor
-          in: query
-          description: 'The cursor to use for the paginated call.'
-          required: false
-          schema:
-            type: string
-            example: eyJpZCI6MTUsIl9wb2ludHNUb05leHRJdGVtcyI6dHJ1ZX0
-        -
           name: page
           in: query
-          description: 'Page number.'
+          description: 'Page number. Only used with simple and table pagination.'
           required: false
           schema:
             type: integer
             example: 1
+        -
+          name: cursor
+          in: query
+          description: 'The cursor to use for the paginated call. Only used with cursor pagination. Not compatible with page parameter'
+          required: false
+          schema:
+            type: string
+            example: eyJpZCI6MTUsIl9wb2ludHNUb05leHRJdGVtcyI6dHJ1ZX0
       responses:
         '200':
           description: 'List test resources with multiple pagination options'
           content:
             application/json:
               schema:
-                properties: {  }
-                type: null
                 oneOf:
-                  - { properties: { data: { type: array, items: { $ref: '#/components/schemas/TestResource' } }, meta: { properties: { current_page: { type: integer }, from: { type: integer, nullable: true }, path: { type: string }, per_page: { type: integer }, last_page: { type: integer }, to: { type: integer, nullable: true }, total: { type: integer }, links: { type: array, items: { type: object } } }, type: object } }, type: object }
-                  - { properties: { data: { type: array, items: { $ref: '#/components/schemas/TestResource' } }, links: { properties: { first: { type: string, nullable: true }, last: { type: string, nullable: true }, prev: { type: string, nullable: true }, next: { type: string, nullable: true } }, type: object }, meta: { properties: { current_page: { type: integer }, from: { type: integer, nullable: true }, last_page: { type: integer }, links: { type: array, items: { properties: { url: { type: string, nullable: true }, label: { type: string }, active: { type: boolean } }, type: object } }, path: { type: string }, per_page: { type: integer }, to: { type: integer, nullable: true }, total: { type: integer } }, type: object } }, type: object }
-                  - { properties: { data: { type: array, items: { $ref: '#/components/schemas/TestResource' } }, links: { properties: { first: { type: string, nullable: true }, last: { type: string, nullable: true }, prev: { type: string, nullable: true }, next: { type: string, nullable: true } }, type: object }, meta: { properties: { path: { type: string }, per_page: { type: integer }, next_cursor: { type: string, nullable: true }, prev_cursor: { type: string, nullable: true } }, type: object } }, type: object }
+                  - { title: 'Paginated Response: simple', properties: { data: { type: array, items: { $ref: '#/components/schemas/TestResource' } }, meta: { properties: { current_page: { type: integer }, from: { type: integer, nullable: true }, path: { type: string }, per_page: { type: integer }, last_page: { type: integer }, to: { type: integer, nullable: true }, total: { type: integer }, links: { type: array, items: { type: object } } }, type: object } }, type: object }
+                  - { title: 'Paginated Response: table', properties: { data: { type: array, items: { $ref: '#/components/schemas/TestResource' } }, links: { properties: { first: { type: string, nullable: true }, last: { type: string, nullable: true }, prev: { type: string, nullable: true }, next: { type: string, nullable: true } }, type: object }, meta: { properties: { current_page: { type: integer }, from: { type: integer, nullable: true }, last_page: { type: integer }, links: { type: array, items: { properties: { url: { type: string, nullable: true }, label: { type: string }, active: { type: boolean } }, type: object } }, path: { type: string }, per_page: { type: integer }, to: { type: integer, nullable: true }, total: { type: integer } }, type: object } }, type: object }
+                  - { title: 'Paginated Response: cursor', properties: { data: { type: array, items: { $ref: '#/components/schemas/TestResource' } }, links: { properties: { first: { type: string, nullable: true }, last: { type: string, nullable: true }, prev: { type: string, nullable: true }, next: { type: string, nullable: true } }, type: object }, meta: { properties: { path: { type: string }, per_page: { type: integer }, next_cursor: { type: string, nullable: true }, prev_cursor: { type: string, nullable: true } }, type: object } }, type: object }
         '401':
           description: Unauthorized
         '403':
