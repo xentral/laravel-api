@@ -23,6 +23,17 @@ There were six main goals in mind when creating this package:
 * Generate OpenAPI schema files that can be used for PHPUnit testing, documentation, and client generation
 * Provide a web interface to easily view and interact with the OpenAPI documentation
 
+## Key Features
+
+* **Flexible Pagination**: Support for simple, table, and cursor pagination with dynamic type switching via headers
+* **Type-Safe Attributes**: Strongly-typed PHP attributes for defining endpoints, schemas, and validation
+* **Advanced Filtering**: Powerful query filtering with intuitive URL-based syntax
+* **Multiple Schema Support**: Generate multiple OpenAPI specifications from different parts of your application
+* **Configurable Response Formats**: Choose between snake_case and camelCase for response field naming
+* **Automatic Documentation**: Generate comprehensive OpenAPI documentation directly from your code
+* **Built-in Validation**: Automatic request/response validation against your OpenAPI schemas
+* **Web Interface**: Interactive documentation browser for testing and exploring your API
+
 ## How does it work?
 
 `xentral/laravel-api` is built upon the excellent `zircote/swagger-php` and
@@ -115,7 +126,7 @@ define a list endpoint for sales orders.
 ```php
 <?php
 
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Resources\Json\ResourceCollection;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\AllowedSort;
 use Xentral\LaravelApi\Query\Filters\QueryFilter;
@@ -123,7 +134,10 @@ use Xentral\LaravelApi\OpenApi\Filters\DateFilter;
 use Xentral\LaravelApi\OpenApi\Filters\IdFilter;
 use Xentral\LaravelApi\OpenApi\Filters\StringFilter;
 use Xentral\LaravelApi\OpenApi\QuerySort;
+use Xentral\LaravelApi\OpenApi\PaginationType;
 use Xentral\LaravelApi\Query\QueryBuilder;
+
+// Simple endpoint with single pagination type
 #[ListEndpoint(
         path: '/api/v1/sales-orders',
         resource: SalesOrderResource::class,
@@ -136,9 +150,10 @@ use Xentral\LaravelApi\Query\QueryBuilder;
             /// ...
             new QuerySort(['created_at', 'updated_at']),
         ],
+        paginationType: PaginationType::SIMPLE,
         tags: ['SalesOrder'],
     )]
-    public function index(): AnonymousResourceCollection
+    public function index(): ResourceCollection
     {
         $salesOrders = QueryBuilder::for(SalesOrder::class)
             ->withCount('positions')
@@ -158,7 +173,45 @@ use Xentral\LaravelApi\Query\QueryBuilder;
                 'customer',
                 'positions',
             ])
-            ->apiPaginate();
+            ->apiPaginate(PaginationType::SIMPLE);
+
+        return SalesOrderResource::collection($salesOrders);
+    }
+
+// Advanced endpoint with multiple pagination types
+#[ListEndpoint(
+        path: '/api/v1/sales-orders-advanced',
+        resource: SalesOrderResource::class,
+        description: 'Advanced paginated list with multiple pagination options',
+        includes: ['customer', 'positions'],
+        parameters: [
+            new IdFilter(),
+            new StringFilter(name: 'documentNumber'),
+            new DateFilter(name: 'documentDate'),
+            new QuerySort(['created_at', 'updated_at']),
+        ],
+        paginationType: [PaginationType::SIMPLE, PaginationType::TABLE, PaginationType::CURSOR],
+        tags: ['SalesOrder'],
+    )]
+    public function indexAdvanced(): ResourceCollection
+    {
+        $salesOrders = QueryBuilder::for(SalesOrder::class)
+            ->withCount('positions')
+            ->defaultSort('-created_at')
+            ->allowedFilters([
+                QueryFilter::identifier(),
+                QueryFilter::string('documentNumber'),
+                QueryFilter::date('documentDate', 'datum'),
+            ])
+            ->allowedSorts([
+                AllowedSort::field('created_at'),
+                AllowedSort::field('updated_at'),
+            ])
+            ->allowedIncludes([
+                'customer',
+                'positions',
+            ])
+            ->apiPaginate(PaginationType::SIMPLE, PaginationType::TABLE, PaginationType::CURSOR);
 
         return SalesOrderResource::collection($salesOrders);
     }
@@ -175,6 +228,75 @@ contains `key`, `op`, and `value` parameters. Here are some examples:
 /api/v1/sales-orders?filter[0][key]=documentNumber&filter[0][op]=in&filter[0][value][]=12345&filter[0][value][]=54321
 /api/v1/sales-orders?filter[0][key]=documentDate&filter[0][op]=lessThan&filter[0][value]=2025-05-05
 /api/v1/sales-orders?filter[0][key]=customer.name&filter[0][op]=contains&filter[0][value]=John
+```
+
+#### Pagination
+
+This package provides flexible pagination options that can be configured per endpoint. You can choose from three different pagination types, each optimized for different use cases:
+
+##### Pagination Types
+
+**Simple Pagination** (`PaginationType::SIMPLE`)
+- Basic prev/next navigation without total counts
+- Most efficient for large datasets
+- Provides: `current_page`, `per_page`, `from`, `to`, `path`, and navigation links
+
+**Table Pagination** (`PaginationType::TABLE`)  
+- Full pagination with page numbers and totals
+- Best for user interfaces with page selectors
+- Provides: All simple pagination fields plus `last_page`, `total`, and detailed link information
+
+**Cursor Pagination** (`PaginationType::CURSOR`)
+- Efficient pagination for real-time data and large datasets
+- Provides: `per_page`, `path`, `next_cursor`, `prev_cursor`, and cursor-based navigation links
+- Uses database cursors for consistent results even when data changes
+
+##### Dynamic Pagination Control
+
+For endpoints that support multiple pagination types, clients can control the pagination format using the `x-pagination` header:
+
+```bash
+# Use simple pagination (default)
+GET /api/v1/sales-orders-advanced
+X-Pagination: simple
+
+# Use table pagination with totals and page numbers
+GET /api/v1/sales-orders-advanced  
+X-Pagination: table
+
+# Use cursor-based pagination
+GET /api/v1/sales-orders-advanced
+X-Pagination: cursor
+```
+
+##### Pagination Parameters
+
+Different pagination types use different query parameters:
+
+**Simple & Table Pagination:**
+```bash
+/api/v1/sales-orders?page=2&per_page=50
+```
+
+**Cursor Pagination:**
+```bash
+/api/v1/sales-orders?cursor=eyJpZCI6MTUsIl9wb2ludHNUb05leHRJdGVtcyI6dHJ1ZX0&per_page=50
+```
+
+##### Configurable Response Format
+
+You can configure whether pagination fields use `snake_case` or `camelCase` in your configuration:
+
+```php
+// Snake case (default): current_page, per_page, last_page
+'pagination_response' => [
+    'casing' => 'snake',
+],
+
+// Camel case: currentPage, perPage, lastPage  
+'pagination_response' => [
+    'casing' => 'camel',
+],
 ```
 
 ### View Endpoints
@@ -391,6 +513,18 @@ return [
             'feature_flags' => [
                 'description_prefix' => "This endpoint is only available if the feature flag `{flag}` is enabled.\n\n",
             ],
+            'validation_response' => [
+                'status_code' => 422,
+                'content_type' => 'application/json',
+                'max_errors' => 3,
+                'content' => [
+                    'message' => 'The given data was invalid.',
+                    'errors' => '{{errors}}',
+                ],
+            ],
+            'pagination_response' => [
+                'casing' => 'snake', // 'snake' or 'camel'
+            ],
             'validation_commands' => [],
             'validation_status_code' => 422,
             'name' => 'My API',
@@ -507,9 +641,10 @@ Once defined, you can use this custom filter collection in your controller metho
         new UserFilters(),
         new QuerySort(['created_at', 'updated_at']),
     ],
+    paginationType: PaginationType::SIMPLE,
     tags: ['User'],
 )]
-public function index(): AnonymousResourceCollection
+public function index(): ResourceCollection
 {
     $users = QueryBuilder::for(User::class)
         ->defaultSort('-created_at')
@@ -522,7 +657,7 @@ public function index(): AnonymousResourceCollection
             AllowedSort::field('created_at'),
             AllowedSort::field('updated_at'),
         ])
-        ->apiPaginate();
+        ->apiPaginate(PaginationType::SIMPLE);
 
     return UserResource::collection($users);
 }
@@ -546,6 +681,13 @@ responses against the OpenAPI schemas defined in your tests.
     - `months_before_removal`: Number of months before deprecated endpoints are removed
 - **`feature_flags`**: Configuration for feature flag documentation
     - `description_prefix`: Template for feature flag descriptions
+- **`validation_response`**: Configuration for validation error responses
+    - `status_code`: HTTP status code for validation errors (default: `422`)
+    - `content_type`: Response content type (default: `application/json`)
+    - `max_errors`: Maximum number of errors to include in response
+    - `content`: Template for validation error response structure
+- **`pagination_response`**: Configuration for pagination response formatting
+    - `casing`: Field name casing format - `snake` (default) or `camel`
 - **`validation_commands`**: Array of commands to run for validation after generation
 - **`validation_status_code`**: HTTP status code for validation errors (default: `422`)
 
@@ -571,11 +713,22 @@ responses against the OpenAPI schemas defined in your tests.
 3. **Mark required fields**: Always specify which fields are required in your schemas
 4. **Use appropriate types**: Use the most specific OpenAPI type for each field
 
+### Pagination Guidelines
+
+1. **Choose the right pagination type**: 
+   - Use **Simple** for basic list views and mobile APIs where performance is critical
+   - Use **Table** for admin interfaces and dashboards where users need page numbers and totals
+   - Use **Cursor** for real-time feeds, activity streams, and very large datasets
+2. **Support multiple types**: For flexible APIs, support multiple pagination types and let clients choose
+3. **Consider your audience**: Internal tools may prefer table pagination, while public APIs often benefit from simple or cursor pagination
+4. **Use appropriate defaults**: Set sensible `defaultPageSize` and `maxPageSize` values for your use case
+
 ### Performance Considerations
 
 1. **Limit includes**: Be selective about which relationships can be included to avoid N+1 queries
 2. **Set reasonable pagination limits**: Use `maxPageSize` to prevent excessive data loading
 3. **Use caching**: Consider caching generated OpenAPI files in production
+4. **Choose efficient pagination**: Cursor pagination performs better on large datasets than offset-based pagination
 
 ## Troubleshooting
 
