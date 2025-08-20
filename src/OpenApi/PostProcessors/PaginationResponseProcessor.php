@@ -7,6 +7,7 @@ use OpenApi\Annotations as OA;
 use OpenApi\Attributes\Items;
 use OpenApi\Attributes\Property;
 use OpenApi\Attributes\Schema;
+use OpenApi\Generator;
 use Xentral\LaravelApi\OpenApi\PaginationType;
 use Xentral\LaravelApi\OpenApi\SchemaConfig;
 
@@ -103,7 +104,7 @@ class PaginationResponseProcessor
         // Replace the schema with oneOf
         $schema->oneOf = $oneOfSchemas;
         $schema->properties = [];
-        $schema->type = null;
+        $schema->type = Generator::UNDEFINED;
     }
 
     private function getPaginationProperties(PaginationType $paginationType): array

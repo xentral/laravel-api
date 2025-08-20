@@ -101,10 +101,10 @@ class ListEndpoint extends Get
 
     private function mergeX(string|array $baseX, array $additionalX): string|array
     {
-        if ($baseX === Generator::UNDEFINED) {
-            return $additionalX;
+        if ($baseX === Generator::UNDEFINED && empty($additionalX['pagination_type'])) {
+            return Generator::UNDEFINED;
         }
 
-        return array_merge($baseX, $additionalX);
+        return array_merge($baseX === Generator::UNDEFINED ? [] : $baseX, $additionalX);
     }
 }
