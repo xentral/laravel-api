@@ -112,7 +112,7 @@ trait HasEndpointHelpers
         ?\DateTimeInterface $deprecated,
         \BackedEnum|string|null $featureFlag,
         string|array|null $scopes = null,
-        ?string $request = null,
+        string|array|null $request = null,
     ): string|array {
         $x = [];
         if ($isInternal) {
