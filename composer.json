@@ -1,7 +1,6 @@
 {
   "name": "xentral/laravel-api",
   "description": "A laravel package which provides a smooth OAS workflow",
-  "version": "0.1.0",
   "keywords": [
     "xentral",
     "laravel",
