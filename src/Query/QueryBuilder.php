@@ -23,9 +23,19 @@ class QueryBuilder extends \Spatie\QueryBuilder\QueryBuilder
             : app(QueryBuilderRequest::class);
     }
 
-    public function apiPaginate(PaginationType ...$allowedTypes): Paginator|LengthAwarePaginator|CursorPaginator
+    public function allowedFilters($filters): static
     {
-        $perPage = min(100, $this->request->integer('per_page', 15));
+        $filters = collect(is_array($filters) ? $filters : func_get_args())
+            ->map(fn ($filter) => $filter instanceof QueryBuilderFilterCollection ? $filter->getFilters() : $filter)
+            ->flatten(1)
+            ->toArray();
+
+        return parent::allowedFilters($filters);
+    }
+
+    public function apiPaginate(int $maxPageSize = 100, PaginationType ...$allowedTypes): Paginator|LengthAwarePaginator|CursorPaginator
+    {
+        $perPage = $this->getPageSize($maxPageSize);
         $requestedType = $this->getRequestedPaginationType();
         $paginationType = $this->validatePaginationType($requestedType, $allowedTypes);
 
@@ -57,13 +67,10 @@ class QueryBuilder extends \Spatie\QueryBuilder\QueryBuilder
         return $allowed[0] ?? PaginationType::SIMPLE;
     }
 
-    public function allowedFilters($filters): static
+    private function getPageSize(int $maxPageSize): int
     {
-        $filters = collect(is_array($filters) ? $filters : func_get_args())
-            ->map(fn ($filter) => $filter instanceof QueryBuilderFilterCollection ? $filter->getFilters() : $filter)
-            ->flatten(1)
-            ->toArray();
+        $perPage = $this->request->integer('per_page', $this->request->integer('perPage', 15));
 
-        return parent::allowedFilters($filters);
+        return min($maxPageSize, $perPage);
     }
 }

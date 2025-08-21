@@ -77,7 +77,7 @@ class TestController
                     QueryFilter::string('name'),
                     QueryFilter::string('status'),
                 )
-                ->apiPaginate(PaginationType::SIMPLE, PaginationType::TABLE, PaginationType::CURSOR)
+                ->apiPaginate(100, PaginationType::SIMPLE, PaginationType::TABLE, PaginationType::CURSOR)
         );
     }
 
