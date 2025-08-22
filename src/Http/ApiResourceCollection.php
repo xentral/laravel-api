@@ -6,6 +6,8 @@ use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class ApiResourceCollection extends ResourceCollection
 {
+    use HasSunsetHeader;
+
     /**
      * The name of the resource being collected.
      *
