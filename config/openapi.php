@@ -31,6 +31,10 @@ return [
                 'feature_flags' => [
                     'description_prefix' => "This endpoint is only available if the feature flag `{flag}` is enabled.\n\n",
                 ],
+                'rate_limit_response' => [
+                    'enabled' => true,
+                    'message' => 'Too Many Requests',
+                ],
                 'validation_commands' => [],
             ],
             'info' => [

@@ -2,13 +2,11 @@
 namespace Xentral\LaravelApi\Http;
 
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Http\Resources\Json\ResourceResponse;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 abstract class ApiResource extends JsonResource
 {
-    protected ?Carbon $deprecatedSince = null;
+    use HasSunsetHeader;
 
     protected function wantsToInclude(string $include): bool
     {
@@ -22,24 +20,6 @@ abstract class ApiResource extends JsonResource
         }
 
         return empty($data[$key]) ? null : $data[$key];
-    }
-
-    public function deprecatedSince(\DateTimeInterface $date): self
-    {
-        $this->deprecatedSince = Carbon::instance($date);
-
-        return $this;
-    }
-
-    public function toResponse($request)
-    {
-        $response = (new ResourceResponse($this))->toResponse($request);
-
-        if ($this->deprecatedSince) {
-            $response->header('Sunset', $this->deprecatedSince->startOfDay()->toRfc7231String());
-        }
-
-        return $response;
     }
 
     public static function newCollection($resource): ApiResourceCollection

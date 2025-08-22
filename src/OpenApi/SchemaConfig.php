@@ -5,6 +5,7 @@ namespace Xentral\LaravelApi\OpenApi;
 use Xentral\LaravelApi\OpenApi\Config\DeprecationFilterConfig;
 use Xentral\LaravelApi\OpenApi\Config\FeatureFlagsConfig;
 use Xentral\LaravelApi\OpenApi\Config\PaginationResponseConfig;
+use Xentral\LaravelApi\OpenApi\Config\RateLimitResponseConfig;
 use Xentral\LaravelApi\OpenApi\Config\ValidationResponseConfig;
 
 readonly class SchemaConfig
@@ -18,6 +19,7 @@ readonly class SchemaConfig
         public PaginationResponseConfig $paginationResponse,
         public DeprecationFilterConfig $deprecationFilter,
         public FeatureFlagsConfig $featureFlags,
+        public RateLimitResponseConfig $rateLimitResponse,
         public array $validationCommands,
     ) {}
 
@@ -32,6 +34,7 @@ readonly class SchemaConfig
             paginationResponse: PaginationResponseConfig::fromArray($config['pagination_response'] ?? []),
             deprecationFilter: DeprecationFilterConfig::fromArray($config['deprecation_filter'] ?? []),
             featureFlags: FeatureFlagsConfig::fromArray($config['feature_flags'] ?? []),
+            rateLimitResponse: RateLimitResponseConfig::fromArray($config['rate_limit_response'] ?? []),
             validationCommands: $config['validation_commands'] ?? [],
         );
     }

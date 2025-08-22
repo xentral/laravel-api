@@ -134,10 +134,6 @@ The examples are taken form the real implementation of the Sales Order business 
 
 Any document can have a actions /actions/{action}. Actions are by design PATCH requests, since they are changing the state of a resource.
 
-## Implementation
-We will leverage the composer package `bambamboole/laravel-openapi`  to bundle all the needed logic to build api endpoints.
-As soon as we are happy with the state, we can take this over into the xentral organisation.
-
 ## Specification
 We leverage prepared PHP attributes for that to have a simple to use abstraction and a better way to post process everything.
 
@@ -159,7 +155,7 @@ The specification can be easily adapted to the used pagination via the paginatio
 Available options are simple , table and cursor.
 
 ### Filtering records
-Another part of the `bambamboole/laravel-openapi` package is a QueryBuilder built on top of the spatie/laravel-query-builder
+Another part of the `xentral/laravel-api` package is a QueryBuilder built on top of the spatie/laravel-query-builder
 package. It provides a powerful way to filter eloquent records based on predefined filters.
 
 ## Validation
