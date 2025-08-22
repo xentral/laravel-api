@@ -80,6 +80,14 @@ paths:
           description: Unauthorized
         '403':
           description: Unauthorized
+        '429':
+          description: 'Too Many Requests'
+          content:
+            application/json:
+              schema:
+                properties:
+                  message: { type: string, example: 'Too Many Requests' }
+                type: object
       x-feature_flag: beta-users
       x-scopes:
         - 'test-models:read'
@@ -113,6 +121,14 @@ paths:
           description: Unauthorized
         '403':
           description: Unauthorized
+        '429':
+          description: 'Too Many Requests'
+          content:
+            application/json:
+              schema:
+                properties:
+                  message: { type: string, example: 'Too Many Requests' }
+                type: object
   /api/v1/test-models-multi-pagination:
     get:
       description: 'List test resources with multiple pagination options'
@@ -201,6 +217,14 @@ paths:
           description: Unauthorized
         '403':
           description: Unauthorized
+        '429':
+          description: 'Too Many Requests'
+          content:
+            application/json:
+              schema:
+                properties:
+                  message: { type: string, example: 'Too Many Requests' }
+                type: object
   '/api/v1/test-models/{id}':
     get:
       description: 'get test resource'
@@ -238,6 +262,14 @@ paths:
           description: Unauthorized
         '404':
           description: 'Not Found'
+        '429':
+          description: 'Too Many Requests'
+          content:
+            application/json:
+              schema:
+                properties:
+                  message: { type: string, example: 'Too Many Requests' }
+                type: object
     delete:
       description: 'delete test resource'
       operationId: 'DELETE::api-v1-test-models-id'
@@ -257,6 +289,14 @@ paths:
           description: Unauthorized
         '404':
           description: 'Not Found'
+        '429':
+          description: 'Too Many Requests'
+          content:
+            application/json:
+              schema:
+                properties:
+                  message: { type: string, example: 'Too Many Requests' }
+                type: object
     patch:
       description: 'update test resource'
       operationId: 'PATCH::api-v1-test-models-id'
@@ -294,6 +334,14 @@ paths:
           description: Unauthorized
         '403':
           description: Unauthorized
+        '429':
+          description: 'Too Many Requests'
+          content:
+            application/json:
+              schema:
+                properties:
+                  message: { type: string, example: 'Too Many Requests' }
+                type: object
   '/api/v1/test-models/{id}/actions/test':
     patch:
       description: 'Execute test action on test resource'
@@ -312,6 +360,14 @@ paths:
           description: Unauthorized
         '403':
           description: Unauthorized
+        '429':
+          description: 'Too Many Requests'
+          content:
+            application/json:
+              schema:
+                properties:
+                  message: { type: string, example: 'Too Many Requests' }
+                type: object
   '/api/v1/test-models/{id}/legacy':
     get:
       description: 'Legacy endpoint for test resource'
@@ -345,6 +401,14 @@ paths:
           description: Unauthorized
         '404':
           description: 'Not Found'
+        '429':
+          description: 'Too Many Requests'
+          content:
+            application/json:
+              schema:
+                properties:
+                  message: { type: string, example: 'Too Many Requests' }
+                type: object
       deprecated: true
 components:
   schemas:
