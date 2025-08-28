@@ -2,6 +2,7 @@
 namespace Xentral\LaravelApi\OpenApi\Endpoints;
 
 use OpenApi\Annotations\Post;
+use OpenApi\Attributes\Parameter;
 use OpenApi\Attributes\Property;
 use OpenApi\Generator;
 
@@ -26,14 +27,14 @@ class PostEndpoint extends Post
         \BackedEnum|string|null $featureFlag = null,
         string|array|null $scopes = null,
     ) {
+        $parameters = $this->makeParameters($parameters, $path);
+        $needs404 = collect($parameters)->filter(fn (Parameter $p) => $p->in === 'path')->isNotEmpty();
         $responses = [
             $resource
                 ? $this->response($successStatus, $description, [new Property('data', ref: $resource)])
                 : $this->response204(),
-            ...$this->makeNegativeResponses(),
+            ...$this->makeNegativeResponses($needs404),
         ];
-
-        $parameters = $this->makeParameters($parameters, $path);
 
         $requestBody = $this->makeRequestBody($request);
 
