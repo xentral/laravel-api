@@ -12,6 +12,7 @@ class WorkbenchServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->mergeConfigFrom(dirname(__DIR__).'/../config/openapi.php', 'openapi');
         $this->app->bind(GuidelineComposer::class, PackageGuidelineComposer::class);
     }
 

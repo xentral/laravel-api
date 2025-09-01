@@ -4,12 +4,12 @@ info:
   description: 'Developer API'
   contact:
     name: 'API Support'
-    url: 'https://.example.com'
-    email: api@example.com
+    url: 'http://localhost'
+    email: hello@example.com
   version: 1.0.0
 servers:
   -
-    url: 'https://.example.com'
+    url: 'http://localhost'
     description: 'Your API environment'
 paths:
   /api/v1/test-models:
@@ -421,6 +421,18 @@ components:
             - active
             - inactive
             - pending
+      type: object
+      additionalProperties: false
+    Money:
+      properties:
+        amount:
+          oneOf:
+            -
+              type: string
+            -
+              type: number
+        currency:
+          type: string
       type: object
       additionalProperties: false
     TestResource:
