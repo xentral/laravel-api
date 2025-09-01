@@ -2,7 +2,7 @@
 
 return [
     'docs' => [
-        'enabled' => env('APP_ENV') !== 'production',
+        'enabled' => true,
         'prefix' => 'api-docs',
         'middleware' => ['web', 'auth'],
     ],
@@ -10,8 +10,8 @@ return [
         'default' => [
             'config' => [
                 'oas_version' => '3.1.0',
-                'folders' => [base_path('app')],
-                'output' => base_path('openapi.yml'),
+                'folders' => [dirname(__DIR__).'/app'],
+                'output' => dirname(__DIR__).'/openapi.yml',
                 'pagination_response' => [
                     'casing' => 'snake',
                 ],
@@ -43,12 +43,12 @@ return [
                 'description' => 'Developer API',
                 'contact' => [
                     'name' => 'API Support',
-                    'url' => env('APP_URL', 'https://example.com'),
-                    'email' => env('MAIL_FROM_ADDRESS', 'api@example.com'),
+                    'url' => 'https://example.com',
+                    'email' => 'api@example.com',
                 ],
                 'servers' => [
                     [
-                        'url' => env('APP_URL', 'https://example.com'),
+                        'url' => 'https://example.com',
                         'description' => 'Your API environment',
                     ],
                 ],

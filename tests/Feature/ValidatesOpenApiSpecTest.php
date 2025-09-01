@@ -8,7 +8,7 @@ uses(ValidatesOpenApiSpec::class);
 
 beforeEach(function () {
     TestModel::factory()->count(5)->create();
-    $this->schemaFilePath(dirname(__DIR__).'/Fixtures/expected.yml');
+    $this->schemaFilePath(dirname(__DIR__, 2).'/workbench/openapi.yml');
 });
 
 it('validates requests against OpenAPI spec automatically: success', function () {
