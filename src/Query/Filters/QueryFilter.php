@@ -15,12 +15,12 @@ class QueryFilter
     {
         return AllowedFilter::custom(
             $name,
-            new CustomOperatorFilter(config('openapi.filters.identifier', [
+            new CustomOperatorFilter([
                 FilterOperator::EQUALS,
                 FilterOperator::NOT_EQUALS,
                 FilterOperator::IN,
                 FilterOperator::NOT_IN,
-            ])),
+            ]),
             $internalName,
         );
     }
