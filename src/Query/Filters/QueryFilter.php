@@ -15,12 +15,12 @@ class QueryFilter
     {
         return AllowedFilter::custom(
             $name,
-            new CustomOperatorFilter([
+            new CustomOperatorFilter(config('openapi.filters.identifier', [
                 FilterOperator::EQUALS,
                 FilterOperator::NOT_EQUALS,
                 FilterOperator::IN,
                 FilterOperator::NOT_IN,
-            ]),
+            ])),
             $internalName,
         );
     }
@@ -82,6 +82,21 @@ class QueryFilter
                 FilterOperator::EQUALS,
                 FilterOperator::NOT_EQUALS,
             ]),
+            $internalName,
+        );
+    }
+
+    public function make(
+        string $name,
+        array $allowedOperators = [],
+        ?string $internalName = null,
+        ?string $enum = null,
+    ): AllowedFilter {
+        $operators = empty($allowedOperators) ? FilterOperator::cases() : $allowedOperators;
+
+        return AllowedFilter::custom(
+            $name,
+            new CustomOperatorFilter($operators, $enum),
             $internalName,
         );
     }
