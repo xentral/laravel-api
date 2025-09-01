@@ -9,8 +9,8 @@ enum TestStatusEnum: string
     case PENDING = 'pending';
 
     public const MAPPING = [
-        1 => self::ACTIVE,
-        2 => self::INACTIVE,
-        3 => self::PENDING,
+        'old_value1' => self::ACTIVE,
+        'old_value2' => self::INACTIVE,
+        'old_value3' => self::PENDING,
     ];
 }

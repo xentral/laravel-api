@@ -91,7 +91,7 @@ class CustomOperatorFilter extends FiltersExact
 
     }
 
-    protected function getInternalValue(string|bool|array $value, string $property): string|bool|array|int
+    protected function getInternalValue(string|bool|array $value, string $property): string|bool|array
     {
         if (is_array($value)) {
             return array_map(fn ($v) => $this->getInternalValue($v, $property), $value);
