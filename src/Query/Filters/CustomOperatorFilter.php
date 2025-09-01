@@ -17,8 +17,12 @@ class CustomOperatorFilter extends FiltersExact
 
             return;
         }
+        try {
+            $operator = FilterOperator::from($value['operator']);
+        } catch (\Throwable) {
+            throw ValidationException::withMessages([$property => "Unsupported filter operator: {$value['operator']}".'Valid operators are '.implode(', ', array_map(fn ($v) => $v->value, $this->allowedOperators))]);
+        }
 
-        $operator = FilterOperator::from($value['operator']);
         if (! in_array($operator, $this->allowedOperators)) {
             throw ValidationException::withMessages([$property => "Unsupported filter operator: {$operator->value}"]);
         }
@@ -114,5 +118,15 @@ class CustomOperatorFilter extends FiltersExact
         }
 
         return $mappedValue;
+    }
+
+    public function allowedOperators(): array
+    {
+        return $this->allowedOperators;
+    }
+
+    public function enum(): ?string
+    {
+        return $this->enum;
     }
 }

@@ -85,4 +85,19 @@ class QueryFilter
             $internalName,
         );
     }
+
+    public function make(
+        string $name,
+        array $allowedOperators = [],
+        ?string $internalName = null,
+        ?string $enum = null,
+    ): AllowedFilter {
+        $operators = empty($allowedOperators) ? FilterOperator::cases() : $allowedOperators;
+
+        return AllowedFilter::custom(
+            $name,
+            new CustomOperatorFilter($operators, $enum),
+            $internalName,
+        );
+    }
 }
