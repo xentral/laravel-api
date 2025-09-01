@@ -43,12 +43,12 @@ return [
                 'description' => 'Developer API',
                 'contact' => [
                     'name' => 'API Support',
-                    'url' => env('APP_URL', 'https://.example.com'),
-                    'email' => env('MAIL_FROM_ADDRESS', 'api@example.com'),
+                    'url' => 'https://example.com',
+                    'email' => 'api@example.com',
                 ],
                 'servers' => [
                     [
-                        'url' => env('APP_URL', 'https://.example.com'),
+                        'url' => 'https://example.com',
                         'description' => 'Your API environment',
                     ],
                 ],

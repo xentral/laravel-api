@@ -21,6 +21,7 @@ class AddMetaInfoProcessor
 
     public function __invoke(Analysis $analysis)
     {
+
         $analysis->openapi = new OpenApi(
             info: new Info(
                 version: $this->info->version,
