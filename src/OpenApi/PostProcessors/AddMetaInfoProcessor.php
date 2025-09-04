@@ -10,6 +10,7 @@ use OpenApi\Attributes\Property;
 use OpenApi\Attributes\Schema;
 use OpenApi\Attributes\SecurityScheme;
 use OpenApi\Attributes\Server;
+use OpenApi\Attributes\ServerVariable;
 use Xentral\LaravelApi\OpenApi\SchemaInfo;
 
 class AddMetaInfoProcessor
@@ -33,10 +34,7 @@ class AddMetaInfoProcessor
                     email: $this->info->contact['email'],
                 ),
             ),
-            servers: array_map(
-                fn ($server) => new Server(...$server),
-                $this->info->servers,
-            ),
+            servers: array_map(fn ($server) => $this->createServer($server), $this->info->servers),
             security: [['BearerAuth' => []]],
             components: new Components(
                 schemas: [
@@ -59,5 +57,42 @@ class AddMetaInfoProcessor
                 ]
             )
         );
+    }
+
+    private function createServer(array $server): Server
+    {
+        $url = $server['url'] ?? null;
+        $description = $server['description'] ?? null;
+        $variables = null;
+
+        if (isset($server['variables'])) {
+            $variables = $this->processServerVariables($server['variables']);
+        }
+
+        return new Server(
+            url: $url,
+            description: $description,
+            variables: $variables
+        );
+    }
+
+    private function processServerVariables(array $variables): array
+    {
+        $serverVariables = [];
+
+        foreach ($variables as $variableGroup) {
+            if (is_array($variableGroup)) {
+                foreach ($variableGroup as $variableName => $variableConfig) {
+                    $serverVariables[] = new ServerVariable(
+                        serverVariable: $variableName,
+                        description: $variableConfig['description'] ?? null,
+                        default: $variableConfig['default'] ?? null,
+                        enum: $variableConfig['enum'] ?? null
+                    );
+                }
+            }
+        }
+
+        return $serverVariables;
     }
 }
