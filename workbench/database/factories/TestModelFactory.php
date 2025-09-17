@@ -13,7 +13,7 @@ class TestModelFactory extends Factory
     {
         return [
             'name' => $this->faker->name,
-            'status' => StatusEnum::PENDING,
+            'status' => StatusEnum::ACTIVE,
         ];
     }
 }

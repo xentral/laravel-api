@@ -6,6 +6,7 @@ use OpenApi\Analysers\DocBlockAnnotationFactory;
 use OpenApi\Analysers\ReflectionAnalyser;
 use OpenApi\Generator;
 use OpenApi\Loggers\ConsoleLogger;
+use OpenApi\Processors\ExpandEnums;
 use OpenApi\Processors\OperationId;
 use Xentral\LaravelApi\OpenApi\PostProcessors\AddMetaInfoProcessor;
 use Xentral\LaravelApi\OpenApi\PostProcessors\DeprecationsProcessor;
@@ -16,6 +17,7 @@ use Xentral\LaravelApi\OpenApi\PostProcessors\RateLimitResponseProcessor;
 use Xentral\LaravelApi\OpenApi\PostProcessors\SortComponentsProcessor;
 use Xentral\LaravelApi\OpenApi\PostProcessors\TokenScopeProcessor;
 use Xentral\LaravelApi\OpenApi\PostProcessors\ValidationResponseProcessor;
+use Xentral\LaravelApi\OpenApi\Processors\ExpandEnumsWithInactiveSupport;
 
 class OpenApiGeneratorFactory
 {
@@ -25,6 +27,8 @@ class OpenApiGeneratorFactory
 
         $generator = new Generator(new ConsoleLogger);
         $generator->getProcessorPipeline()->insert(new AddMetaInfoProcessor($schemaDefinition->info, $config['exclude_money'] ?? false), fn () => 1);
+        $generator->getProcessorPipeline()->remove(ExpandEnums::class);
+        $generator->getProcessorPipeline()->insert(new ExpandEnumsWithInactiveSupport, fn () => 5); // Insert at same position as original ExpandEnums
         $generator->getProcessorPipeline()->remove(OperationId::class);
         $generator->getProcessorPipeline()->add(new OperationIdProcessor);
         $generator->getProcessorPipeline()->add(new TokenScopeProcessor);

@@ -420,7 +420,6 @@ components:
           enum:
             - active
             - inactive
-            - pending
       type: object
       additionalProperties: false
     Money:
@@ -450,7 +449,6 @@ components:
           enum:
             - active
             - inactive
-            - pending
         created_at:
           type: string
           format: date-time
@@ -472,7 +470,6 @@ components:
           enum:
             - active
             - inactive
-            - pending
       type: object
       additionalProperties: false
   securitySchemes:

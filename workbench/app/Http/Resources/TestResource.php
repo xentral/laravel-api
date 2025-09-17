@@ -4,8 +4,8 @@ namespace Workbench\App\Http\Resources;
 use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
 use Workbench\App\Enum\StatusEnum;
+use Workbench\App\Models\TestModel;
 use Xentral\LaravelApi\Http\ApiResource;
-use Xentral\LaravelApi\Tests\TestClasses\Models\TestModel;
 
 #[OA\Schema(
     schema: 'TestResource',
