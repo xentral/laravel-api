@@ -4,7 +4,8 @@ return [
     'docs' => [
         'enabled' => true,
         'prefix' => 'api-docs',
-        'middleware' => ['web', 'auth'],
+        'middleware' => ['web'],
+        'client' => 'scalar',
     ],
     'schemas' => [
         'default' => [
