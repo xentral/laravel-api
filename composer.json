@@ -24,7 +24,7 @@
     "spatie/laravel-data": "^4.17",
     "spatie/laravel-query-builder": "^6.3",
     "swagger-api/swagger-ui": "^5.21",
-    "zircote/swagger-php": "^5.1"
+    "zircote/swagger-php": "^5.3"
   },
   "require-dev": {
     "larastan/larastan": "^3.5",

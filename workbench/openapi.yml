@@ -422,18 +422,6 @@ components:
             - inactive
       type: object
       additionalProperties: false
-    Money:
-      properties:
-        amount:
-          oneOf:
-            -
-              type: string
-            -
-              type: number
-        currency:
-          type: string
-      type: object
-      additionalProperties: false
     TestResource:
       required:
         - id

@@ -6,9 +6,11 @@ use OpenApi\Analysers\DocBlockAnnotationFactory;
 use OpenApi\Analysers\ReflectionAnalyser;
 use OpenApi\Generator;
 use OpenApi\Loggers\ConsoleLogger;
+use OpenApi\Processors\CleanUnusedComponents;
 use OpenApi\Processors\ExpandEnums;
 use OpenApi\Processors\OperationId;
 use Xentral\LaravelApi\OpenApi\PostProcessors\AddMetaInfoProcessor;
+use Xentral\LaravelApi\OpenApi\PostProcessors\CustomCleanUnusedComponents;
 use Xentral\LaravelApi\OpenApi\PostProcessors\DeprecationsProcessor;
 use Xentral\LaravelApi\OpenApi\PostProcessors\FeatureFlagProcessor;
 use Xentral\LaravelApi\OpenApi\PostProcessors\OperationIdProcessor;
@@ -30,6 +32,9 @@ class OpenApiGeneratorFactory
         $generator->getProcessorPipeline()->remove(ExpandEnums::class);
         $generator->getProcessorPipeline()->insert(new ExpandEnumsWithInactiveSupport, fn () => 5); // Insert at same position as original ExpandEnums
         $generator->getProcessorPipeline()->remove(OperationId::class);
+        $generator->getProcessorPipeline()->remove(CleanUnusedComponents::class);
+        // Add our custom CleanUnusedComponents that preserves security schemes
+        $generator->getProcessorPipeline()->add(new CustomCleanUnusedComponents);
         $generator->getProcessorPipeline()->add(new OperationIdProcessor);
         $generator->getProcessorPipeline()->add(new TokenScopeProcessor);
         $generator->getProcessorPipeline()->add(new ValidationResponseProcessor($schemaDefinition->config));
