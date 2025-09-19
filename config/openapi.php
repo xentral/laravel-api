@@ -5,9 +5,11 @@ return [
         'enabled' => env('APP_ENV') !== 'production',
         'prefix' => 'api-docs',
         'middleware' => ['web', 'auth'],
+        'client' => 'swagger', // swagger or scalar
     ],
     'schemas' => [
         'default' => [
+            'client' => null, // Uses global client setting if null, otherwise: swagger or scalar
             'config' => [
                 'oas_version' => '3.1.0',
                 'folders' => [base_path('app')],

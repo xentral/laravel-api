@@ -11,6 +11,7 @@ class ApiDocsController
 {
     public function assets(string $asset): Response
     {
+        // Note: This method only serves Swagger UI assets. Scalar uses CDN.
         $allowedFiles = [
             'favicon-16x16.png',
             'favicon-32x32.png',
@@ -69,10 +70,25 @@ class ApiDocsController
     {
         $schema = $schema ?: 'default';
 
-        return view('openapi::docs', [
+        // Allow client override via query parameter (?client=scalar)
+        $requestClient = request()->query('client');
+
+        // Determine which client to use (query param > per-schema > global setting)
+        $client = $requestClient
+            ?? config("openapi.schemas.{$schema}.client", config('openapi.docs.client', 'swagger'));
+
+        // Validate client type
+        if (! in_array($client, ['swagger', 'scalar'], true)) {
+            $client = 'swagger';
+        }
+
+        $viewName = $client === 'scalar' ? 'openapi::scalar' : 'openapi::docs';
+
+        return view($viewName, [
             'title' => 'OpenAPI Docs: '.$schema,
             'api' => $schema,
             'url' => route('openapi.schema', ['schema' => $schema]),
+            'client' => $client,
         ]);
     }
 }

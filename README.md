@@ -499,9 +499,11 @@ return [
         'enabled' => env('APP_ENV') !== 'production',
         'prefix' => 'api-docs',
         'middleware' => ['web', 'auth'],
+        'client' => env('OPENAPI_CLIENT', 'swagger'), // 'swagger' or 'scalar'
     ],
     'schemas' => [
         'default' => [
+            'client' => null, // Uses global client setting if null, otherwise: 'swagger' or 'scalar'
             'oas_version' => '3.1.0',
             'ruleset' => null,
             'folders' => [base_path('app')],
@@ -584,7 +586,77 @@ You can configure the web interface in the `docs` section of the configuration f
     'enabled' => env('APP_ENV') !== 'production', // Enable or disable the web interface
     'prefix' => 'api-docs', // URL prefix for the web interface
     'middleware' => ['web', 'auth'], // Middleware applied to the web interface routes
+    'client' => env('OPENAPI_CLIENT', 'swagger'), // API documentation client: 'swagger' or 'scalar'
 ],
+```
+
+#### API Documentation Clients
+
+The package supports two different API documentation clients for rendering your OpenAPI documentation:
+
+**Swagger UI (Default)**
+- Traditional OpenAPI documentation interface
+- Mature and widely-used tool
+- Excellent browser support and feature set
+
+**Scalar**
+- Modern, clean API documentation interface
+- Enhanced user experience with better design
+- Faster loading and improved mobile support
+
+#### Client Configuration
+
+You can configure which client to use at three different levels:
+
+**Global Configuration (Environment)**
+```bash
+# .env file
+OPENAPI_CLIENT=scalar  # or 'swagger'
+```
+
+**Global Configuration (Config)**
+```php
+// config/openapi.php
+'docs' => [
+    'client' => 'scalar', // Global default for all schemas
+],
+```
+
+**Per-Schema Configuration**
+```php
+// config/openapi.php
+'schemas' => [
+    'default' => [
+        'client' => 'scalar', // Override for this specific schema
+        // other settings...
+    ],
+    'v2' => [
+        'client' => 'swagger', // Different client for v2 API
+        // other settings...
+    ],
+],
+```
+
+**Runtime Override (Query Parameter)**
+```bash
+# Use Scalar for a specific request
+GET /api-docs/default?client=scalar
+
+# Use Swagger UI for a specific request
+GET /api-docs/default?client=swagger
+```
+
+The configuration precedence is: Query Parameter > Per-Schema > Global > Default (swagger).
+
+#### Accessing Different API Versions
+
+If you have multiple schemas configured, you can access their documentation at:
+
+```bash
+/api-docs/default           # Default schema
+/api-docs/v1               # v1 schema
+/api-docs/v2               # v2 schema
+/api-docs/v1?client=scalar # v1 schema using Scalar
 ```
 
 ### Reusing Filters
