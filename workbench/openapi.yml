@@ -334,6 +334,8 @@ paths:
           description: Unauthorized
         '403':
           description: Unauthorized
+        '404':
+          description: 'Not Found'
         '429':
           description: 'Too Many Requests'
           content:
@@ -360,6 +362,8 @@ paths:
           description: Unauthorized
         '403':
           description: Unauthorized
+        '404':
+          description: 'Not Found'
         '429':
           description: 'Too Many Requests'
           content:
