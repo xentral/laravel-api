@@ -2,7 +2,6 @@
 namespace Xentral\LaravelApi\OpenApi\Endpoints;
 
 use OpenApi\Annotations\Put;
-use OpenApi\Attributes\Property;
 use OpenApi\Generator;
 
 #[\Attribute(\Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD)]
@@ -27,7 +26,7 @@ class PutEndpoint extends Put
     ) {
         $responses = [
             $resource
-                ? $this->response('200', $description, [new Property('data', ref: $resource)])
+                ? $this->resourceResponse('200', $description, $resource)
                 : $this->response204(),
             ...$this->makeNegativeResponses(),
         ];

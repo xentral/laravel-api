@@ -69,8 +69,8 @@ class ValidationResponseProcessor
         $props = [];
         foreach ($this->config->validationResponse->content as $key => $value) {
             $props[] = $value === '{{errors}}'
-                ? new Property($key, type: 'object', example: $errorMessages)
-                : new Property($key, type: 'string', example: $value);
+                ? new Property($key, description: 'Error messages', type: 'object', example: $errorMessages)
+                : new Property($key, description: 'Error messages', type: 'string', example: $value);
         }
 
         return new Response(
