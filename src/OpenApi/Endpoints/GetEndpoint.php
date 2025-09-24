@@ -2,7 +2,6 @@
 namespace Xentral\LaravelApi\OpenApi\Endpoints;
 
 use OpenApi\Annotations\Get;
-use OpenApi\Attributes\Property;
 use OpenApi\Generator;
 
 #[\Attribute(\Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD)]
@@ -26,7 +25,7 @@ class GetEndpoint extends Get
         string|array|null $scopes = null,
     ) {
         $responses = [
-            $this->response('200', $description, [new Property('data', ref: $resource)]),
+            $this->resourceResponse('200', $description, $resource),
             ...$this->makeNegativeResponses(with404: true),
         ];
 

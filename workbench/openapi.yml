@@ -73,8 +73,8 @@ paths:
             application/json:
               schema:
                 properties:
-                  data: { type: array, items: { $ref: '#/components/schemas/TestResource' } }
-                  meta: { properties: { current_page: { type: integer }, from: { type: integer, nullable: true }, path: { type: string }, per_page: { type: integer }, last_page: { type: integer }, to: { type: integer, nullable: true }, total: { type: integer }, links: { type: array, items: { type: object } } }, type: object }
+                  data: { type: array, items: { $ref: '#/components/schemas/TestResource' }, x-description-ignore: true, x-example-ignore: true }
+                  meta: { description: 'Pagination meta data', properties: { current_page: { description: 'The current page number', type: integer, example: 1 }, from: { description: 'The first item being returned in the current page', type: integer, example: 1, nullable: true }, path: { description: 'The base path for the paginated results', type: string, example: 'https://api.example.com/items' }, per_page: { description: 'The number of items shown per page', type: integer, example: 15 }, last_page: { description: 'The last page number', type: integer, example: 10 }, to: { description: 'The last item being returned in the current page', type: integer, example: 15, nullable: true }, total: { description: 'The total number of items', type: integer, example: 150 }, links: { description: 'Pagination links array', type: array, items: { type: object } } }, type: object, x-example-ignore: true }
                 type: object
         '401':
           description: Unauthorized
@@ -86,7 +86,7 @@ paths:
             application/json:
               schema:
                 properties:
-                  message: { type: string, example: 'Too Many Requests' }
+                  message: { description: 'Too Many Requests', type: string, example: 'Too Many Requests' }
                 type: object
       x-feature_flag: beta-users
       x-scopes:
@@ -114,8 +114,8 @@ paths:
             application/json:
               schema:
                 properties:
-                  message: { type: string, example: 'The given data was invalid.' }
-                  errors: { type: object, example: { name: ['The name field must be a string.'], status: ['The selected status is invalid.'] } }
+                  message: { description: 'Error messages', type: string, example: 'The given data was invalid.' }
+                  errors: { description: 'Error messages', type: object, example: { name: ['The name field must be a string.'], status: ['The selected status is invalid.'] } }
                 type: object
         '401':
           description: Unauthorized
@@ -127,7 +127,7 @@ paths:
             application/json:
               schema:
                 properties:
-                  message: { type: string, example: 'Too Many Requests' }
+                  message: { description: 'Too Many Requests', type: string, example: 'Too Many Requests' }
                 type: object
   /api/v1/test-models-multi-pagination:
     get:
@@ -210,9 +210,9 @@ paths:
             application/json:
               schema:
                 oneOf:
-                  - { title: 'Paginated Response: simple', properties: { data: { type: array, items: { $ref: '#/components/schemas/TestResource' } }, meta: { properties: { current_page: { type: integer }, from: { type: integer, nullable: true }, path: { type: string }, per_page: { type: integer }, last_page: { type: integer }, to: { type: integer, nullable: true }, total: { type: integer }, links: { type: array, items: { type: object } } }, type: object } }, type: object }
-                  - { title: 'Paginated Response: table', properties: { data: { type: array, items: { $ref: '#/components/schemas/TestResource' } }, links: { properties: { first: { type: string, nullable: true }, last: { type: string, nullable: true }, prev: { type: string, nullable: true }, next: { type: string, nullable: true } }, type: object }, meta: { properties: { current_page: { type: integer }, from: { type: integer, nullable: true }, last_page: { type: integer }, links: { type: array, items: { properties: { url: { type: string, nullable: true }, label: { type: string }, active: { type: boolean } }, type: object } }, path: { type: string }, per_page: { type: integer }, to: { type: integer, nullable: true }, total: { type: integer } }, type: object } }, type: object }
-                  - { title: 'Paginated Response: cursor', properties: { data: { type: array, items: { $ref: '#/components/schemas/TestResource' } }, links: { properties: { first: { type: string, nullable: true }, last: { type: string, nullable: true }, prev: { type: string, nullable: true }, next: { type: string, nullable: true } }, type: object }, meta: { properties: { path: { type: string }, per_page: { type: integer }, next_cursor: { type: string, nullable: true }, prev_cursor: { type: string, nullable: true } }, type: object } }, type: object }
+                  - { title: 'Paginated Response: simple', properties: { data: { type: array, items: { $ref: '#/components/schemas/TestResource' }, x-description-ignore: true, x-example-ignore: true }, meta: { description: 'Pagination meta data', properties: { current_page: { description: 'The current page number', type: integer, example: 1 }, from: { description: 'The first item being returned in the current page', type: integer, example: 1, nullable: true }, path: { description: 'The base path for the paginated results', type: string, example: 'https://api.example.com/items' }, per_page: { description: 'The number of items shown per page', type: integer, example: 15 }, last_page: { description: 'The last page number', type: integer, example: 10 }, to: { description: 'The last item being returned in the current page', type: integer, example: 15, nullable: true }, total: { description: 'The total number of items', type: integer, example: 150 }, links: { description: 'Pagination links array', type: array, items: { type: object } } }, type: object, x-example-ignore: true } }, type: object }
+                  - { title: 'Paginated Response: table', properties: { data: { type: array, items: { $ref: '#/components/schemas/TestResource' }, x-description-ignore: true, x-example-ignore: true }, links: { properties: { first: { description: 'URL to the first page', type: string, example: 'https://api.example.com/items?page=1', nullable: true }, last: { description: 'URL to the last page', type: string, example: 'https://api.example.com/items?page=10', nullable: true }, prev: { description: 'URL to the previous page', type: string, example: null, nullable: true }, next: { description: 'URL to the next page', type: string, example: 'https://api.example.com/items?page=2', nullable: true } }, type: object, x-description-ignore: true, x-example-ignore: true }, meta: { properties: { current_page: { description: 'The current page number', type: integer, example: 1 }, from: { description: 'The first item being returned in the current page', type: integer, example: 1, nullable: true }, last_page: { description: 'The last page number', type: integer, example: 10 }, links: { type: array, items: { properties: { url: { description: 'URL for the pagination link', type: string, example: 'https://api.example.com/items?page=2', nullable: true }, label: { description: 'Label for the pagination link', type: string, example: '2' }, active: { description: 'Whether this link represents the current page', type: boolean, example: false } }, type: object } }, path: { description: 'The base path for the paginated results', type: string, example: 'https://api.example.com/items' }, per_page: { description: 'The number of items shown per page', type: integer, example: 15 }, to: { description: 'The last item being returned in the current page', type: integer, example: 15, nullable: true }, total: { description: 'The total number of items', type: integer, example: 150 } }, type: object, x-description-ignore: true, x-example-ignore: true } }, type: object }
+                  - { title: 'Paginated Response: cursor', properties: { data: { type: array, items: { $ref: '#/components/schemas/TestResource' }, x-description-ignore: true, x-example-ignore: true }, links: { description: 'Pagination links', properties: { first: { description: 'URL to the first page', type: string, example: 'https://api.example.com/items?cursor=eyJpZCI6MSwiX3BvaW50c1RvTmV4dEl0ZW1zIjp0cnVlfQ', nullable: true }, last: { description: 'URL to the last page', type: string, example: null, nullable: true }, prev: { description: 'URL to the previous page', type: string, example: null, nullable: true }, next: { description: 'URL to the next page', type: string, example: 'https://api.example.com/items?cursor=eyJpZCI6MTYsIl9wb2ludHNUb05leHRJdGVtcyI6dHJ1ZX0', nullable: true } }, type: object, x-example-ignore: true }, meta: { description: 'Pagination meta data', properties: { path: { description: 'The base path for the paginated results', type: string, example: 'https://api.example.com/items' }, per_page: { description: 'The number of items shown per page', type: integer, example: 15 }, next_cursor: { description: 'Cursor for the next page', type: string, example: eyJpZCI6MTYsIl9wb2ludHNUb05leHRJdGVtcyI6dHJ1ZX0, nullable: true }, prev_cursor: { description: 'Cursor for the previous page', type: string, example: null, nullable: true } }, type: object, x-example-ignore: true } }, type: object }
         '401':
           description: Unauthorized
         '403':
@@ -223,7 +223,7 @@ paths:
             application/json:
               schema:
                 properties:
-                  message: { type: string, example: 'Too Many Requests' }
+                  message: { description: 'Too Many Requests', type: string, example: 'Too Many Requests' }
                 type: object
   '/api/v1/test-models/{id}':
     get:
@@ -268,7 +268,7 @@ paths:
             application/json:
               schema:
                 properties:
-                  message: { type: string, example: 'Too Many Requests' }
+                  message: { description: 'Too Many Requests', type: string, example: 'Too Many Requests' }
                 type: object
     delete:
       description: 'delete test resource'
@@ -295,7 +295,7 @@ paths:
             application/json:
               schema:
                 properties:
-                  message: { type: string, example: 'Too Many Requests' }
+                  message: { description: 'Too Many Requests', type: string, example: 'Too Many Requests' }
                 type: object
     patch:
       description: 'update test resource'
@@ -327,8 +327,8 @@ paths:
             application/json:
               schema:
                 properties:
-                  message: { type: string, example: 'The given data was invalid.' }
-                  errors: { type: object, example: { name: ['The name field is invalid.'], status: ['The status field is invalid.'] } }
+                  message: { description: 'Error messages', type: string, example: 'The given data was invalid.' }
+                  errors: { description: 'Error messages', type: object, example: { name: ['The name field is invalid.'], status: ['The status field is invalid.'] } }
                 type: object
         '401':
           description: Unauthorized
@@ -342,7 +342,7 @@ paths:
             application/json:
               schema:
                 properties:
-                  message: { type: string, example: 'Too Many Requests' }
+                  message: { description: 'Too Many Requests', type: string, example: 'Too Many Requests' }
                 type: object
   '/api/v1/test-models/{id}/actions/test':
     patch:
@@ -370,7 +370,7 @@ paths:
             application/json:
               schema:
                 properties:
-                  message: { type: string, example: 'Too Many Requests' }
+                  message: { description: 'Too Many Requests', type: string, example: 'Too Many Requests' }
                 type: object
   '/api/v1/test-models/{id}/legacy':
     get:
@@ -411,7 +411,7 @@ paths:
             application/json:
               schema:
                 properties:
-                  message: { type: string, example: 'Too Many Requests' }
+                  message: { description: 'Too Many Requests', type: string, example: 'Too Many Requests' }
                 type: object
       deprecated: true
 components:

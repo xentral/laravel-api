@@ -6,6 +6,7 @@ use OpenApi\Attributes\Items;
 use OpenApi\Attributes\JsonContent;
 use OpenApi\Attributes\MediaType;
 use OpenApi\Attributes\Parameter;
+use OpenApi\Attributes\Property;
 use OpenApi\Attributes\RequestBody;
 use OpenApi\Attributes\Response;
 use OpenApi\Attributes\Schema;
@@ -16,6 +17,11 @@ trait HasEndpointHelpers
     protected function response(string $status, string $description, ?array $properties = null): Response
     {
         return new Response(response: $status, description: $description, content: $properties ? new JsonContent(properties: $properties) : null);
+    }
+
+    protected function resourceResponse(string $status, string $description, string $resource): Response
+    {
+        return $this->response($status, $description, [new Property('data', ref: $resource, x: ['description-ignore' => true, 'example-ignore' => true])]);
     }
 
     protected function response204(): Response

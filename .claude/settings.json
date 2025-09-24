@@ -2,13 +2,5 @@
   "enabledMcpjsonServers": [
     "laravel-boost"
   ],
-  "enableAllProjectMcpServers": true,
-  "model": "anthropic.claude-sonnet-4-20250514-v1:0",
-
-  "env": {
-    "CLAUDE_CODE_USE_BEDROCK": "1",
-    "AWS_PROFILE": "test",
-    "AWS_REGION": "eu-central-1",
-    "ANTHROPIC_MODEL": "eu.anthropic.claude-sonnet-4-20250514-v1:0"
-  }
+  "enableAllProjectMcpServers": true
 }

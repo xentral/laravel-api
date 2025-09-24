@@ -119,17 +119,19 @@ class PaginationResponseProcessor
             return [
                 new Property(
                     'meta',
+                    description: 'Pagination meta data',
                     properties: [
-                        new Property(property: $this->convertCase('current_page'), type: 'integer'),
-                        new Property(property: $this->convertCase('from'), type: 'integer', nullable: true),
-                        new Property(property: $this->convertCase('path'), type: 'string'),
-                        new Property(property: $this->convertCase('per_page'), type: 'integer'),
-                        new Property(property: $this->convertCase('last_page'), type: 'integer'),
-                        new Property(property: $this->convertCase('to'), type: 'integer', nullable: true),
-                        new Property(property: $this->convertCase('total'), type: 'integer'),
-                        new Property(property: $this->convertCase('links'), type: 'array', items: new Items(type: 'object')),
+                        new Property(property: $this->convertCase('current_page'), description: 'The current page number', type: 'integer', example: 1),
+                        new Property(property: $this->convertCase('from'), description: 'The first item being returned in the current page', type: 'integer', example: 1, nullable: true),
+                        new Property(property: $this->convertCase('path'), description: 'The base path for the paginated results', type: 'string', example: 'https://api.example.com/items'),
+                        new Property(property: $this->convertCase('per_page'), description: 'The number of items shown per page', type: 'integer', example: 15),
+                        new Property(property: $this->convertCase('last_page'), description: 'The last page number', type: 'integer', example: 10),
+                        new Property(property: $this->convertCase('to'), description: 'The last item being returned in the current page', type: 'integer', example: 15, nullable: true),
+                        new Property(property: $this->convertCase('total'), description: 'The total number of items', type: 'integer', example: 150),
+                        new Property(property: $this->convertCase('links'), description: 'Pagination links array', type: 'array', items: new Items(type: 'object')),
                     ],
                     type: 'object',
+                    x: ['example-ignore' => true],
                 ),
             ];
         }
@@ -138,23 +140,27 @@ class PaginationResponseProcessor
             return [
                 new Property(
                     'links',
+                    description: 'Pagination links',
                     properties: [
-                        new Property(property: $this->convertCase('first'), type: 'string', nullable: true),
-                        new Property(property: $this->convertCase('last'), type: 'string', nullable: true),
-                        new Property(property: $this->convertCase('prev'), type: 'string', nullable: true),
-                        new Property(property: $this->convertCase('next'), type: 'string', nullable: true),
+                        new Property(property: $this->convertCase('first'), description: 'URL to the first page', type: 'string', example: 'https://api.example.com/items?cursor=eyJpZCI6MSwiX3BvaW50c1RvTmV4dEl0ZW1zIjp0cnVlfQ', nullable: true),
+                        new Property(property: $this->convertCase('last'), description: 'URL to the last page', type: 'string', example: null, nullable: true),
+                        new Property(property: $this->convertCase('prev'), description: 'URL to the previous page', type: 'string', example: null, nullable: true),
+                        new Property(property: $this->convertCase('next'), description: 'URL to the next page', type: 'string', example: 'https://api.example.com/items?cursor=eyJpZCI6MTYsIl9wb2ludHNUb05leHRJdGVtcyI6dHJ1ZX0', nullable: true),
                     ],
                     type: 'object',
+                    x: ['example-ignore' => true],
                 ),
                 new Property(
                     'meta',
+                    description: 'Pagination meta data',
                     properties: [
-                        new Property(property: $this->convertCase('path'), type: 'string'),
-                        new Property(property: $this->convertCase('per_page'), type: 'integer'),
-                        new Property(property: $this->convertCase('next_cursor'), type: 'string', nullable: true),
-                        new Property(property: $this->convertCase('prev_cursor'), type: 'string', nullable: true),
+                        new Property(property: $this->convertCase('path'), description: 'The base path for the paginated results', type: 'string', example: 'https://api.example.com/items'),
+                        new Property(property: $this->convertCase('per_page'), description: 'The number of items shown per page', type: 'integer', example: 15),
+                        new Property(property: $this->convertCase('next_cursor'), description: 'Cursor for the next page', type: 'string', example: 'eyJpZCI6MTYsIl9wb2ludHNUb05leHRJdGVtcyI6dHJ1ZX0', nullable: true),
+                        new Property(property: $this->convertCase('prev_cursor'), description: 'Cursor for the previous page', type: 'string', example: null, nullable: true),
                     ],
                     type: 'object',
+                    x: ['example-ignore' => true],
                 ),
             ];
         }
@@ -164,30 +170,32 @@ class PaginationResponseProcessor
             new Property(
                 'links',
                 properties: [
-                    new Property(property: $this->convertCase('first'), type: 'string', nullable: true),
-                    new Property(property: $this->convertCase('last'), type: 'string', nullable: true),
-                    new Property(property: $this->convertCase('prev'), type: 'string', nullable: true),
-                    new Property(property: $this->convertCase('next'), type: 'string', nullable: true),
+                    new Property(property: $this->convertCase('first'), description: 'URL to the first page', type: 'string', example: 'https://api.example.com/items?page=1', nullable: true),
+                    new Property(property: $this->convertCase('last'), description: 'URL to the last page', type: 'string', example: 'https://api.example.com/items?page=10', nullable: true),
+                    new Property(property: $this->convertCase('prev'), description: 'URL to the previous page', type: 'string', example: null, nullable: true),
+                    new Property(property: $this->convertCase('next'), description: 'URL to the next page', type: 'string', example: 'https://api.example.com/items?page=2', nullable: true),
                 ],
                 type: 'object',
+                x: ['description-ignore' => true, 'example-ignore' => true],
             ),
             new Property(
                 'meta',
                 properties: [
-                    new Property(property: $this->convertCase('current_page'), type: 'integer'),
-                    new Property(property: $this->convertCase('from'), type: 'integer', nullable: true),
-                    new Property(property: $this->convertCase('last_page'), type: 'integer'),
+                    new Property(property: $this->convertCase('current_page'), description: 'The current page number', type: 'integer', example: 1),
+                    new Property(property: $this->convertCase('from'), description: 'The first item being returned in the current page', type: 'integer', nullable: true, example: 1),
+                    new Property(property: $this->convertCase('last_page'), description: 'The last page number', type: 'integer', example: 10),
                     new Property(property: $this->convertCase('links'), type: 'array', items: new Items(properties: [
-                        new Property(property: $this->convertCase('url'), type: 'string', nullable: true),
-                        new Property(property: $this->convertCase('label'), type: 'string'),
-                        new Property(property: $this->convertCase('active'), type: 'boolean'),
+                        new Property(property: $this->convertCase('url'), description: 'URL for the pagination link', type: 'string', nullable: true, example: 'https://api.example.com/items?page=2'),
+                        new Property(property: $this->convertCase('label'), description: 'Label for the pagination link', type: 'string', example: '2'),
+                        new Property(property: $this->convertCase('active'), description: 'Whether this link represents the current page', type: 'boolean', example: false),
                     ], type: 'object')),
-                    new Property(property: $this->convertCase('path'), type: 'string'),
-                    new Property(property: $this->convertCase('per_page'), type: 'integer'),
-                    new Property(property: $this->convertCase('to'), type: 'integer', nullable: true),
-                    new Property(property: $this->convertCase('total'), type: 'integer'),
+                    new Property(property: $this->convertCase('path'), description: 'The base path for the paginated results', type: 'string', example: 'https://api.example.com/items'),
+                    new Property(property: $this->convertCase('per_page'), description: 'The number of items shown per page', type: 'integer', example: 15),
+                    new Property(property: $this->convertCase('to'), description: 'The last item being returned in the current page', type: 'integer', nullable: true, example: 15),
+                    new Property(property: $this->convertCase('total'), description: 'The total number of items', type: 'integer', example: 150),
                 ],
                 type: 'object',
+                x: ['description-ignore' => true, 'example-ignore' => true],
             ),
         ];
     }

@@ -3,7 +3,6 @@ namespace Xentral\LaravelApi\OpenApi\Endpoints;
 
 use OpenApi\Annotations\Post;
 use OpenApi\Attributes\Parameter;
-use OpenApi\Attributes\Property;
 use OpenApi\Generator;
 
 #[\Attribute(\Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD)]
@@ -31,7 +30,7 @@ class PostEndpoint extends Post
         $needs404 = collect($parameters)->filter(fn (Parameter $p) => $p->in === 'path')->isNotEmpty();
         $responses = [
             $resource
-                ? $this->response($successStatus, $description, [new Property('data', ref: $resource)])
+                ? $this->resourceResponse($successStatus, $description, $resource)
                 : $this->response204(),
             ...$this->makeNegativeResponses($needs404),
         ];

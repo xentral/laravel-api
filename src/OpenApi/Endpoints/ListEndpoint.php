@@ -33,7 +33,7 @@ class ListEndpoint extends Get
     ) {
         $responses = [
             $this->response('200', $description, [
-                new Property('data', type: 'array', items: new Items(ref: $resource)),
+                new Property('data', type: 'array', items: new Items(ref: $resource, x: ['description-ignore' => true, 'example-ignore' => true]), x: ['description-ignore' => true, 'example-ignore' => true]),
             ]),
             ...$this->makeNegativeResponses(),
         ];

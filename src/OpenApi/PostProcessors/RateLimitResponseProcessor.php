@@ -42,7 +42,12 @@ class RateLimitResponseProcessor
                 mediaType: 'application/json',
                 schema: new Schema(
                     properties: [
-                        new Property('message', type: 'string', example: $this->config->rateLimitResponse->message),
+                        new Property(
+                            property: 'message',
+                            description: $this->config->rateLimitResponse->message,
+                            type: 'string',
+                            example: $this->config->rateLimitResponse->message,
+                        ),
                     ],
                     type: 'object',
                 )
