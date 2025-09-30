@@ -65,11 +65,9 @@ class DateOperatorFilter extends FiltersExact
         if (in_array($operator, [FilterOperator::IS_NULL, FilterOperator::IS_NOT_NULL])) {
             // Handle relation properties (e.g., customer.phone)
             if ($this->isRelationProperty($query, $property)) {
-                [$relationName, $relationProperty] = collect(explode('.', $property))
-                    ->pipe(fn ($parts) => [
-                        $parts->except(count($parts) - 1)->implode('.'),
-                        $parts->last(),
-                    ]);
+                $parts = explode('.', $property);
+                $relationProperty = array_pop($parts);
+                $relationName = implode('.', $parts);
 
                 $query->where(function (Builder $query) use ($operator, $relationName, $relationProperty) {
                     switch ($operator) {
@@ -103,12 +101,6 @@ class DateOperatorFilter extends FiltersExact
 
         if (empty($value['value'])) {
             return;
-        }
-
-        if (is_array($value['value']) && ! in_array($operator, [FilterOperator::IN, FilterOperator::NOT_IN])) {
-            throw ValidationException::withMessages([
-                $property => "Unsupported filter operator: {$operator->value}. Only in and notIn are allowed for multiple values",
-            ]);
         }
 
         // Wrap value in array for processing, but remember if it was originally an array

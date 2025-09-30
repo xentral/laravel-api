@@ -11,21 +11,3 @@ parameters:
 			identifier: staticMethod.notFound
 			count: 2
 			path: src/OpenApi/Processors/ExpandEnumsWithInactiveSupport.php
-
-		-
-			message: '#^Call to function in_array\(\) with Xentral\\LaravelApi\\Query\\Filters\\FilterOperator\:\:EQUALS\|Xentral\\LaravelApi\\Query\\Filters\\FilterOperator\:\:GREATER_THAN\|Xentral\\LaravelApi\\Query\\Filters\\FilterOperator\:\:GREATER_THAN_OR_EQUALS\|Xentral\\LaravelApi\\Query\\Filters\\FilterOperator\:\:LESS_THAN\|Xentral\\LaravelApi\\Query\\Filters\\FilterOperator\:\:LESS_THAN_OR_EQUALS\|Xentral\\LaravelApi\\Query\\Filters\\FilterOperator\:\:NOT_EQUALS and array\{Xentral\\LaravelApi\\Query\\Filters\\FilterOperator\:\:IN, Xentral\\LaravelApi\\Query\\Filters\\FilterOperator\:\:NOT_IN\} will always evaluate to false\.$#'
-			identifier: function.impossibleType
-			count: 1
-			path: src/Query/Filters/DateOperatorFilter.php
-
-		-
-			message: '#^Parameter \#1 \$keys of method Illuminate\\Support\\Collection\<int,string\>\:\:except\(\) expects array\<int\>\|Illuminate\\Support\\Enumerable\<\(int\|string\), int\>\|string, int\<\-1, max\> given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Query/Filters/DateOperatorFilter.php
-
-		-
-			message: '#^Parameter \#1 \$keys of method Illuminate\\Support\\Collection\<int,string\>\:\:except\(\) expects array\<int\>\|Illuminate\\Support\\Enumerable\<\(int\|string\), int\>\|string, int\<\-1, max\> given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Query/Filters/StringOperatorFilter.php
