@@ -366,9 +366,6 @@ describe('Invoice Date Filters', function () {
 
 describe('Invoice Date Range Filters (Between)', function () {
     it('can filter invoices by issued_at between two dates', function () {
-        // Clear any existing invoices first
-        Invoice::query()->delete();
-
         $startDate = now()->startOfDay()->subDays(20);
         $endDate = $startDate->copy()->addDays(10);
 
@@ -397,9 +394,6 @@ describe('Invoice Date Range Filters (Between)', function () {
     });
 
     it('can filter invoices by due_at between two dates with greater than and less than', function () {
-        // Clear any existing invoices first
-        Invoice::query()->delete();
-
         $startDate = now()->startOfDay()->subDays(50);
         $endDate = $startDate->copy()->addDays(30);
 
