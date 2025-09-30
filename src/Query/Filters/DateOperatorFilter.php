@@ -22,7 +22,14 @@ class DateOperatorFilter extends FiltersExact
 
     public function __invoke(Builder $query, mixed $value, string $property): void
     {
-        // Handle IS_NULL/IS_NOT_NULL before relation check - these operators work on relations too
+        if (isset($value[0]) && is_array($value[0])) {
+            foreach ($value as $filter) {
+                $this->__invoke($query, $filter, $property);
+            }
+
+            return;
+        }
+
         if (is_array($value) && isset($value['operator']) && in_array($value['operator'], ['isNull', 'isNotNull'])) {
             $this->applyFilter($query, $value, $property);
 
@@ -31,15 +38,6 @@ class DateOperatorFilter extends FiltersExact
 
         if ($this->isRelationProperty($query, $property)) {
             $this->withRelationConstraint($query, $value, $property);
-
-            return;
-        }
-
-        // Handle multiple filters on the same property
-        if (isset($value[0]) && is_array($value[0])) {
-            foreach ($value as $filter) {
-                $this->applyFilter($query, $filter, $property);
-            }
 
             return;
         }

@@ -20,6 +20,8 @@ class QueryFilter
                 FilterOperator::NOT_EQUALS,
                 FilterOperator::IN,
                 FilterOperator::NOT_IN,
+                FilterOperator::IS_NULL,
+                FilterOperator::IS_NOT_NULL,
             ]),
             $internalName,
         );
@@ -65,6 +67,8 @@ class QueryFilter
                 FilterOperator::LESS_THAN_OR_EQUALS,
                 FilterOperator::GREATER_THAN,
                 FilterOperator::GREATER_THAN_OR_EQUALS,
+                FilterOperator::IS_NULL,
+                FilterOperator::IS_NOT_NULL,
             ]),
             $internalName,
         );

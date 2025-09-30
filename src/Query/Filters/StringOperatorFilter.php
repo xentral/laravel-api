@@ -12,7 +12,14 @@ class StringOperatorFilter extends FiltersExact
 
     public function __invoke(Builder $query, mixed $value, string $property)
     {
-        // Handle IS_NULL/IS_NOT_NULL before relation check - these operators work on relations too
+        if (isset($value[0]) && is_array($value[0])) {
+            foreach ($value as $filter) {
+                $this->__invoke($query, $filter, $property);
+            }
+
+            return;
+        }
+
         if (is_array($value) && isset($value['operator']) && in_array($value['operator'], ['isNull', 'isNotNull'])) {
             $this->applyFilter($query, $value, $property);
 
@@ -25,15 +32,6 @@ class StringOperatorFilter extends FiltersExact
             return;
         }
 
-        // Handle multiple filters on the same property
-        if (isset($value[0]) && is_array($value[0])) {
-            foreach ($value as $filter) {
-                $this->applyFilter($query, $filter, $property);
-            }
-
-            return;
-        }
-
         $this->applyFilter($query, $value, $property);
     }
 
@@ -42,19 +40,16 @@ class StringOperatorFilter extends FiltersExact
         try {
             $operator = FilterOperator::from($value['operator']);
         } catch (\Throwable) {
-            throw ValidationException::withMessages([$property => "Unsupported filter operator: {$value['operator']}".'Valid operators are '.implode(', ', array_map(fn ($v) => $v->value, $this->allowedOperators))]);
+            throw ValidationException::withMessages([$property => "Unsupported filter operator: {$value['operator']}. Valid operators are ".implode(', ', array_map(fn ($v) => $v->value, $this->allowedOperators))]);
         }
 
-        if (! in_array($operator, $this->allowedOperators)) {
-            throw ValidationException::withMessages([$property => "Unsupported filter operator: {$operator->value}"]);
+        if (! in_array($operator, $this->allowedOperators, true)) {
+            throw ValidationException::withMessages([$property => "Unsupported filter operator: {$operator->value}. Valid operators are ".implode(', ', array_map(fn ($v) => $v->value, $this->allowedOperators))]);
         }
 
         // IS_NULL and IS_NOT_NULL don't require a value
         if (empty($value) && ! in_array($operator, [FilterOperator::IS_NULL, FilterOperator::IS_NOT_NULL])) {
             return;
-        }
-        if (isset($value['value']) && is_array($value['value']) && ! in_array($operator, [FilterOperator::IN, FilterOperator::NOT_IN])) {
-            throw ValidationException::withMessages([$property => "Unsupported filter operator: {$operator->value}. Only in and notIn are allowed for multiple values"]);
         }
 
         // IS_NULL and IS_NOT_NULL don't use the value field
@@ -139,7 +134,13 @@ class StringOperatorFilter extends FiltersExact
                     }
                     break;
                 case FilterOperator::NOT_CONTAINS:
-                    $query->where($query->qualifyColumn($property), 'not like', '%'.$value.'%');
+                    if (is_array($value)) {
+                        foreach ($value as $val) {
+                            $query->where($query->qualifyColumn($property), 'not like', '%'.$val.'%');
+                        }
+                    } else {
+                        $query->where($query->qualifyColumn($property), 'not like', '%'.$value.'%');
+                    }
                     break;
                 case FilterOperator::STARTS_WITH:
                     if (is_array($value)) {
