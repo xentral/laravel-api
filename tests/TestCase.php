@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Orchestra\Testbench\TestCase as Orchestra;
 use Spatie\LaravelData\LaravelDataServiceProvider;
+use Workbench\App\Http\Controller\ListInvoicesController;
 use Workbench\App\Http\Controller\TestController;
 use Workbench\App\Providers\WorkbenchServiceProvider;
 use Xentral\LaravelApi\ApiServiceProvider;
@@ -41,6 +42,7 @@ class TestCase extends Orchestra
         $router->patch('/api/v1/test-models/{id}', [TestController::class, 'update']);
         $router->delete('/api/v1/test-models/{id}', [TestController::class, 'delete']);
         $router->patch('/api/v1/test-models/{id}/actions/test', [TestController::class, 'testAction']);
+        $router->get('/api/v1/invoices', ListInvoicesController::class);
     }
 
     protected function getPackageProviders($app): array

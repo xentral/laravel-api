@@ -37,30 +37,32 @@ describe('QueryFilter Validation', function () {
             ->toThrow(ValidationException::class);
     });
 
-    it('throws validation exception for array value with non-array operator', function () {
+    it('allows array values with equals operator', function () {
         $filter = new QueryFilter('test');
-        $allowedFilter = $filter->make('name', [FilterOperator::EQUALS, FilterOperator::CONTAINS]);
+        $allowedFilter = $filter->make('name', [FilterOperator::EQUALS]);
 
         $query = TestModel::query();
 
-        expect(fn () => $allowedFilter->getFilterClass()($query, [
+        $allowedFilter->getFilterClass()($query, [
             'operator' => 'equals',
             'value' => ['test1', 'test2'],
-        ], 'name'))
-            ->toThrow(ValidationException::class, 'Unsupported filter operator: equals. Only in and notIn are allowed for multiple values');
+        ], 'name');
+
+        expect($query->toRawSql())->toContain('in');
     });
 
-    it('throws validation exception for array value with contains operator', function () {
+    it('allows array values with contains operator', function () {
         $filter = new QueryFilter('test');
         $allowedFilter = $filter->make('name', [FilterOperator::CONTAINS]);
 
         $query = TestModel::query();
 
-        expect(fn () => $allowedFilter->getFilterClass()($query, [
+        $allowedFilter->getFilterClass()($query, [
             'operator' => 'contains',
             'value' => ['test1', 'test2'],
-        ], 'name'))
-            ->toThrow(ValidationException::class, 'Unsupported filter operator: contains. Only in and notIn are allowed for multiple values');
+        ], 'name');
+
+        expect($query->toRawSql())->toContain('like');
     });
 
     it('allows array values with IN operator', function () {
