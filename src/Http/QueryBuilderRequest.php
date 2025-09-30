@@ -27,10 +27,30 @@ class QueryBuilderRequest extends \Spatie\QueryBuilder\QueryBuilderRequest
         }
 
         try {
-            return collect($filterParts)->mapWithKeys(fn ($value) => [$value['key'] => [
-                'operator' => $value['op'],
-                'value' => $this->getFilterValue($value['value']),
-            ]]);
+            $filters = collect();
+
+            foreach ($filterParts as $filter) {
+                $key = $filter['key'];
+                $filterValue = [
+                    'operator' => $filter['op'],
+                    'value' => $this->getFilterValue($filter['value']),
+                ];
+
+                // If the key already exists, make it an array of filters
+                if ($filters->has($key)) {
+                    $existing = $filters->get($key);
+                    // If it's not already an array of arrays, convert it
+                    if (! isset($existing[0])) {
+                        $filters->put($key, [$existing, $filterValue]);
+                    } else {
+                        $filters->put($key, array_merge($existing, [$filterValue]));
+                    }
+                } else {
+                    $filters->put($key, $filterValue);
+                }
+            }
+
+            return $filters;
         } catch (\Throwable) {
             throw ValidationException::withMessages(['filter' => 'Invalid filter format.']);
         }

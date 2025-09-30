@@ -15,7 +15,7 @@ class QueryFilter
     {
         return AllowedFilter::custom(
             $name,
-            new CustomOperatorFilter([
+            new StringOperatorFilter([
                 FilterOperator::EQUALS,
                 FilterOperator::NOT_EQUALS,
                 FilterOperator::IN,
@@ -29,14 +29,7 @@ class QueryFilter
     {
         return AllowedFilter::custom(
             $name,
-            new CustomOperatorFilter([
-                FilterOperator::EQUALS,
-                FilterOperator::NOT_EQUALS,
-                FilterOperator::LESS_THAN,
-                FilterOperator::LESS_THAN_OR_EQUALS,
-                FilterOperator::GREATER_THAN,
-                FilterOperator::GREATER_THAN_OR_EQUALS,
-            ]),
+            new DateOperatorFilter,
             $internalName,
         );
     }
@@ -45,14 +38,17 @@ class QueryFilter
     {
         return AllowedFilter::custom(
             $name,
-            new CustomOperatorFilter([
+            new StringOperatorFilter([
                 FilterOperator::EQUALS,
                 FilterOperator::NOT_EQUALS,
                 FilterOperator::IN,
                 FilterOperator::NOT_IN,
                 FilterOperator::CONTAINS,
+                FilterOperator::NOT_CONTAINS,
                 FilterOperator::STARTS_WITH,
                 FilterOperator::ENDS_WITH,
+                FilterOperator::IS_NULL,
+                FilterOperator::IS_NOT_NULL,
             ], $enum),
             $internalName,
         );
@@ -62,7 +58,7 @@ class QueryFilter
     {
         return AllowedFilter::custom(
             $name,
-            new CustomOperatorFilter([
+            new StringOperatorFilter([
                 FilterOperator::EQUALS,
                 FilterOperator::NOT_EQUALS,
                 FilterOperator::LESS_THAN,
@@ -78,7 +74,7 @@ class QueryFilter
     {
         return AllowedFilter::custom(
             $name,
-            new CustomOperatorFilter([
+            new StringOperatorFilter([
                 FilterOperator::EQUALS,
                 FilterOperator::NOT_EQUALS,
             ]),
@@ -96,7 +92,7 @@ class QueryFilter
 
         return AllowedFilter::custom(
             $name,
-            new CustomOperatorFilter($operators, $enum),
+            new StringOperatorFilter($operators, $enum),
             $internalName,
         );
     }

@@ -4,23 +4,6 @@ use Workbench\App\Models\Customer;
 use Workbench\App\Models\Invoice;
 use Workbench\App\Models\LineItem;
 
-/**
- * Helper function to build filter query string
- */
-function buildFilterQuery(array $filters): string
-{
-    // Convert all numeric values to strings, keep booleans as-is
-    $normalizedFilters = array_map(function ($filter) {
-        if (isset($filter['value']) && ! is_bool($filter['value']) && ! is_string($filter['value'])) {
-            $filter['value'] = (string) $filter['value'];
-        }
-
-        return $filter;
-    }, $filters);
-
-    return http_build_query(['filter' => json_encode($normalizedFilters)]);
-}
-
 describe('Invoice ID Filters', function () {
     it('can filter invoices by id equals', function () {
         $invoice = Invoice::factory()->create();
@@ -381,6 +364,139 @@ describe('Invoice Date Filters', function () {
     });
 });
 
+describe('Invoice Date Range Filters (Between)', function () {
+    it('can filter invoices by issued_at between two dates', function () {
+        // Clear any existing invoices first
+        Invoice::query()->delete();
+
+        $startDate = now()->startOfDay()->subDays(20);
+        $endDate = $startDate->copy()->addDays(10);
+
+        // Inside the range (inclusive)
+        Invoice::factory()->create(['issued_at' => $startDate->copy()]); // On start boundary
+        Invoice::factory()->create(['issued_at' => $startDate->copy()->addDays(5)]);
+        Invoice::factory()->create(['issued_at' => $endDate->copy()]); // On end boundary
+
+        // Outside the range
+        Invoice::factory()->create(['issued_at' => $startDate->copy()->subDays(1)]);
+        Invoice::factory()->create(['issued_at' => $endDate->copy()->addDays(1)]);
+
+        $query = buildFilterQuery([[
+            'key' => 'issued_at',
+            'op' => 'greaterThanOrEquals',
+            'value' => $startDate->toDateString(),
+        ], [
+            'key' => 'issued_at',
+            'op' => 'lessThanOrEquals',
+            'value' => $endDate->toDateString(),
+        ]]);
+        $response = $this->getJson("/api/v1/invoices?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(3, 'data');
+    });
+
+    it('can filter invoices by due_at between two dates with greater than and less than', function () {
+        // Clear any existing invoices first
+        Invoice::query()->delete();
+
+        $startDate = now()->startOfDay()->subDays(50);
+        $endDate = $startDate->copy()->addDays(30);
+
+        // Inside the range (strictly between start and end, excluding boundaries)
+        Invoice::factory()->create(['due_at' => $startDate->copy()->addDays(5)]);
+        Invoice::factory()->create(['due_at' => $startDate->copy()->addDays(15)]);
+        Invoice::factory()->create(['due_at' => $startDate->copy()->addDays(25)]);
+
+        // Outside the range (including boundaries)
+        Invoice::factory()->create(['due_at' => $startDate->copy()]);
+        Invoice::factory()->create(['due_at' => $endDate->copy()]);
+
+        $query = buildFilterQuery([[
+            'key' => 'due_at',
+            'op' => 'greaterThan',
+            'value' => $startDate->toDateString(),
+        ], [
+            'key' => 'due_at',
+            'op' => 'lessThan',
+            'value' => $endDate->toDateString(),
+        ]]);
+        $response = $this->getJson("/api/v1/invoices?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(3, 'data');
+    });
+
+    it('can filter invoices by created_at in the last 7 days', function () {
+        $sevenDaysAgo = now()->subDays(7)->startOfDay();
+
+        Invoice::factory()->create(['created_at' => now()->subDays(3)]);
+        Invoice::factory()->create(['created_at' => now()->subDays(5)]);
+        Invoice::factory()->create(['created_at' => now()->subDays(1)]);
+        Invoice::factory()->create(['created_at' => now()->subDays(10)]);
+
+        $query = buildFilterQuery([[
+            'key' => 'created_at',
+            'op' => 'greaterThanOrEquals',
+            'value' => $sevenDaysAgo->toDateString(),
+        ]]);
+        $response = $this->getJson("/api/v1/invoices?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(3, 'data');
+    });
+
+    it('can combine date range with other filters', function () {
+        $startDate = now()->startOfDay();
+        $endDate = $startDate->copy()->addDays(10);
+        $customer = Customer::factory()->create(['country' => 'US']);
+
+        Invoice::factory()->paid()->for($customer)->create([
+            'issued_at' => $startDate->copy()->addDays(5),
+            'total_amount' => 2000,
+        ]);
+        Invoice::factory()->paid()->for($customer)->create([
+            'issued_at' => $startDate->copy()->addDays(7),
+            'total_amount' => 3000,
+        ]);
+        Invoice::factory()->draft()->for($customer)->create([
+            'issued_at' => $startDate->copy()->addDays(6),
+            'total_amount' => 2500,
+        ]);
+        Invoice::factory()->paid()->create([
+            'issued_at' => $startDate->copy()->addDays(5),
+            'total_amount' => 2500,
+        ]);
+
+        $query = buildFilterQuery([[
+            'key' => 'status',
+            'op' => 'equals',
+            'value' => 'paid',
+        ], [
+            'key' => 'issued_at',
+            'op' => 'greaterThanOrEquals',
+            'value' => $startDate->toDateString(),
+        ], [
+            'key' => 'issued_at',
+            'op' => 'lessThanOrEquals',
+            'value' => $endDate->toDateString(),
+        ], [
+            'key' => 'customer.country',
+            'op' => 'equals',
+            'value' => 'US',
+        ], [
+            'key' => 'total_amount',
+            'op' => 'greaterThan',
+            'value' => 2000,
+        ]]);
+        $response = $this->getJson("/api/v1/invoices?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(1, 'data');
+        expect($response->json('data.0.total_amount'))->toBe(3000);
+    });
+});
+
 describe('Invoice Relation Filters', function () {
     it('can filter invoices by customer_id equals', function () {
         $customer = Customer::factory()->create();
@@ -449,9 +565,10 @@ describe('Invoice Relation Filters', function () {
     });
 
     it('can filter invoices by customer country equals', function () {
-        $customer = Customer::factory()->create(['country' => 'US']);
-        Invoice::factory()->count(3)->for($customer)->create();
-        Invoice::factory()->count(2)->create();
+        $usCustomer = Customer::factory()->create(['country' => 'US']);
+        $caCustomer = Customer::factory()->create(['country' => 'CA']);
+        Invoice::factory()->count(3)->for($usCustomer)->create();
+        Invoice::factory()->count(2)->for($caCustomer)->create();
 
         $query = buildFilterQuery([[
             'key' => 'customer.country',

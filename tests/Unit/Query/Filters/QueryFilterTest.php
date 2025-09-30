@@ -1,9 +1,9 @@
 <?php declare(strict_types=1);
 
 use Spatie\QueryBuilder\AllowedFilter;
-use Xentral\LaravelApi\Query\Filters\CustomOperatorFilter;
 use Xentral\LaravelApi\Query\Filters\FilterOperator;
 use Xentral\LaravelApi\Query\Filters\QueryFilter;
+use Xentral\LaravelApi\Query\Filters\StringOperatorFilter;
 
 describe('QueryFilter', function () {
     it('can create an AllowedFilter using make method with default operators', function () {
@@ -20,7 +20,7 @@ describe('QueryFilter', function () {
         $result = $filter->make('test_field');
 
         $customFilter = $result->getFilterClass();
-        expect($customFilter)->toBeInstanceOf(CustomOperatorFilter::class)
+        expect($customFilter)->toBeInstanceOf(StringOperatorFilter::class)
             ->and($customFilter->allowedOperators())->toEqual(FilterOperator::cases());
     });
 
@@ -30,7 +30,7 @@ describe('QueryFilter', function () {
         $result = $filter->make('test_field', $customOperators);
 
         $customFilter = $result->getFilterClass();
-        expect($customFilter)->toBeInstanceOf(CustomOperatorFilter::class)
+        expect($customFilter)->toBeInstanceOf(StringOperatorFilter::class)
             ->and($customFilter->allowedOperators())->toEqual($customOperators);
     });
 
@@ -47,7 +47,7 @@ describe('QueryFilter', function () {
         $result = $filter->make('test_field', [], null, 'SomeEnum');
 
         $customFilter = $result->getFilterClass();
-        expect($customFilter)->toBeInstanceOf(CustomOperatorFilter::class)
+        expect($customFilter)->toBeInstanceOf(StringOperatorFilter::class)
             ->and($customFilter->enum())->toBe('SomeEnum');
     });
 
@@ -61,7 +61,7 @@ describe('QueryFilter', function () {
             ->and($result->getInternalName())->toBe('db_search_column');
 
         $customFilter = $result->getFilterClass();
-        expect($customFilter)->toBeInstanceOf(CustomOperatorFilter::class)
+        expect($customFilter)->toBeInstanceOf(StringOperatorFilter::class)
             ->and($customFilter->allowedOperators())->toEqual($customOperators)
             ->and($customFilter->enum())->toBe('SearchEnum');
     });
@@ -72,7 +72,7 @@ describe('QueryFilter', function () {
 
         $customFilter = $result->getFilterClass();
         // When empty array is passed, it should default to all FilterOperator cases
-        expect($customFilter)->toBeInstanceOf(CustomOperatorFilter::class)
+        expect($customFilter)->toBeInstanceOf(StringOperatorFilter::class)
             ->and($customFilter->allowedOperators())->toEqual(FilterOperator::cases());
     });
 });

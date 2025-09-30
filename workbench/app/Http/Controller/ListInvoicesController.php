@@ -27,6 +27,7 @@ class ListInvoicesController
                     QueryFilter::identifier('customer_id'),
                     QueryFilter::string('customer.name', 'customer.name'),
                     QueryFilter::string('customer.email', 'customer.email'),
+                    QueryFilter::string('customer.phone', 'customer.phone'),
                     QueryFilter::string('customer.country', 'customer.country'),
                     QueryFilter::boolean('customer.is_active', 'customer.is_active'),
                     QueryFilter::string('lineItems.product_name', 'lineItems.product_name'),
