@@ -40,11 +40,13 @@ class AddMetaInfoProcessor
                 schemas: [
                     $this->excludeMoney ? null : new Schema(
                         schema: 'Money',
+                        description: 'Money',
                         properties: [
                             new Property(property: 'amount', oneOf: [new Schema(type: 'string'), new Schema(type: 'number')]),
                             new Property(property: 'currency', type: 'string'),
                         ],
                         type: 'object',
+                        example: ['amount' => '13.37', 'currency' => 'EUR'],
                         additionalProperties: false,
                     ),
                 ],
