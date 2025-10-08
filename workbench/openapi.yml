@@ -35,7 +35,7 @@ paths:
                   type: string
                   enum: [equals, notEquals, in, notIn, contains, notContains, startsWith, endsWith]
                 value:
-                  description: 'value oder so'
+                  description: 'The property value.'
                   oneOf: [{ title: String, type: string }, { title: Array, type: array, items: { type: string } }]
               type: object
               additionalProperties: false
@@ -152,7 +152,7 @@ paths:
                   type: string
                   enum: [equals, notEquals, in, notIn, contains, notContains, startsWith, endsWith]
                 value:
-                  description: 'value oder so'
+                  description: 'The property value.'
                   oneOf: [{ title: String, type: string }, { title: Array, type: array, items: { type: string } }]
               type: object
               additionalProperties: false

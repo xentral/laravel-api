@@ -70,7 +70,7 @@ class FilterParameter extends Parameter
                     ),
                     new Property(
                         property: 'value',
-                        description: 'value oder so',
+                        description: 'The property value.',
                         oneOf: [
                             new Schema(
                                 title: 'String',
