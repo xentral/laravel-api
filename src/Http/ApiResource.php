@@ -22,6 +22,19 @@ abstract class ApiResource extends JsonResource
         return empty($data[$key]) ? null : $data[$key];
     }
 
+    protected function reference(string $relation, string $resourceClass): mixed
+    {
+        return $this->whenLoaded(
+            $relation,
+            fn () => new $resourceClass($this->resource->$relation),
+            function () use ($relation) {
+                $foreignKey = $this->resource->$relation()->getForeignKeyName();
+
+                return $this->resource->$foreignKey ? ['id' => (int) $this->resource->$foreignKey] : null;
+            },
+        );
+    }
+
     public static function newCollection($resource): ApiResourceCollection
     {
         return new ApiResourceCollection($resource, static::class);
