@@ -280,7 +280,7 @@ describe('Invoice Number Filters', function () {
 
 describe('Invoice Date Filters', function () {
     it('can filter invoices by issued_at equals', function () {
-        $date = now()->startOfDay();
+        $date = today();
         Invoice::factory()->create(['issued_at' => $date]);
         Invoice::factory()->count(3)->create(['issued_at' => $date->copy()->addDays(5)]);
 
@@ -296,7 +296,7 @@ describe('Invoice Date Filters', function () {
     });
 
     it('can filter invoices by issued_at greater than', function () {
-        $date = now()->startOfDay();
+        $date = today();
         Invoice::factory()->create(['issued_at' => $date->copy()->addDays(10)]);
         Invoice::factory()->create(['issued_at' => $date->copy()->addDays(15)]);
         Invoice::factory()->create(['issued_at' => $date->copy()->subDays(5)]);
@@ -313,7 +313,7 @@ describe('Invoice Date Filters', function () {
     });
 
     it('can filter invoices by issued_at less than', function () {
-        $date = now()->startOfDay();
+        $date = today();
         Invoice::factory()->create(['issued_at' => $date->copy()->subDays(10)]);
         Invoice::factory()->create(['issued_at' => $date->copy()->subDays(5)]);
         Invoice::factory()->create(['issued_at' => $date->copy()->addDays(5)]);
@@ -330,7 +330,7 @@ describe('Invoice Date Filters', function () {
     });
 
     it('can filter invoices by due_at greater than or equals', function () {
-        $date = now()->startOfDay();
+        $date = today();
         Invoice::factory()->create(['due_at' => $date]);
         Invoice::factory()->create(['due_at' => $date->copy()->addDays(5)]);
         Invoice::factory()->create(['due_at' => $date->copy()->subDays(5)]);
@@ -347,7 +347,7 @@ describe('Invoice Date Filters', function () {
     });
 
     it('can filter invoices by paid_at not equals', function () {
-        $date = now()->startOfDay();
+        $date = today();
         Invoice::factory()->paid()->create(['paid_at' => $date]);
         Invoice::factory()->paid()->count(2)->create(['paid_at' => $date->copy()->addDays(5)]);
         Invoice::factory()->draft()->count(1)->create(['paid_at' => null]);
@@ -366,7 +366,7 @@ describe('Invoice Date Filters', function () {
 
 describe('Invoice Date Range Filters (Between)', function () {
     it('can filter invoices by issued_at between two dates', function () {
-        $startDate = now()->startOfDay()->subDays(20);
+        $startDate = today()->subDays(20);
         $endDate = $startDate->copy()->addDays(10);
 
         // Inside the range (inclusive)
@@ -394,7 +394,7 @@ describe('Invoice Date Range Filters (Between)', function () {
     });
 
     it('can filter invoices by due_at between two dates with greater than and less than', function () {
-        $startDate = now()->startOfDay()->subDays(50);
+        $startDate = today()->subDays(50);
         $endDate = $startDate->copy()->addDays(30);
 
         // Inside the range (strictly between start and end, excluding boundaries)
@@ -441,7 +441,7 @@ describe('Invoice Date Range Filters (Between)', function () {
     });
 
     it('can combine date range with other filters', function () {
-        $startDate = now()->startOfDay();
+        $startDate = today();
         $endDate = $startDate->copy()->addDays(10);
         $customer = Customer::factory()->create(['country' => 'US']);
 
@@ -770,7 +770,7 @@ describe('Invoice Multiple Filter Combinations', function () {
     });
 
     it('can filter by status, date range and customer', function () {
-        $date = now()->startOfDay();
+        $date = today();
         $customer = Customer::factory()->create(['country' => 'US']);
         Invoice::factory()->paid()->for($customer)->create(['issued_at' => $date->copy()->addDays(5)]);
         Invoice::factory()->paid()->for($customer)->create(['issued_at' => $date->copy()->addDays(10)]);

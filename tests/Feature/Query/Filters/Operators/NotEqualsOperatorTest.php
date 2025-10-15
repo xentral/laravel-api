@@ -34,7 +34,7 @@ describe('Not Equals Operator', function () {
     });
 
     it('can filter by date not equals', function () {
-        $date = now()->startOfDay();
+        $date = today();
         $otherDate = $date->copy()->addDays(5);
 
         Invoice::factory()->count(2)->create(['paid_at' => $date]);

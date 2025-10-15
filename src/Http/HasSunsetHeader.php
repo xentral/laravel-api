@@ -10,7 +10,7 @@ trait HasSunsetHeader
 
     public function deprecatedSince(\DateTimeInterface $date): self
     {
-        $this->deprecatedSince = Carbon::instance($date);
+        $this->deprecatedSince = \Illuminate\Support\Facades\Date::instance($date);
 
         return $this;
     }

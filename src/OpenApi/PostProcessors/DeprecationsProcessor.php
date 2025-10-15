@@ -67,7 +67,7 @@ class DeprecationsProcessor
 
     private function makeSunsetDate(string $deprecationDate): CarbonImmutable
     {
-        return Carbon::createFromFormat('Y-m-d', $deprecationDate)
+        return \Illuminate\Support\Facades\Date::createFromFormat('Y-m-d', $deprecationDate)
             ->startOfDay()
             ->addMonths($this->config->deprecationFilter->monthsBeforeRemoval)
             ->toImmutable();
