@@ -3,6 +3,7 @@ namespace Workbench\App\Http\Controller;
 
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Http\Response;
+use Workbench\App\Enum\StatusEnum;
 use Workbench\App\Http\Filter\FilterCollection;
 use Workbench\App\Http\Requests\CreateTestModelRequest;
 use Workbench\App\Http\Requests\UpdateTestModelRequest;
@@ -14,7 +15,6 @@ use Xentral\LaravelApi\OpenApi\Endpoints\GetEndpoint;
 use Xentral\LaravelApi\OpenApi\Endpoints\ListEndpoint;
 use Xentral\LaravelApi\OpenApi\Endpoints\PatchEndpoint;
 use Xentral\LaravelApi\OpenApi\Endpoints\PostEndpoint;
-use Workbench\App\Enum\StatusEnum;
 use Xentral\LaravelApi\OpenApi\Filters\EnumFilter;
 use Xentral\LaravelApi\OpenApi\Filters\FilterParameter;
 use Xentral\LaravelApi\OpenApi\Filters\IdFilter;

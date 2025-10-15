@@ -2,7 +2,6 @@
 namespace Xentral\LaravelApi\OpenApi\PostProcessors;
 
 use Carbon\CarbonImmutable;
-use Illuminate\Support\Carbon;
 use OpenApi\Analysis;
 use OpenApi\Annotations as OA;
 use OpenApi\Attributes\Header;
