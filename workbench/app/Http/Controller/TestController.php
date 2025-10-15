@@ -14,6 +14,8 @@ use Xentral\LaravelApi\OpenApi\Endpoints\GetEndpoint;
 use Xentral\LaravelApi\OpenApi\Endpoints\ListEndpoint;
 use Xentral\LaravelApi\OpenApi\Endpoints\PatchEndpoint;
 use Xentral\LaravelApi\OpenApi\Endpoints\PostEndpoint;
+use Workbench\App\Enum\StatusEnum;
+use Xentral\LaravelApi\OpenApi\Filters\EnumFilter;
 use Xentral\LaravelApi\OpenApi\Filters\FilterParameter;
 use Xentral\LaravelApi\OpenApi\Filters\IdFilter;
 use Xentral\LaravelApi\OpenApi\Filters\StringFilter;
@@ -32,7 +34,7 @@ class TestController
             new FilterParameter([
                 new IdFilter,
                 new StringFilter(name: 'name'),
-                new StringFilter(name: 'status'),
+                new EnumFilter(name: 'status', enumSource: StatusEnum::class),
                 new FilterCollection,
             ]),
         ],
@@ -63,7 +65,7 @@ class TestController
             new FilterParameter([
                 new IdFilter,
                 new StringFilter(name: 'name'),
-                new StringFilter(name: 'status'),
+                new EnumFilter(name: 'status', enumSource: StatusEnum::class),
             ]),
         ],
         paginationType: [PaginationType::SIMPLE, PaginationType::TABLE, PaginationType::CURSOR],
