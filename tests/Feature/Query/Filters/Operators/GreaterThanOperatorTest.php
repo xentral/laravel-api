@@ -20,7 +20,7 @@ describe('Greater Than Operator', function () {
     });
 
     it('can filter by date greater than', function () {
-        $baseDate = now()->startOfDay()->subDays(10);
+        $baseDate = today()->subDays(10);
 
         Invoice::factory()->create(['issued_at' => $baseDate->copy()->subDays(2)]);
         Invoice::factory()->create(['issued_at' => $baseDate->copy()->addDays(2)]);

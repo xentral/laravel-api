@@ -52,7 +52,7 @@ describe('Equals Operator', function () {
     });
 
     it('can filter by date equals', function () {
-        $date = now()->startOfDay();
+        $date = today();
         $invoice = Invoice::factory()->create(['issued_at' => $date]);
         Invoice::factory()->count(3)->create();
 

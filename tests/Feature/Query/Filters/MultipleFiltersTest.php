@@ -5,7 +5,7 @@ use Workbench\App\Models\Invoice;
 
 describe('Multiple Filters on Same Property', function () {
     it('can filter by same property with multiple conditions', function () {
-        $date1 = now()->startOfDay();
+        $date1 = today();
         $date2 = $date1->copy()->addDays(10);
         $date3 = $date1->copy()->addDays(20);
 

@@ -20,7 +20,7 @@ describe('Less Than Or Equals Operator', function () {
     });
 
     it('can filter by date less than or equals', function () {
-        $baseDate = now()->startOfDay()->subDays(10);
+        $baseDate = today()->subDays(10);
 
         Invoice::factory()->create(['issued_at' => $baseDate->copy()->subDays(2)]);
         Invoice::factory()->create(['issued_at' => $baseDate->copy()]);
