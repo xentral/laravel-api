@@ -43,7 +43,7 @@ class AddMetaInfoProcessor
                         description: 'Money',
                         properties: [
                             new Property(property: 'amount', oneOf: [new Schema(type: 'string'), new Schema(type: 'number')]),
-                            new Property(property: 'currency', type: 'string'),
+                            new Property(property: 'currency', description: 'Currency', type: 'string', example: 'EUR'),
                         ],
                         type: 'object',
                         example: ['amount' => '13.37', 'currency' => 'EUR'],
