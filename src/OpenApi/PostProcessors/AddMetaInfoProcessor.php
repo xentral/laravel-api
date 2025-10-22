@@ -34,7 +34,7 @@ class AddMetaInfoProcessor
                     email: $this->info->contact['email'],
                 ),
             ),
-            servers: array_map(fn ($server) => $this->createServer($server), $this->info->servers),
+            servers: array_map($this->createServer(...), $this->info->servers),
             security: [['BearerAuth' => []]],
             components: new Components(
                 schemas: [
