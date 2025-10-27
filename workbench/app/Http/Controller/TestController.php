@@ -152,4 +152,19 @@ class TestController
     {
         return new TestResource(TestModel::query()->findOrFail($id));
     }
+
+    #[PatchEndpoint(
+        path: '/api/v1/test-models/{id}/with-problems',
+        request: UpdateTestModelRequest::class,
+        resource: TestResource::class,
+        description: 'Update test resource with potential conflict',
+        problems: ['conflict'],
+    )]
+    public function updateWithProblems(UpdateTestModelRequest $request, int $id): TestResource
+    {
+        $testModel = TestModel::query()->findOrFail($id);
+        $testModel->update($request->validated());
+
+        return new TestResource($testModel);
+    }
 }

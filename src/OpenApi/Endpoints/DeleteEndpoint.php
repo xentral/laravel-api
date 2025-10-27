@@ -22,6 +22,7 @@ class DeleteEndpoint extends Delete
         ?\DateTimeInterface $deprecated = null,
         \BackedEnum|string|null $featureFlag = null,
         string|array|null $scopes = null,
+        ?array $problems = null,
     ) {
         $responses = [
             $this->response('204', 'Resource successfully deleted'),
@@ -40,7 +41,7 @@ class DeleteEndpoint extends Delete
             'tags' => $tags ?? Generator::UNDEFINED,
             'callbacks' => Generator::UNDEFINED,
             'deprecated' => $deprecated !== null ? true : Generator::UNDEFINED,
-            'x' => $this->compileX($isInternal, $deprecated, $featureFlag, $scopes, ! empty($validates) ? $validates : null),
+            'x' => $this->compileX($isInternal, $deprecated, $featureFlag, $scopes, ! empty($validates) ? $validates : null, $problems),
             'value' => $this->combine($responses, $parameters),
         ]);
     }

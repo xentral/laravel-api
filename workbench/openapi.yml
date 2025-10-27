@@ -414,6 +414,63 @@ paths:
                   message: { description: 'Too Many Requests', type: string, example: 'Too Many Requests' }
                 type: object
       deprecated: true
+  '/api/v1/test-models/{id}/with-problems':
+    patch:
+      description: 'Update test resource with potential conflict'
+      operationId: 'PATCH::api-v1-test-models-id-with-problems'
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTestModelRequest'
+      responses:
+        '200':
+          description: 'Update test resource with potential conflict'
+          content:
+            application/json:
+              schema:
+                properties:
+                  data: { $ref: '#/components/schemas/TestResource' }
+                type: object
+        '422':
+          description: 'Failed validation'
+          content:
+            application/json:
+              schema:
+                properties:
+                  message: { description: 'Error messages', type: string, example: 'The given data was invalid.' }
+                  errors: { description: 'Error messages', type: object, example: { name: ['The name field is invalid.'], status: ['The status field is invalid.'] } }
+                type: object
+        '401':
+          description: Unauthorized
+        '403':
+          description: Unauthorized
+        '404':
+          description: 'Not Found'
+        '429':
+          description: 'Too Many Requests'
+          content:
+            application/json:
+              schema:
+                properties:
+                  message: { description: 'Too Many Requests', type: string, example: 'Too Many Requests' }
+                type: object
+        '409':
+          description: 'Conflict happened'
+          content:
+            application/json:
+              schema:
+                properties:
+                  type: { type: string, example: 'https://api.xentral.biz/problems/conflict' }
+                  title: { type: string, example: 'Conflict happened' }
+                type: object
 components:
   schemas:
     CreateTestModelRequest:

@@ -7,6 +7,15 @@ return [
         'middleware' => ['web', 'auth'],
         'client' => 'swagger', // swagger or scalar
     ],
+    'problems' => [
+        'conflict' => [
+            'status' => 409,
+            'body' => [
+                'type' => 'https://api.xentral.biz/problems/conflict',
+                'title' => 'Conflict happened',
+            ],
+        ],
+    ],
     'schemas' => [
         'default' => [
             'client' => null, // Uses global client setting if null, otherwise: swagger or scalar

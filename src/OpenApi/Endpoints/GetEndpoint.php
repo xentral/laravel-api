@@ -23,6 +23,7 @@ class GetEndpoint extends Get
         ?\DateTimeInterface $deprecated = null,
         \BackedEnum|string|null $featureFlag = null,
         string|array|null $scopes = null,
+        ?array $problems = null,
     ) {
         $responses = [
             $this->resourceResponse('200', $description, $resource),
@@ -41,7 +42,7 @@ class GetEndpoint extends Get
             'tags' => $tags ?? Generator::UNDEFINED,
             'callbacks' => Generator::UNDEFINED,
             'deprecated' => $deprecated !== null ? true : Generator::UNDEFINED,
-            'x' => $this->compileX($isInternal, $deprecated, $featureFlag, $scopes),
+            'x' => $this->compileX($isInternal, $deprecated, $featureFlag, $scopes, null, $problems),
             'value' => $this->combine($responses, $parameters),
         ]);
     }
