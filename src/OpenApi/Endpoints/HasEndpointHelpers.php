@@ -119,6 +119,7 @@ trait HasEndpointHelpers
         \BackedEnum|string|null $featureFlag,
         string|array|null $scopes = null,
         string|array|null $request = null,
+        ?array $problems = null,
     ): string|array {
         $x = [];
         if ($isInternal) {
@@ -138,6 +139,12 @@ trait HasEndpointHelpers
         }
         if ($request) {
             $x['request'] = $request;
+        }
+        if ($problems) {
+            $x['problems'] = array_map(
+                fn ($problem) => $problem instanceof \BackedEnum ? $problem->value : $problem,
+                $problems
+            );
         }
 
         return empty($x) ? Generator::UNDEFINED : $x;

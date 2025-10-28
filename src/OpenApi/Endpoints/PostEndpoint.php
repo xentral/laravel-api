@@ -25,6 +25,7 @@ class PostEndpoint extends Post
         ?\DateTimeInterface $deprecated = null,
         \BackedEnum|string|null $featureFlag = null,
         string|array|null $scopes = null,
+        ?array $problems = null,
     ) {
         $parameters = $this->makeParameters($parameters, $path);
         $needs404 = collect($parameters)->filter(fn (Parameter $p) => $p->in === 'path')->isNotEmpty();
@@ -47,7 +48,7 @@ class PostEndpoint extends Post
             'tags' => $tags ?? Generator::UNDEFINED,
             'callbacks' => Generator::UNDEFINED,
             'deprecated' => $deprecated !== null ? true : Generator::UNDEFINED,
-            'x' => $this->compileX($isInternal, $deprecated, $featureFlag, $scopes, $request),
+            'x' => $this->compileX($isInternal, $deprecated, $featureFlag, $scopes, $request, $problems),
             'value' => $this->combine($requestBody, $responses, $parameters),
         ]);
     }
