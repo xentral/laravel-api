@@ -35,7 +35,7 @@ abstract class ApiResource extends JsonResource
     {
         $foreignKey = $this->resource->$relation()->getForeignKeyName();
 
-        return $this->resource->$foreignKey ? ['id' => (int) $this->resource->$foreignKey] : null;
+        return $this->resource->$foreignKey ? ['id' => (string) $this->resource->$foreignKey] : null;
     }
 
     public static function newCollection($resource): ApiResourceCollection
