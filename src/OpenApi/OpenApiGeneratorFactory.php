@@ -12,6 +12,7 @@ use OpenApi\Processors\OperationId;
 use Xentral\LaravelApi\OpenApi\PostProcessors\AddMetaInfoProcessor;
 use Xentral\LaravelApi\OpenApi\PostProcessors\CustomCleanUnusedComponents;
 use Xentral\LaravelApi\OpenApi\PostProcessors\DeprecationsProcessor;
+use Xentral\LaravelApi\OpenApi\PostProcessors\ExpandEnumsProcessor;
 use Xentral\LaravelApi\OpenApi\PostProcessors\FeatureFlagProcessor;
 use Xentral\LaravelApi\OpenApi\PostProcessors\OperationIdProcessor;
 use Xentral\LaravelApi\OpenApi\PostProcessors\PaginationResponseProcessor;
@@ -21,7 +22,6 @@ use Xentral\LaravelApi\OpenApi\PostProcessors\SortComponentsProcessor;
 use Xentral\LaravelApi\OpenApi\PostProcessors\SummaryPostProcessor;
 use Xentral\LaravelApi\OpenApi\PostProcessors\TokenScopeProcessor;
 use Xentral\LaravelApi\OpenApi\PostProcessors\ValidationResponseProcessor;
-use Xentral\LaravelApi\OpenApi\Processors\ExpandEnumsWithInactiveSupport;
 
 class OpenApiGeneratorFactory
 {
@@ -32,7 +32,7 @@ class OpenApiGeneratorFactory
         $generator = new Generator(new ConsoleLogger);
         $generator->getProcessorPipeline()->insert(new AddMetaInfoProcessor($schemaDefinition->info, $config['exclude_money'] ?? false), fn () => 1);
         $generator->getProcessorPipeline()->remove(ExpandEnums::class);
-        $generator->getProcessorPipeline()->insert(new ExpandEnumsWithInactiveSupport, fn () => 5); // Insert at same position as original ExpandEnums
+        $generator->getProcessorPipeline()->insert(new ExpandEnumsProcessor, fn () => 5); // Insert at same position as original ExpandEnums
         $generator->getProcessorPipeline()->remove(OperationId::class);
         $generator->getProcessorPipeline()->remove(CleanUnusedComponents::class);
         // Add our custom CleanUnusedComponents that preserves security schemes

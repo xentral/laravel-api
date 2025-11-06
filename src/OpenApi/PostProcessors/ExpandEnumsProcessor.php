@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Xentral\LaravelApi\OpenApi\Processors;
+namespace Xentral\LaravelApi\OpenApi\PostProcessors;
 
 use OpenApi\Analysis;
 use OpenApi\Annotations as OA;
@@ -10,7 +10,7 @@ use OpenApi\Processors\ExpandEnums;
 use ReflectionClass;
 use Xentral\LaravelApi\Enum\HasInactiveCases;
 
-class ExpandEnumsWithInactiveSupport extends ExpandEnums
+class ExpandEnumsProcessor extends ExpandEnums
 {
     protected function expandSchemaEnum(Analysis $analysis): void
     {
