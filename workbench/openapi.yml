@@ -14,6 +14,7 @@ servers:
 paths:
   /api/v1/test-models:
     get:
+      summary: '🔒 List test resources V1'
       description: "This endpoint is only available if the feature flag `beta-users` is enabled.\n\nThis endpoint requires the following scopes: `test-models:read`.\n\nList test resources"
       operationId: 'GET::api-v1-test-models'
       parameters:
@@ -92,6 +93,7 @@ paths:
       x-scopes:
         - 'test-models:read'
     post:
+      summary: 'update test resource V1'
       description: 'update test resource'
       operationId: 'POST::api-v1-test-models'
       requestBody:
@@ -131,6 +133,7 @@ paths:
                 type: object
   /api/v1/test-models-multi-pagination:
     get:
+      summary: 'List test resources with multiple pagination options V1'
       description: 'List test resources with multiple pagination options'
       operationId: 'GET::api-v1-test-models-multi-pagination'
       parameters:
@@ -227,6 +230,7 @@ paths:
                 type: object
   '/api/v1/test-models/{id}':
     get:
+      summary: 'get test resource V1'
       description: 'get test resource'
       operationId: 'GET::api-v1-test-models-id'
       parameters:
@@ -271,6 +275,7 @@ paths:
                   message: { description: 'Too Many Requests', type: string, example: 'Too Many Requests' }
                 type: object
     delete:
+      summary: 'delete test resource V1'
       description: 'delete test resource'
       operationId: 'DELETE::api-v1-test-models-id'
       parameters:
@@ -298,6 +303,7 @@ paths:
                   message: { description: 'Too Many Requests', type: string, example: 'Too Many Requests' }
                 type: object
     patch:
+      summary: 'update test resource V1'
       description: 'update test resource'
       operationId: 'PATCH::api-v1-test-models-id'
       parameters:
@@ -346,6 +352,7 @@ paths:
                 type: object
   '/api/v1/test-models/{id}/actions/test':
     patch:
+      summary: 'Execute test action on test resource V1'
       description: 'Execute test action on test resource'
       operationId: 'PATCH::api-v1-test-models-id-actions-test'
       parameters:
@@ -374,6 +381,7 @@ paths:
                 type: object
   '/api/v1/test-models/{id}/legacy':
     get:
+      summary: 'Legacy endpoint for test resource V1'
       description: 'Legacy endpoint for test resource'
       operationId: 'GET::api-v1-test-models-id-legacy'
       parameters:
@@ -416,6 +424,7 @@ paths:
       deprecated: true
   '/api/v1/test-models/{id}/with-problems':
     patch:
+      summary: 'Update test resource with potential conflict V1'
       description: 'Update test resource with potential conflict'
       operationId: 'PATCH::api-v1-test-models-id-with-problems'
       parameters:
