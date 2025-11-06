@@ -18,6 +18,7 @@ use Xentral\LaravelApi\OpenApi\PostProcessors\PaginationResponseProcessor;
 use Xentral\LaravelApi\OpenApi\PostProcessors\ProblemsProcessor;
 use Xentral\LaravelApi\OpenApi\PostProcessors\RateLimitResponseProcessor;
 use Xentral\LaravelApi\OpenApi\PostProcessors\SortComponentsProcessor;
+use Xentral\LaravelApi\OpenApi\PostProcessors\SummaryPostProcessor;
 use Xentral\LaravelApi\OpenApi\PostProcessors\TokenScopeProcessor;
 use Xentral\LaravelApi\OpenApi\PostProcessors\ValidationResponseProcessor;
 use Xentral\LaravelApi\OpenApi\Processors\ExpandEnumsWithInactiveSupport;
@@ -35,6 +36,7 @@ class OpenApiGeneratorFactory
         $generator->getProcessorPipeline()->remove(OperationId::class);
         $generator->getProcessorPipeline()->remove(CleanUnusedComponents::class);
         // Add our custom CleanUnusedComponents that preserves security schemes
+        $generator->getProcessorPipeline()->add(new SummaryPostProcessor);
         $generator->getProcessorPipeline()->add(new CustomCleanUnusedComponents);
         $generator->getProcessorPipeline()->add(new OperationIdProcessor);
         $generator->getProcessorPipeline()->add(new TokenScopeProcessor);

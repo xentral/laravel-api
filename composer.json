@@ -65,7 +65,7 @@
     ],
     "all": [
       "@lint",
-      "@test",
+      "@pest",
       "@phpstan:analyse"
     ]
   },
