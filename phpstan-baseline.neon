@@ -1,13 +1,13 @@
 parameters:
 	ignoreErrors:
 		-
+			message: '#^Call to an undefined static method UnitEnum\:\:getActiveCases\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 2
+			path: src/OpenApi/PostProcessors/ExpandEnumsProcessor.php
+
+		-
 			message: '#^Property OpenApi\\Annotations\\Schema\:\:\$properties \(array\<OpenApi\\Annotations\\Property\>\) does not accept string\.$#'
 			identifier: assign.propertyType
 			count: 1
 			path: src/OpenApi/PostProcessors/PaginationResponseProcessor.php
-
-		-
-			message: '#^Call to an undefined static method UnitEnum\:\:getActiveCases\(\)\.$#'
-			identifier: staticMethod.notFound
-			count: 2
-			path: src/OpenApi/Processors/ExpandEnumsWithInactiveSupport.php

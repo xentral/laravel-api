@@ -7,7 +7,7 @@ it('generates summary from description with version suffix when no summary is pr
     $factory = new OpenApiGeneratorFactory;
     $generator = $factory->create(config('openapi.schemas.default'));
 
-    $spec = $generator->generate([__DIR__.'/../../workbench']);
+    $spec = $generator->generate([workbench_dir()]);
     $yaml = $spec->toYaml();
 
     $data = Yaml::parse($yaml);
@@ -23,7 +23,7 @@ it('prepends lock emoji to summary for feature flagged endpoints', function () {
     $factory = new OpenApiGeneratorFactory;
     $generator = $factory->create(config('openapi.schemas.default'));
 
-    $spec = $generator->generate([__DIR__.'/../../workbench']);
+    $spec = $generator->generate([workbench_dir()]);
     $yaml = $spec->toYaml();
 
     $data = Yaml::parse($yaml);
@@ -40,7 +40,7 @@ it('uses description with version suffix for non-feature-flagged endpoints', fun
     $factory = new OpenApiGeneratorFactory;
     $generator = $factory->create(config('openapi.schemas.default'));
 
-    $spec = $generator->generate([__DIR__.'/../../workbench']);
+    $spec = $generator->generate([workbench_dir()]);
     $yaml = $spec->toYaml();
 
     $data = Yaml::parse($yaml);
@@ -57,7 +57,7 @@ it('applies summary processing to all HTTP methods', function () {
     $factory = new OpenApiGeneratorFactory;
     $generator = $factory->create(config('openapi.schemas.default'));
 
-    $spec = $generator->generate([__DIR__.'/../../workbench']);
+    $spec = $generator->generate([workbench_dir()]);
     $yaml = $spec->toYaml();
 
     $data = Yaml::parse($yaml);

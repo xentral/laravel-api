@@ -7,7 +7,7 @@ it('generates correct parameters for single pagination type', function () {
     $factory = new OpenApiGeneratorFactory;
     $generator = $factory->create(config('openapi.schemas.default'));
 
-    $spec = $generator->generate([__DIR__.'/../../workbench']);
+    $spec = $generator->generate([workbench_dir()]);
     $yaml = $spec->toYaml();
 
     // Parse YAML to check parameters
@@ -28,7 +28,7 @@ it('generates correct parameters for multiple pagination types', function () {
     $factory = new OpenApiGeneratorFactory;
     $generator = $factory->create(config('openapi.schemas.default'));
 
-    $spec = $generator->generate([__DIR__.'/../../workbench']);
+    $spec = $generator->generate([workbench_dir()]);
     $yaml = $spec->toYaml();
 
     // Parse YAML to check parameters
@@ -49,7 +49,7 @@ it('parameter descriptions explain when they are used', function () {
     $factory = new OpenApiGeneratorFactory;
     $generator = $factory->create(config('openapi.schemas.default'));
 
-    $spec = $generator->generate([__DIR__.'/../../workbench']);
+    $spec = $generator->generate([workbench_dir()]);
     $yaml = $spec->toYaml();
 
     // Parse YAML to check parameter descriptions
@@ -72,7 +72,7 @@ it('includes x-pagination header for multiple pagination types', function () {
     $factory = new OpenApiGeneratorFactory;
     $generator = $factory->create(config('openapi.schemas.default'));
 
-    $spec = $generator->generate([__DIR__.'/../../workbench']);
+    $spec = $generator->generate([workbench_dir()]);
     $yaml = $spec->toYaml();
 
     // Parse YAML to check parameters
@@ -98,7 +98,7 @@ it('does not include x-pagination header for single pagination type', function (
     $factory = new OpenApiGeneratorFactory;
     $generator = $factory->create(config('openapi.schemas.default'));
 
-    $spec = $generator->generate([__DIR__.'/../../workbench']);
+    $spec = $generator->generate([workbench_dir()]);
     $yaml = $spec->toYaml();
 
     // Parse YAML to check parameters
@@ -117,7 +117,7 @@ it('x-pagination header description includes available types', function () {
     $factory = new OpenApiGeneratorFactory;
     $generator = $factory->create(config('openapi.schemas.default'));
 
-    $spec = $generator->generate([__DIR__.'/../../workbench']);
+    $spec = $generator->generate([workbench_dir()]);
     $yaml = $spec->toYaml();
 
     // Parse YAML to check parameter descriptions

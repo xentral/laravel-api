@@ -30,3 +30,8 @@ function buildFilterQuery(array $filters): string
 
     return http_build_query(['filter' => json_encode($normalizedFilters)]);
 }
+
+function workbench_dir(): string
+{
+    return dirname(__DIR__).'/workbench';
+}

@@ -7,7 +7,7 @@ it('adds sunset header to deprecated endpoints that are still active', function 
     $factory = new OpenApiGeneratorFactory;
     $generator = $factory->create(config('openapi.schemas.default'));
 
-    $spec = $generator->generate([__DIR__.'/../../workbench']);
+    $spec = $generator->generate([workbench_dir()]);
     $yaml = $spec->toYaml();
 
     // Parse YAML to check for sunset headers
@@ -33,7 +33,7 @@ it('calculates sunset date correctly based on deprecation date and months before
     $factory = new OpenApiGeneratorFactory;
     $generator = $factory->create(config('openapi.schemas.default'));
 
-    $spec = $generator->generate([__DIR__.'/../../workbench']);
+    $spec = $generator->generate([workbench_dir()]);
     $yaml = $spec->toYaml();
 
     // Parse YAML to check sunset date calculation
@@ -52,7 +52,7 @@ it('adds sunset header to all response types for deprecated endpoints', function
     $factory = new OpenApiGeneratorFactory;
     $generator = $factory->create(config('openapi.schemas.default'));
 
-    $spec = $generator->generate([__DIR__.'/../../workbench']);
+    $spec = $generator->generate([workbench_dir()]);
     $yaml = $spec->toYaml();
 
     // Parse YAML to check that all responses have sunset header
@@ -72,7 +72,7 @@ it('does not add sunset header to non-deprecated endpoints', function () {
     $factory = new OpenApiGeneratorFactory;
     $generator = $factory->create(config('openapi.schemas.default'));
 
-    $spec = $generator->generate([__DIR__.'/../../workbench']);
+    $spec = $generator->generate([workbench_dir()]);
     $yaml = $spec->toYaml();
 
     // Parse YAML to check that non-deprecated endpoints don't have sunset headers

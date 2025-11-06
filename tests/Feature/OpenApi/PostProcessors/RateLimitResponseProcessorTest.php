@@ -13,7 +13,7 @@ it('adds 429 response to all endpoints when enabled', function () {
     $factory = new OpenApiGeneratorFactory;
     $generator = $factory->create($config);
 
-    $spec = $generator->generate([__DIR__.'/../../workbench']);
+    $spec = $generator->generate([workbench_dir()]);
     $yaml = $spec->toYaml();
 
     // Parse YAML to check for 429 responses
@@ -38,7 +38,7 @@ it('does not add 429 response when disabled', function () {
     $factory = new OpenApiGeneratorFactory;
     $generator = $factory->create($config);
 
-    $spec = $generator->generate([__DIR__.'/../../workbench']);
+    $spec = $generator->generate([workbench_dir()]);
     $yaml = $spec->toYaml();
 
     // Parse YAML to check for absence of 429 responses
@@ -62,7 +62,7 @@ it('uses custom message from config', function () {
     $factory = new OpenApiGeneratorFactory;
     $generator = $factory->create($config);
 
-    $spec = $generator->generate([__DIR__.'/../../workbench']);
+    $spec = $generator->generate([workbench_dir()]);
     $yaml = $spec->toYaml();
 
     // Parse YAML to check for custom message
@@ -85,7 +85,7 @@ it('adds 429 response to POST endpoints', function () {
     $factory = new OpenApiGeneratorFactory;
     $generator = $factory->create($config);
 
-    $spec = $generator->generate([__DIR__.'/../../workbench']);
+    $spec = $generator->generate([workbench_dir()]);
     $yaml = $spec->toYaml();
 
     // Parse YAML to check for 429 responses on POST endpoints
