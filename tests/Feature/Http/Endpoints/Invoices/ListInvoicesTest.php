@@ -4,6 +4,151 @@ use Workbench\App\Models\Customer;
 use Workbench\App\Models\Invoice;
 use Workbench\App\Models\LineItem;
 
+describe('Basic List Operations', function () {
+    it('can list invoices', function () {
+        Invoice::factory()->count(3)->create();
+
+        $response = $this->getJson('/api/v1/invoices');
+
+        $response->assertOk();
+        $response->assertJsonCount(3, 'data');
+        $response->assertJsonStructure([
+            'data' => [
+                '*' => [
+                    'id',
+                    'invoice_number',
+                    'customer_id',
+                    'status',
+                    'total_amount',
+                    'issued_at',
+                    'due_at',
+                    'paid_at',
+                    'created_at',
+                    'updated_at',
+                ],
+            ],
+        ]);
+    });
+
+    it('can include customer relationship', function () {
+        Invoice::factory()->count(2)->create();
+
+        $response = $this->getJson('/api/v1/invoices?include=customer');
+
+        $response->assertOk();
+        $response->assertJsonStructure([
+            'data' => [
+                '*' => [
+                    'id',
+                    'invoice_number',
+                    'customer_id',
+                    'customer' => [
+                        'id',
+                        'name',
+                        'email',
+                        'phone',
+                        'country',
+                        'is_active',
+                    ],
+                ],
+            ],
+        ]);
+
+        $firstInvoice = $response->json('data.0');
+        expect($firstInvoice['customer'])->toHaveKey('id');
+        expect($firstInvoice['customer']['id'])->toBe($firstInvoice['customer_id']);
+    });
+
+    it('can include lineItems relationship', function () {
+        $invoice = Invoice::factory()->hasLineItems(3)->create();
+        Invoice::factory()->count(1)->create();
+
+        $response = $this->getJson('/api/v1/invoices?include=lineItems');
+
+        $response->assertOk();
+        $response->assertJsonStructure([
+            'data' => [
+                '*' => [
+                    'id',
+                    'invoice_number',
+                    'line_items' => [
+                        '*' => [
+                            'id',
+                            'invoice_id',
+                            'product_name',
+                            'quantity',
+                            'unit_price',
+                            'total_price',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $invoiceData = collect($response->json('data'))->firstWhere('id', $invoice->id);
+        expect($invoiceData['line_items'])->toHaveCount(3);
+    });
+
+    it('can include both customer and lineItems', function () {
+        $invoice = Invoice::factory()->hasLineItems(2)->create();
+
+        $response = $this->getJson('/api/v1/invoices?include=customer,lineItems');
+
+        $response->assertOk();
+        $response->assertJsonStructure([
+            'data' => [
+                '*' => [
+                    'id',
+                    'invoice_number',
+                    'customer_id',
+                    'customer' => [
+                        'id',
+                        'name',
+                        'email',
+                    ],
+                    'line_items' => [
+                        '*' => [
+                            'id',
+                            'product_name',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $firstInvoice = $response->json('data.0');
+        expect($firstInvoice)->toHaveKey('customer');
+        expect($firstInvoice)->toHaveKey('line_items');
+        expect($firstInvoice['customer']['id'])->toBe($firstInvoice['customer_id']);
+    });
+
+    it('pagination works correctly', function () {
+        Invoice::factory()->count(15)->create();
+
+        $response = $this->getJson('/api/v1/invoices?per_page=5');
+
+        $response->assertOk();
+        $response->assertJsonCount(5, 'data');
+        $response->assertJsonStructure([
+            'data',
+            'links' => [
+                'first',
+                'next',
+            ],
+            'meta' => [
+                'current_page',
+                'per_page',
+            ],
+        ]);
+    });
+
+    it('returns empty array when no invoices exist', function () {
+        $response = $this->getJson('/api/v1/invoices');
+
+        $response->assertOk();
+        $response->assertJsonCount(0, 'data');
+    });
+});
 describe('Invoice ID Filters', function () {
     it('can filter invoices by id equals', function () {
         $invoice = Invoice::factory()->create();
@@ -854,5 +999,108 @@ describe('Invoice Filter Edge Cases', function () {
                 ],
             ],
         ]);
+    });
+});
+
+describe('Invoice Multiple Filters on Same Property', function () {
+    it('can filter by same property with multiple conditions', function () {
+        $date1 = today();
+        $date2 = $date1->copy()->addDays(10);
+        $date3 = $date1->copy()->addDays(20);
+
+        Invoice::factory()->create(['issued_at' => $date1]);
+        Invoice::factory()->create(['issued_at' => $date2->copy()->addDays(2)]);
+        Invoice::factory()->create(['issued_at' => $date2->copy()->addDays(5)]);
+        Invoice::factory()->create(['issued_at' => $date3]);
+
+        $query = buildFilterQuery([[
+            'key' => 'issued_at',
+            'op' => 'greaterThanOrEquals',
+            'value' => $date2->toDateString(),
+        ], [
+            'key' => 'issued_at',
+            'op' => 'lessThan',
+            'value' => $date3->toDateString(),
+        ]]);
+        $response = $this->getJson("/api/v1/invoices?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(2, 'data');
+    });
+
+    it('can filter by relation property with multiple conditions', function () {
+        $customer1 = Customer::factory()->create(['name' => 'Acme Corporation']);
+        $customer2 = Customer::factory()->create(['name' => 'Acme Industries']);
+        $customer3 = Customer::factory()->create(['name' => 'Tech Corporation']);
+        $customer4 = Customer::factory()->create(['name' => 'Beta Corp']);
+
+        Invoice::factory()->for($customer1)->create();
+        Invoice::factory()->for($customer2)->create();
+        Invoice::factory()->for($customer3)->create();
+        Invoice::factory()->for($customer4)->create();
+
+        $query = buildFilterQuery([[
+            'key' => 'customer.name',
+            'op' => 'contains',
+            'value' => 'Acme',
+        ], [
+            'key' => 'customer.name',
+            'op' => 'startsWith',
+            'value' => 'Acme C',
+        ]]);
+
+        $response = $this->getJson("/api/v1/invoices?{$query}");
+        $response->assertOk();
+        $response->assertJsonCount(1, 'data');
+    });
+
+    it('can filter by same property with 3+ conditions', function () {
+        Invoice::factory()->create(['total_amount' => 500]);
+        Invoice::factory()->create(['total_amount' => 1500]);
+        Invoice::factory()->create(['total_amount' => 2500]);
+        Invoice::factory()->create(['total_amount' => 3500]);
+        Invoice::factory()->create(['total_amount' => 4500]);
+
+        $query = buildFilterQuery([[
+            'key' => 'total_amount',
+            'op' => 'greaterThan',
+            'value' => 1000,
+        ], [
+            'key' => 'total_amount',
+            'op' => 'lessThan',
+            'value' => 4000,
+        ], [
+            'key' => 'total_amount',
+            'op' => 'notEquals',
+            'value' => 2500,
+        ]]);
+
+        $response = $this->getJson("/api/v1/invoices?{$query}");
+        $response->assertOk();
+        $response->assertJsonCount(2, 'data');
+    });
+
+    it('can filter by relation property with mixed operators', function () {
+        $customer1 = Customer::factory()->create(['name' => 'Acme Corporation', 'country' => 'US']);
+        $customer2 = Customer::factory()->create(['name' => 'Acme Industries', 'country' => 'CA']);
+        $customer3 = Customer::factory()->create(['name' => 'Tech Corporation', 'country' => 'US']);
+
+        Invoice::factory()->for($customer1)->create();
+        Invoice::factory()->for($customer2)->create();
+        Invoice::factory()->for($customer3)->create();
+
+        $query = buildFilterQuery([[
+            'key' => 'customer.name',
+            'op' => 'contains',
+            'value' => 'Acme',
+        ], [
+            'key' => 'customer.country',
+            'op' => 'equals',
+            'value' => 'US',
+        ]]);
+
+        $response = $this->getJson("/api/v1/invoices?{$query}");
+        $response->assertOk();
+        $response->assertJsonCount(1, 'data');
     });
 });

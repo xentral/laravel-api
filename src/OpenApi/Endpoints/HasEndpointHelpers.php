@@ -12,6 +12,7 @@ use OpenApi\Attributes\Response;
 use OpenApi\Attributes\Schema;
 use OpenApi\Generator;
 use Xentral\LaravelApi\OpenApi\Filters\FilterParameter;
+use Xentral\LaravelApi\OpenApi\QuerySort;
 
 trait HasEndpointHelpers
 {
@@ -60,7 +61,7 @@ trait HasEndpointHelpers
             $parameters,
             $this->createMissingPathParameters(
                 $path,
-                array_filter($parameters, fn ($p) => ! $p instanceof FilterParameter)),
+                array_filter($parameters, fn ($p) => ! $p instanceof FilterParameter && ! $p instanceof QuerySort)),
         );
         if (! empty($filters)) {
             $parameters[] = new Parameter(

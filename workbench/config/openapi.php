@@ -7,6 +7,15 @@ return [
         'middleware' => ['web'],
         'client' => 'scalar',
     ],
+    'problems' => [
+        'conflict' => [
+            'status' => 409,
+            'body' => [
+                'type' => 'https://api.xentral.biz/problems/conflict',
+                'title' => 'Conflict happened',
+            ],
+        ],
+    ],
     'schemas' => [
         'default' => [
             'config' => [

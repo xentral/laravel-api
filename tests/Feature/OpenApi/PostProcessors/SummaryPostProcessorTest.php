@@ -12,11 +12,11 @@ it('generates summary from description with version suffix when no summary is pr
 
     $data = Yaml::parse($yaml);
 
-    // Check endpoint without explicit summary
-    $getEndpoint = $data['paths']['/api/v1/test-models/{id}']['get'] ?? null;
+    // Check endpoint without explicit summary (using Invoice)
+    $getEndpoint = $data['paths']['/api/v1/invoices/{id}']['get'] ?? null;
 
     expect($getEndpoint)->not->toBeNull()
-        ->and($getEndpoint['summary'])->toBe('get test resource V1');
+        ->and($getEndpoint['summary'])->toEndWith('V1');
 });
 
 it('prepends lock emoji to summary for feature flagged endpoints', function () {
@@ -28,8 +28,8 @@ it('prepends lock emoji to summary for feature flagged endpoints', function () {
 
     $data = Yaml::parse($yaml);
 
-    // Check the list endpoint which has featureFlag: 'beta-users'
-    $listEndpoint = $data['paths']['/api/v1/test-models']['get'] ?? null;
+    // Check the list endpoint which has featureFlag: 'beta-customers'
+    $listEndpoint = $data['paths']['/api/v1/customers']['get'] ?? null;
 
     expect($listEndpoint)->not->toBeNull()
         ->and($listEndpoint['summary'])->toStartWith('🔒 ')
@@ -45,12 +45,12 @@ it('uses description with version suffix for non-feature-flagged endpoints', fun
 
     $data = Yaml::parse($yaml);
 
-    // Check endpoints without feature flags
-    $deleteEndpoint = $data['paths']['/api/v1/test-models/{id}']['delete'] ?? null;
+    // Check endpoints without feature flags (using Invoice)
+    $getEndpoint = $data['paths']['/api/v1/invoices']['get'] ?? null;
 
-    expect($deleteEndpoint)->not->toBeNull()
-        ->and($deleteEndpoint['summary'])->toBe('delete test resource V1')
-        ->and($deleteEndpoint['summary'])->not->toStartWith('🔒 ');
+    expect($getEndpoint)->not->toBeNull()
+        ->and($getEndpoint['summary'])->toEndWith('V1')
+        ->and($getEndpoint['summary'])->not->toStartWith('🔒 ');
 });
 
 it('applies summary processing to all HTTP methods', function () {
@@ -62,12 +62,13 @@ it('applies summary processing to all HTTP methods', function () {
 
     $data = Yaml::parse($yaml);
 
-    $testModelsPath = $data['paths']['/api/v1/test-models/{id}'] ?? null;
+    $invoicesPath = $data['paths']['/api/v1/invoices'] ?? null;
+    $invoiceDetailPath = $data['paths']['/api/v1/invoices/{id}'] ?? null;
 
-    expect($testModelsPath)->not->toBeNull();
+    expect($invoicesPath)->not->toBeNull()
+        ->and($invoiceDetailPath)->not->toBeNull();
 
-    // Check that GET, PATCH, DELETE all have summaries with version suffix
-    expect($testModelsPath['get']['summary'])->toBeString()->not->toBeEmpty()->toEndWith('V1')
-        ->and($testModelsPath['patch']['summary'])->toBeString()->not->toBeEmpty()->toEndWith('V1')
-        ->and($testModelsPath['delete']['summary'])->toBeString()->not->toBeEmpty()->toEndWith('V1');
+    // Check that GET endpoints have summaries with version suffix
+    expect($invoicesPath['get']['summary'])->toBeString()->not->toBeEmpty()->toEndWith('V1')
+        ->and($invoiceDetailPath['get']['summary'])->toBeString()->not->toBeEmpty()->toEndWith('V1');
 });

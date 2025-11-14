@@ -19,6 +19,7 @@ use Xentral\LaravelApi\OpenApi\PostProcessors\PaginationResponseProcessor;
 use Xentral\LaravelApi\OpenApi\PostProcessors\ProblemsProcessor;
 use Xentral\LaravelApi\OpenApi\PostProcessors\RateLimitResponseProcessor;
 use Xentral\LaravelApi\OpenApi\PostProcessors\SortComponentsProcessor;
+use Xentral\LaravelApi\OpenApi\PostProcessors\SortOperationsProcessor;
 use Xentral\LaravelApi\OpenApi\PostProcessors\SummaryPostProcessor;
 use Xentral\LaravelApi\OpenApi\PostProcessors\TokenScopeProcessor;
 use Xentral\LaravelApi\OpenApi\PostProcessors\ValidationResponseProcessor;
@@ -46,6 +47,7 @@ class OpenApiGeneratorFactory
         $generator->getProcessorPipeline()->add(new ProblemsProcessor);
         $generator->getProcessorPipeline()->add(new FeatureFlagProcessor($schemaDefinition->config));
         $generator->getProcessorPipeline()->add(new SortComponentsProcessor);
+        $generator->getProcessorPipeline()->add(new SortOperationsProcessor);
         if ($schemaDefinition->config->deprecationFilter->enabled) {
             $generator->getProcessorPipeline()->add(new DeprecationsProcessor($schemaDefinition->config));
         }

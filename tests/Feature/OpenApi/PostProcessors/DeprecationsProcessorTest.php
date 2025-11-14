@@ -14,7 +14,7 @@ it('adds sunset header to deprecated endpoints that are still active', function 
     $data = Yaml::parse($yaml);
 
     // Check if our deprecated endpoint exists (it should since it's within the removal window)
-    $deprecatedEndpoint = $data['paths']['/api/v1/test-models/{id}/legacy']['get'] ?? null;
+    $deprecatedEndpoint = $data['paths']['/api/v1/customers/{id}/legacy']['get'] ?? null;
 
     expect($deprecatedEndpoint)->not->toBeNull()
         ->and($deprecatedEndpoint['deprecated'])->toBeTrue();
@@ -39,7 +39,7 @@ it('calculates sunset date correctly based on deprecation date and months before
     // Parse YAML to check sunset date calculation
     $data = Yaml::parse($yaml);
 
-    $deprecatedEndpoint = $data['paths']['/api/v1/test-models/{id}/legacy']['get'];
+    $deprecatedEndpoint = $data['paths']['/api/v1/customers/{id}/legacy']['get'];
     $sunsetExample = $deprecatedEndpoint['responses']['200']['headers']['Sunset']['schema']['example'];
 
     // The sunset date should be deprecation date (2025-07-01) + 6 months = 2026-01-01
@@ -58,7 +58,7 @@ it('adds sunset header to all response types for deprecated endpoints', function
     // Parse YAML to check that all responses have sunset header
     $data = Yaml::parse($yaml);
 
-    $deprecatedEndpoint = $data['paths']['/api/v1/test-models/{id}/legacy']['get'];
+    $deprecatedEndpoint = $data['paths']['/api/v1/customers/{id}/legacy']['get'];
 
     // Check that each response has the sunset header
     foreach ($deprecatedEndpoint['responses'] as $statusCode => $response) {
@@ -78,8 +78,8 @@ it('does not add sunset header to non-deprecated endpoints', function () {
     // Parse YAML to check that non-deprecated endpoints don't have sunset headers
     $data = Yaml::parse($yaml);
 
-    // Check a regular non-deprecated endpoint
-    $regularEndpoint = $data['paths']['/api/v1/test-models/{id}']['get'];
+    // Check a regular non-deprecated endpoint (using Invoice endpoint)
+    $regularEndpoint = $data['paths']['/api/v1/invoices/{id}']['get'];
 
     expect($regularEndpoint['deprecated'] ?? false)->toBeFalse();
 
