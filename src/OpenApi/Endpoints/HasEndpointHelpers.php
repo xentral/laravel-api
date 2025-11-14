@@ -60,7 +60,7 @@ trait HasEndpointHelpers
             $parameters,
             $this->createMissingPathParameters(
                 $path,
-                array_filter($parameters, fn($p) => !$p instanceof FilterParameter)),
+                array_filter($parameters, fn ($p) => ! $p instanceof FilterParameter)),
         );
         if (! empty($filters)) {
             $parameters[] = new Parameter(
