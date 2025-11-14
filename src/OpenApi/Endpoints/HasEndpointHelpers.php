@@ -11,6 +11,7 @@ use OpenApi\Attributes\RequestBody;
 use OpenApi\Attributes\Response;
 use OpenApi\Attributes\Schema;
 use OpenApi\Generator;
+use Xentral\LaravelApi\OpenApi\Filters\FilterParameter;
 
 trait HasEndpointHelpers
 {
@@ -55,7 +56,12 @@ trait HasEndpointHelpers
 
     protected function makeParameters(array $parameters, string $path, array $filters = [], array $includes = []): array
     {
-        $parameters = array_merge($parameters, $this->createMissingPathParameters($path, $parameters));
+        $parameters = array_merge(
+            $parameters,
+            $this->createMissingPathParameters(
+                $path,
+                array_filter($parameters, fn ($p) => ! $p instanceof FilterParameter)),
+        );
         if (! empty($filters)) {
             $parameters[] = new Parameter(
                 name: 'filter',
@@ -89,9 +95,7 @@ trait HasEndpointHelpers
         preg_match_all('/{([^}]+)}/', $path, $matches);
         $missing = [];
         foreach ($matches[1] as $match) {
-            $hasParam = count(
-                array_filter($parameters, fn (Parameter $parameter) => $parameter->name === $match)
-            ) > 0;
+            $hasParam = count(array_filter($parameters, fn (Parameter $parameter) => $parameter->name === $match)) > 0;
             if ($hasParam) {
                 continue;
             }
