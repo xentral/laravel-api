@@ -6,7 +6,9 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Orchestra\Testbench\TestCase as Orchestra;
 use Spatie\LaravelData\LaravelDataServiceProvider;
-use Workbench\App\Http\Controller\ListInvoicesController;
+use Workbench\App\Http\Controller\CustomerController;
+use Workbench\App\Http\Controller\InvoiceController;
+use Workbench\App\Http\Controller\LineItemController;
 use Workbench\App\Http\Controller\TestController;
 use Workbench\App\Providers\WorkbenchServiceProvider;
 use Xentral\LaravelApi\ApiServiceProvider;
@@ -42,7 +44,17 @@ class TestCase extends Orchestra
         $router->patch('/api/v1/test-models/{id}', [TestController::class, 'update']);
         $router->delete('/api/v1/test-models/{id}', [TestController::class, 'delete']);
         $router->patch('/api/v1/test-models/{id}/actions/test', [TestController::class, 'testAction']);
-        $router->get('/api/v1/invoices', ListInvoicesController::class);
+
+        // Customer routes
+        $router->get('/api/v1/customers', [CustomerController::class, 'index']);
+        $router->get('/api/v1/customers/{id}', [CustomerController::class, 'show']);
+
+        // Invoice routes
+        $router->get('/api/v1/invoices', [InvoiceController::class, 'index']);
+        $router->get('/api/v1/invoices/{id}', [InvoiceController::class, 'show']);
+
+        // LineItem routes (nested under invoices)
+        $router->get('/api/v1/invoices/{id}/line-items', [LineItemController::class, 'index']);
     }
 
     protected function getPackageProviders($app): array

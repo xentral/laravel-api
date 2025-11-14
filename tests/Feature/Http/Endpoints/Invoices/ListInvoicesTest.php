@@ -4,6 +4,151 @@ use Workbench\App\Models\Customer;
 use Workbench\App\Models\Invoice;
 use Workbench\App\Models\LineItem;
 
+describe('Basic List Operations', function () {
+    it('can list invoices', function () {
+        Invoice::factory()->count(3)->create();
+
+        $response = $this->getJson('/api/v1/invoices');
+
+        $response->assertOk();
+        $response->assertJsonCount(3, 'data');
+        $response->assertJsonStructure([
+            'data' => [
+                '*' => [
+                    'id',
+                    'invoice_number',
+                    'customer_id',
+                    'status',
+                    'total_amount',
+                    'issued_at',
+                    'due_at',
+                    'paid_at',
+                    'created_at',
+                    'updated_at',
+                ],
+            ],
+        ]);
+    });
+
+    it('can include customer relationship', function () {
+        Invoice::factory()->count(2)->create();
+
+        $response = $this->getJson('/api/v1/invoices?include=customer');
+
+        $response->assertOk();
+        $response->assertJsonStructure([
+            'data' => [
+                '*' => [
+                    'id',
+                    'invoice_number',
+                    'customer_id',
+                    'customer' => [
+                        'id',
+                        'name',
+                        'email',
+                        'phone',
+                        'country',
+                        'is_active',
+                    ],
+                ],
+            ],
+        ]);
+
+        $firstInvoice = $response->json('data.0');
+        expect($firstInvoice['customer'])->toHaveKey('id');
+        expect($firstInvoice['customer']['id'])->toBe($firstInvoice['customer_id']);
+    });
+
+    it('can include lineItems relationship', function () {
+        $invoice = Invoice::factory()->hasLineItems(3)->create();
+        Invoice::factory()->count(1)->create();
+
+        $response = $this->getJson('/api/v1/invoices?include=lineItems');
+
+        $response->assertOk();
+        $response->assertJsonStructure([
+            'data' => [
+                '*' => [
+                    'id',
+                    'invoice_number',
+                    'line_items' => [
+                        '*' => [
+                            'id',
+                            'invoice_id',
+                            'product_name',
+                            'quantity',
+                            'unit_price',
+                            'total_price',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $invoiceData = collect($response->json('data'))->firstWhere('id', $invoice->id);
+        expect($invoiceData['line_items'])->toHaveCount(3);
+    });
+
+    it('can include both customer and lineItems', function () {
+        $invoice = Invoice::factory()->hasLineItems(2)->create();
+
+        $response = $this->getJson('/api/v1/invoices?include=customer,lineItems');
+
+        $response->assertOk();
+        $response->assertJsonStructure([
+            'data' => [
+                '*' => [
+                    'id',
+                    'invoice_number',
+                    'customer_id',
+                    'customer' => [
+                        'id',
+                        'name',
+                        'email',
+                    ],
+                    'line_items' => [
+                        '*' => [
+                            'id',
+                            'product_name',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $firstInvoice = $response->json('data.0');
+        expect($firstInvoice)->toHaveKey('customer');
+        expect($firstInvoice)->toHaveKey('line_items');
+        expect($firstInvoice['customer']['id'])->toBe($firstInvoice['customer_id']);
+    });
+
+    it('pagination works correctly', function () {
+        Invoice::factory()->count(15)->create();
+
+        $response = $this->getJson('/api/v1/invoices?per_page=5');
+
+        $response->assertOk();
+        $response->assertJsonCount(5, 'data');
+        $response->assertJsonStructure([
+            'data',
+            'links' => [
+                'first',
+                'next',
+            ],
+            'meta' => [
+                'current_page',
+                'per_page',
+            ],
+        ]);
+    });
+
+    it('returns empty array when no invoices exist', function () {
+        $response = $this->getJson('/api/v1/invoices');
+
+        $response->assertOk();
+        $response->assertJsonCount(0, 'data');
+    });
+});
 describe('Invoice ID Filters', function () {
     it('can filter invoices by id equals', function () {
         $invoice = Invoice::factory()->create();

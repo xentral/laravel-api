@@ -12,6 +12,346 @@ servers:
     url: 'https://example.com'
     description: 'Your API environment'
 paths:
+  /api/v1/customers:
+    get:
+      summary: 'List customers V1'
+      description: 'List customers'
+      operationId: 'GET::api-v1-customers'
+      parameters:
+        -
+          name: filter
+          in: query
+          description: "The filter parameter is used to filter the results of the given endpoint. \n\n\n**Supported filter operators by key:** \n\n`id`: *equals*, *notEquals*, *in*, *notIn* \n\n`name`: *equals*, *notEquals*, *in*, *notIn*, *contains*, *notContains*, *startsWith*, *endsWith* \n\n`email`: *equals*, *notEquals*, *in*, *notIn*, *contains*, *notContains*, *startsWith*, *endsWith* \n\n`country`: *equals*, *notEquals*, *in*, *notIn*, *contains*, *notContains*, *startsWith*, *endsWith*"
+          required: false
+          style: deepObject
+          schema:
+            type: array
+            items:
+              properties:
+                key:
+                  type: string
+                  enum: [id, name, email, country]
+                op:
+                  description: operator
+                  type: string
+                  enum: [equals, notEquals, in, notIn, contains, notContains, startsWith, endsWith]
+                value:
+                  description: 'The property value.'
+                  oneOf: [{ title: String, type: string }, { title: Array, type: array, items: { type: string } }]
+              type: object
+              additionalProperties: false
+        -
+          name: include
+          in: query
+          required: false
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - invoices
+        -
+          name: per_page
+          in: query
+          description: 'Number of items per page. Default: 15, Max: 100'
+          required: false
+          schema:
+            type: integer
+            example: 15
+        -
+          name: page
+          in: query
+          description: 'Page number.'
+          required: false
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: 'List customers'
+          content:
+            application/json:
+              schema:
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/CustomerResource' }, x-description-ignore: true, x-example-ignore: true }
+                  meta: { description: 'Pagination meta data', properties: { current_page: { description: 'The current page number', type: integer, example: 1 }, from: { description: 'The first item being returned in the current page', type: integer, example: 1, nullable: true }, path: { description: 'The base path for the paginated results', type: string, example: 'https://api.example.com/items' }, per_page: { description: 'The number of items shown per page', type: integer, example: 15 }, last_page: { description: 'The last page number', type: integer, example: 10 }, to: { description: 'The last item being returned in the current page', type: integer, example: 15, nullable: true }, total: { description: 'The total number of items', type: integer, example: 150 }, links: { description: 'Pagination links array', type: array, items: { type: object } } }, type: object, x-example-ignore: true }
+                type: object
+        '401':
+          description: Unauthorized
+        '403':
+          description: Unauthorized
+        '429':
+          description: 'Too Many Requests'
+          content:
+            application/json:
+              schema:
+                properties:
+                  message: { description: 'Too Many Requests', type: string, example: 'Too Many Requests' }
+                type: object
+  '/api/v1/customers/{id}':
+    get:
+      summary: 'Get customer V1'
+      description: 'Get customer'
+      operationId: 'GET::api-v1-customers-id'
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        -
+          name: include
+          in: query
+          required: false
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - invoices
+      responses:
+        '200':
+          description: 'Get customer'
+          content:
+            application/json:
+              schema:
+                properties:
+                  data: { $ref: '#/components/schemas/CustomerResource' }
+                type: object
+        '401':
+          description: Unauthorized
+        '403':
+          description: Unauthorized
+        '404':
+          description: 'Not Found'
+        '429':
+          description: 'Too Many Requests'
+          content:
+            application/json:
+              schema:
+                properties:
+                  message: { description: 'Too Many Requests', type: string, example: 'Too Many Requests' }
+                type: object
+  /api/v1/invoices:
+    get:
+      summary: 'List invoices V1'
+      description: 'List invoices'
+      operationId: 'GET::api-v1-invoices'
+      parameters:
+        -
+          name: filter
+          in: query
+          description: "The filter parameter is used to filter the results of the given endpoint. \n\n\n**Supported filter operators by key:** \n\n`id`: *equals*, *notEquals*, *in*, *notIn* \n\n`invoice_number`: *equals*, *notEquals*, *in*, *notIn*, *contains*, *notContains*, *startsWith*, *endsWith* \n\n`status`: *equals*, *notEquals*, *in*, *notIn* \n\n`issued_at`: *equals*, *notEquals*, *lessThan*, *lessThanOrEquals*, *greaterThan*, *greaterThanOrEquals* \n\n`due_at`: *equals*, *notEquals*, *lessThan*, *lessThanOrEquals*, *greaterThan*, *greaterThanOrEquals* \n\n`paid_at`: *equals*, *notEquals*, *lessThan*, *lessThanOrEquals*, *greaterThan*, *greaterThanOrEquals* \n\n`created_at`: *equals*, *notEquals*, *lessThan*, *lessThanOrEquals*, *greaterThan*, *greaterThanOrEquals* \n\n`updated_at`: *equals*, *notEquals*, *lessThan*, *lessThanOrEquals*, *greaterThan*, *greaterThanOrEquals*"
+          required: false
+          style: deepObject
+          schema:
+            type: array
+            items:
+              properties:
+                key:
+                  type: string
+                  enum: [id, invoice_number, status, issued_at, due_at, paid_at, created_at, updated_at]
+                op:
+                  description: operator
+                  type: string
+                  enum: [equals, notEquals, in, notIn, contains, notContains, startsWith, endsWith, lessThan, lessThanOrEquals, greaterThan, greaterThanOrEquals]
+                value:
+                  description: 'The property value.'
+                  oneOf: [{ title: String, type: string }, { title: Array, type: array, items: { type: string } }]
+              type: object
+              additionalProperties: false
+        -
+          name: include
+          in: query
+          required: false
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - customer
+                - lineItems
+        -
+          name: x-pagination
+          in: header
+          description: "Controls the pagination format. Available types: simple, table, cursor. Defaults to 'simple' if not specified."
+          required: false
+          schema:
+            type: string
+            enum:
+              - simple
+              - table
+              - cursor
+            example: simple
+        -
+          name: per_page
+          in: query
+          description: 'Number of items per page. Default: 15, Max: 100'
+          required: false
+          schema:
+            type: integer
+            example: 15
+        -
+          name: page
+          in: query
+          description: 'Page number. Only used with simple and table pagination.'
+          required: false
+          schema:
+            type: integer
+            example: 1
+        -
+          name: cursor
+          in: query
+          description: 'The cursor to use for the paginated call. Only used with cursor pagination. Not compatible with page parameter'
+          required: false
+          schema:
+            type: string
+            example: eyJpZCI6MTUsIl9wb2ludHNUb05leHRJdGVtcyI6dHJ1ZX0
+      responses:
+        '200':
+          description: 'List invoices'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - { title: 'Paginated Response: simple', properties: { data: { type: array, items: { $ref: '#/components/schemas/InvoiceResource' }, x-description-ignore: true, x-example-ignore: true }, meta: { description: 'Pagination meta data', properties: { current_page: { description: 'The current page number', type: integer, example: 1 }, from: { description: 'The first item being returned in the current page', type: integer, example: 1, nullable: true }, path: { description: 'The base path for the paginated results', type: string, example: 'https://api.example.com/items' }, per_page: { description: 'The number of items shown per page', type: integer, example: 15 }, last_page: { description: 'The last page number', type: integer, example: 10 }, to: { description: 'The last item being returned in the current page', type: integer, example: 15, nullable: true }, total: { description: 'The total number of items', type: integer, example: 150 }, links: { description: 'Pagination links array', type: array, items: { type: object } } }, type: object, x-example-ignore: true } }, type: object }
+                  - { title: 'Paginated Response: table', properties: { data: { type: array, items: { $ref: '#/components/schemas/InvoiceResource' }, x-description-ignore: true, x-example-ignore: true }, links: { properties: { first: { description: 'URL to the first page', type: string, example: 'https://api.example.com/items?page=1', nullable: true }, last: { description: 'URL to the last page', type: string, example: 'https://api.example.com/items?page=10', nullable: true }, prev: { description: 'URL to the previous page', type: string, example: null, nullable: true }, next: { description: 'URL to the next page', type: string, example: 'https://api.example.com/items?page=2', nullable: true } }, type: object, x-description-ignore: true, x-example-ignore: true }, meta: { properties: { current_page: { description: 'The current page number', type: integer, example: 1 }, from: { description: 'The first item being returned in the current page', type: integer, example: 1, nullable: true }, last_page: { description: 'The last page number', type: integer, example: 10 }, links: { type: array, items: { properties: { url: { description: 'URL for the pagination link', type: string, example: 'https://api.example.com/items?page=2', nullable: true }, label: { description: 'Label for the pagination link', type: string, example: '2' }, active: { description: 'Whether this link represents the current page', type: boolean, example: false } }, type: object } }, path: { description: 'The base path for the paginated results', type: string, example: 'https://api.example.com/items' }, per_page: { description: 'The number of items shown per page', type: integer, example: 15 }, to: { description: 'The last item being returned in the current page', type: integer, example: 15, nullable: true }, total: { description: 'The total number of items', type: integer, example: 150 } }, type: object, x-description-ignore: true, x-example-ignore: true } }, type: object }
+                  - { title: 'Paginated Response: cursor', properties: { data: { type: array, items: { $ref: '#/components/schemas/InvoiceResource' }, x-description-ignore: true, x-example-ignore: true }, links: { description: 'Pagination links', properties: { first: { description: 'URL to the first page', type: string, example: 'https://api.example.com/items?cursor=eyJpZCI6MSwiX3BvaW50c1RvTmV4dEl0ZW1zIjp0cnVlfQ', nullable: true }, last: { description: 'URL to the last page', type: string, example: null, nullable: true }, prev: { description: 'URL to the previous page', type: string, example: null, nullable: true }, next: { description: 'URL to the next page', type: string, example: 'https://api.example.com/items?cursor=eyJpZCI6MTYsIl9wb2ludHNUb05leHRJdGVtcyI6dHJ1ZX0', nullable: true } }, type: object, x-example-ignore: true }, meta: { description: 'Pagination meta data', properties: { path: { description: 'The base path for the paginated results', type: string, example: 'https://api.example.com/items' }, per_page: { description: 'The number of items shown per page', type: integer, example: 15 }, next_cursor: { description: 'Cursor for the next page', type: string, example: eyJpZCI6MTYsIl9wb2ludHNUb05leHRJdGVtcyI6dHJ1ZX0, nullable: true }, prev_cursor: { description: 'Cursor for the previous page', type: string, example: null, nullable: true } }, type: object, x-example-ignore: true } }, type: object }
+        '401':
+          description: Unauthorized
+        '403':
+          description: Unauthorized
+        '429':
+          description: 'Too Many Requests'
+          content:
+            application/json:
+              schema:
+                properties:
+                  message: { description: 'Too Many Requests', type: string, example: 'Too Many Requests' }
+                type: object
+  '/api/v1/invoices/{id}':
+    get:
+      summary: 'Get invoice V1'
+      description: 'Get invoice'
+      operationId: 'GET::api-v1-invoices-id'
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        -
+          name: include
+          in: query
+          required: false
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - customer
+                - lineItems
+      responses:
+        '200':
+          description: 'Get invoice'
+          content:
+            application/json:
+              schema:
+                properties:
+                  data: { $ref: '#/components/schemas/InvoiceResource' }
+                type: object
+        '401':
+          description: Unauthorized
+        '403':
+          description: Unauthorized
+        '404':
+          description: 'Not Found'
+        '429':
+          description: 'Too Many Requests'
+          content:
+            application/json:
+              schema:
+                properties:
+                  message: { description: 'Too Many Requests', type: string, example: 'Too Many Requests' }
+                type: object
+  '/api/v1/invoices/{id}/line-items':
+    get:
+      summary: 'List line items for an invoice V1'
+      description: 'List line items for an invoice'
+      operationId: 'GET::api-v1-invoices-id-line-items'
+      parameters:
+        -
+          name: filter
+          in: query
+          description: "The filter parameter is used to filter the results of the given endpoint. \n\n\n**Supported filter operators by key:** \n\n`id`: *equals*, *notEquals*, *in*, *notIn* \n\n`product_name`: *equals*, *notEquals*, *in*, *notIn*, *contains*, *notContains*, *startsWith*, *endsWith*"
+          required: false
+          style: deepObject
+          schema:
+            type: array
+            items:
+              properties:
+                key:
+                  type: string
+                  enum: [id, product_name]
+                op:
+                  description: operator
+                  type: string
+                  enum: [equals, notEquals, in, notIn, contains, notContains, startsWith, endsWith]
+                value:
+                  description: 'The property value.'
+                  oneOf: [{ title: String, type: string }, { title: Array, type: array, items: { type: string } }]
+              type: object
+              additionalProperties: false
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        -
+          name: per_page
+          in: query
+          description: 'Number of items per page. Default: 15, Max: 100'
+          required: false
+          schema:
+            type: integer
+            example: 15
+        -
+          name: page
+          in: query
+          description: 'Page number.'
+          required: false
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: 'List line items for an invoice'
+          content:
+            application/json:
+              schema:
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/LineItemResource' }, x-description-ignore: true, x-example-ignore: true }
+                  meta: { description: 'Pagination meta data', properties: { current_page: { description: 'The current page number', type: integer, example: 1 }, from: { description: 'The first item being returned in the current page', type: integer, example: 1, nullable: true }, path: { description: 'The base path for the paginated results', type: string, example: 'https://api.example.com/items' }, per_page: { description: 'The number of items shown per page', type: integer, example: 15 }, last_page: { description: 'The last page number', type: integer, example: 10 }, to: { description: 'The last item being returned in the current page', type: integer, example: 15, nullable: true }, total: { description: 'The total number of items', type: integer, example: 150 }, links: { description: 'Pagination links array', type: array, items: { type: object } } }, type: object, x-example-ignore: true }
+                type: object
+        '401':
+          description: Unauthorized
+        '403':
+          description: Unauthorized
+        '429':
+          description: 'Too Many Requests'
+          content:
+            application/json:
+              schema:
+                properties:
+                  message: { description: 'Too Many Requests', type: string, example: 'Too Many Requests' }
+                type: object
   /api/v1/test-models:
     get:
       summary: '🔒 List test resources V1'
@@ -490,6 +830,171 @@ components:
           enum:
             - active
             - inactive
+      type: object
+      additionalProperties: false
+    CustomerResource:
+      required:
+        - id
+        - name
+        - email
+        - country
+        - is_active
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: 'Acme Corporation'
+        email:
+          type: string
+          format: email
+          example: contact@acme.com
+        phone:
+          type:
+            - string
+            - 'null'
+          example: +1-555-0123
+        country:
+          type: string
+          example: US
+        is_active:
+          type: boolean
+          example: true
+        created_at:
+          type: string
+          format: date-time
+          example: '2024-01-15T10:30:00+00:00'
+        updated_at:
+          type: string
+          format: date-time
+          example: '2024-01-15T10:30:00+00:00'
+        invoices:
+          type: array
+          items:
+            $ref: '#/components/schemas/InvoiceResource'
+      type: object
+      additionalProperties: false
+    InvoiceResource:
+      required:
+        - id
+        - invoice_number
+        - customer_id
+        - status
+        - total_amount
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: integer
+          example: 1
+        invoice_number:
+          type: string
+          example: INV-2024-001
+        customer_id:
+          type: integer
+          example: 1
+        status:
+          type: string
+          enum:
+            - sent
+            - paid
+            - overdue
+          example: sent
+        total_amount:
+          type: number
+          format: float
+          example: 1500
+        issued_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          example: '2024-01-15T10:00:00+00:00'
+        due_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          example: '2024-02-15T10:00:00+00:00'
+        paid_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          example: '2024-02-10T14:30:00+00:00'
+        created_at:
+          type: string
+          format: date-time
+          example: '2024-01-15T10:00:00+00:00'
+        updated_at:
+          type: string
+          format: date-time
+          example: '2024-01-15T10:00:00+00:00'
+        customer:
+          oneOf:
+            -
+              $ref: '#/components/schemas/CustomerResource'
+            -
+              type: 'null'
+        line_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/LineItemResource'
+      type: object
+      additionalProperties: false
+    LineItemResource:
+      required:
+        - id
+        - invoice_id
+        - product_name
+        - quantity
+        - unit_price
+        - total_price
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: integer
+          example: 1
+        invoice_id:
+          type: integer
+          example: 1
+        product_name:
+          type: string
+          example: 'Premium Widget'
+        description:
+          type:
+            - string
+            - 'null'
+          example: 'High-quality widget with extended warranty'
+        quantity:
+          type: integer
+          example: 10
+        unit_price:
+          type: number
+          format: float
+          example: 50
+        total_price:
+          type: number
+          format: float
+          example: 500
+        discount_percent:
+          type:
+            - number
+            - 'null'
+          format: float
+          example: 10
+        created_at:
+          type: string
+          format: date-time
+          example: '2024-01-15T10:00:00+00:00'
+        updated_at:
+          type: string
+          format: date-time
+          example: '2024-01-15T10:00:00+00:00'
       type: object
       additionalProperties: false
     TestResource:
