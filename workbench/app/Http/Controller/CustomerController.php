@@ -20,6 +20,7 @@ class CustomerController
         resource: CustomerResource::class,
         description: 'List customers',
         includes: ['invoices'],
+        featureFlag: 'beta-customers',
         parameters: [
             new FilterParameter([
                 new IdFilter,
@@ -52,6 +53,23 @@ class CustomerController
         includes: ['invoices'],
     )]
     public function show(int $id): CustomerResource
+    {
+        $customer = QueryBuilder::for(Customer::class)
+            ->where('id', $id)
+            ->allowedIncludes(['invoices'])
+            ->firstOrFail();
+
+        return new CustomerResource($customer);
+    }
+
+    #[GetEndpoint(
+        path: '/api/v1/customers/{id}/legacy',
+        resource: CustomerResource::class,
+        description: 'Get customer (legacy endpoint)',
+        includes: ['invoices'],
+        deprecated: new \DateTimeImmutable('2025-07-01'),
+    )]
+    public function legacyShow(int $id): CustomerResource
     {
         $customer = QueryBuilder::for(Customer::class)
             ->where('id', $id)

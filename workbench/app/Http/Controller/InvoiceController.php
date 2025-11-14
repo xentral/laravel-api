@@ -4,10 +4,12 @@ namespace Workbench\App\Http\Controller;
 
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Workbench\App\Enum\InvoiceStatusEnum;
+use Workbench\App\Http\Requests\CreateInvoiceRequest;
 use Workbench\App\Http\Resources\InvoiceResource;
 use Workbench\App\Models\Invoice;
 use Xentral\LaravelApi\OpenApi\Endpoints\GetEndpoint;
 use Xentral\LaravelApi\OpenApi\Endpoints\ListEndpoint;
+use Xentral\LaravelApi\OpenApi\Endpoints\PostEndpoint;
 use Xentral\LaravelApi\OpenApi\Filters\DateFilter;
 use Xentral\LaravelApi\OpenApi\Filters\EnumFilter;
 use Xentral\LaravelApi\OpenApi\Filters\FilterParameter;
@@ -80,6 +82,19 @@ class InvoiceController
             ->where('id', $id)
             ->allowedIncludes(['customer', 'lineItems'])
             ->firstOrFail();
+
+        return new InvoiceResource($invoice);
+    }
+
+    #[PostEndpoint(
+        path: '/api/v1/invoices',
+        resource: InvoiceResource::class,
+        description: 'Create invoice',
+        request: CreateInvoiceRequest::class,
+    )]
+    public function create(CreateInvoiceRequest $request): InvoiceResource
+    {
+        $invoice = Invoice::create($request->validated());
 
         return new InvoiceResource($invoice);
     }

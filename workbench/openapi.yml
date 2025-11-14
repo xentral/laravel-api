@@ -14,8 +14,8 @@ servers:
 paths:
   /api/v1/customers:
     get:
-      summary: 'List customers V1'
-      description: 'List customers'
+      summary: '🔒 List customers V1'
+      description: "This endpoint is only available if the feature flag `beta-customers` is enabled.\n\nList customers"
       operationId: 'GET::api-v1-customers'
       parameters:
         -
@@ -89,6 +89,7 @@ paths:
                 properties:
                   message: { description: 'Too Many Requests', type: string, example: 'Too Many Requests' }
                 type: object
+      x-feature_flag: beta-customers
   '/api/v1/customers/{id}':
     get:
       summary: 'Get customer V1'
@@ -135,6 +136,60 @@ paths:
                 properties:
                   message: { description: 'Too Many Requests', type: string, example: 'Too Many Requests' }
                 type: object
+  '/api/v1/customers/{id}/legacy':
+    get:
+      summary: 'Get customer (legacy endpoint) V1'
+      description: 'Get customer (legacy endpoint)'
+      operationId: 'GET::api-v1-customers-id-legacy'
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        -
+          name: include
+          in: query
+          required: false
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - invoices
+      responses:
+        '200':
+          description: 'Get customer (legacy endpoint)'
+          headers:
+            Sunset:
+              description: 'This endpoint is deprecated and will be sunset on the example date. If an endpoint is over this date but still accessible, it can be removed any time.'
+              schema:
+                type: string
+                format: http-date
+                example: 'Thu, 01 Jan 2026 00:00:00 GMT'
+          content:
+            application/json:
+              schema:
+                properties:
+                  data: { $ref: '#/components/schemas/CustomerResource' }
+                type: object
+        '401':
+          description: Unauthorized
+        '403':
+          description: Unauthorized
+        '404':
+          description: 'Not Found'
+        '429':
+          description: 'Too Many Requests'
+          content:
+            application/json:
+              schema:
+                properties:
+                  message: { description: 'Too Many Requests', type: string, example: 'Too Many Requests' }
+                type: object
+      deprecated: true
   /api/v1/invoices:
     get:
       summary: 'List invoices V1'
@@ -221,6 +276,45 @@ paths:
                   - { title: 'Paginated Response: simple', properties: { data: { type: array, items: { $ref: '#/components/schemas/InvoiceResource' }, x-description-ignore: true, x-example-ignore: true }, meta: { description: 'Pagination meta data', properties: { current_page: { description: 'The current page number', type: integer, example: 1 }, from: { description: 'The first item being returned in the current page', type: integer, example: 1, nullable: true }, path: { description: 'The base path for the paginated results', type: string, example: 'https://api.example.com/items' }, per_page: { description: 'The number of items shown per page', type: integer, example: 15 }, last_page: { description: 'The last page number', type: integer, example: 10 }, to: { description: 'The last item being returned in the current page', type: integer, example: 15, nullable: true }, total: { description: 'The total number of items', type: integer, example: 150 }, links: { description: 'Pagination links array', type: array, items: { type: object } } }, type: object, x-example-ignore: true } }, type: object }
                   - { title: 'Paginated Response: table', properties: { data: { type: array, items: { $ref: '#/components/schemas/InvoiceResource' }, x-description-ignore: true, x-example-ignore: true }, links: { properties: { first: { description: 'URL to the first page', type: string, example: 'https://api.example.com/items?page=1', nullable: true }, last: { description: 'URL to the last page', type: string, example: 'https://api.example.com/items?page=10', nullable: true }, prev: { description: 'URL to the previous page', type: string, example: null, nullable: true }, next: { description: 'URL to the next page', type: string, example: 'https://api.example.com/items?page=2', nullable: true } }, type: object, x-description-ignore: true, x-example-ignore: true }, meta: { properties: { current_page: { description: 'The current page number', type: integer, example: 1 }, from: { description: 'The first item being returned in the current page', type: integer, example: 1, nullable: true }, last_page: { description: 'The last page number', type: integer, example: 10 }, links: { type: array, items: { properties: { url: { description: 'URL for the pagination link', type: string, example: 'https://api.example.com/items?page=2', nullable: true }, label: { description: 'Label for the pagination link', type: string, example: '2' }, active: { description: 'Whether this link represents the current page', type: boolean, example: false } }, type: object } }, path: { description: 'The base path for the paginated results', type: string, example: 'https://api.example.com/items' }, per_page: { description: 'The number of items shown per page', type: integer, example: 15 }, to: { description: 'The last item being returned in the current page', type: integer, example: 15, nullable: true }, total: { description: 'The total number of items', type: integer, example: 150 } }, type: object, x-description-ignore: true, x-example-ignore: true } }, type: object }
                   - { title: 'Paginated Response: cursor', properties: { data: { type: array, items: { $ref: '#/components/schemas/InvoiceResource' }, x-description-ignore: true, x-example-ignore: true }, links: { description: 'Pagination links', properties: { first: { description: 'URL to the first page', type: string, example: 'https://api.example.com/items?cursor=eyJpZCI6MSwiX3BvaW50c1RvTmV4dEl0ZW1zIjp0cnVlfQ', nullable: true }, last: { description: 'URL to the last page', type: string, example: null, nullable: true }, prev: { description: 'URL to the previous page', type: string, example: null, nullable: true }, next: { description: 'URL to the next page', type: string, example: 'https://api.example.com/items?cursor=eyJpZCI6MTYsIl9wb2ludHNUb05leHRJdGVtcyI6dHJ1ZX0', nullable: true } }, type: object, x-example-ignore: true }, meta: { description: 'Pagination meta data', properties: { path: { description: 'The base path for the paginated results', type: string, example: 'https://api.example.com/items' }, per_page: { description: 'The number of items shown per page', type: integer, example: 15 }, next_cursor: { description: 'Cursor for the next page', type: string, example: eyJpZCI6MTYsIl9wb2ludHNUb05leHRJdGVtcyI6dHJ1ZX0, nullable: true }, prev_cursor: { description: 'Cursor for the previous page', type: string, example: null, nullable: true } }, type: object, x-example-ignore: true } }, type: object }
+        '401':
+          description: Unauthorized
+        '403':
+          description: Unauthorized
+        '429':
+          description: 'Too Many Requests'
+          content:
+            application/json:
+              schema:
+                properties:
+                  message: { description: 'Too Many Requests', type: string, example: 'Too Many Requests' }
+                type: object
+    post:
+      summary: 'Create invoice V1'
+      description: 'Create invoice'
+      operationId: 'POST::api-v1-invoices'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateInvoiceRequest'
+      responses:
+        '200':
+          description: 'Create invoice'
+          content:
+            application/json:
+              schema:
+                properties:
+                  data: { $ref: '#/components/schemas/InvoiceResource' }
+                type: object
+        '422':
+          description: 'Failed validation'
+          content:
+            application/json:
+              schema:
+                properties:
+                  message: { description: 'Error messages', type: string, example: 'The given data was invalid.' }
+                  errors: { description: 'Error messages', type: object, example: { status: ['The status field is required.'], total_amount: ['The total amount field is required.'], issued_at: ['The issued at field must be a valid date.'] } }
+                type: object
         '401':
           description: Unauthorized
         '403':
@@ -352,484 +446,45 @@ paths:
                 properties:
                   message: { description: 'Too Many Requests', type: string, example: 'Too Many Requests' }
                 type: object
-  /api/v1/test-models:
-    get:
-      summary: '🔒 List test resources V1'
-      description: "This endpoint is only available if the feature flag `beta-users` is enabled.\n\nThis endpoint requires the following scopes: `test-models:read`.\n\nList test resources"
-      operationId: 'GET::api-v1-test-models'
-      parameters:
-        -
-          name: filter
-          in: query
-          description: "The filter parameter is used to filter the results of the given endpoint. \n\n\n**Supported filter operators by key:** \n\n`id`: *equals*, *notEquals*, *in*, *notIn* \n\n`name`: *equals*, *notEquals*, *in*, *notIn*, *contains*, *notContains*, *startsWith*, *endsWith* \n\n`status`: *equals*, *notEquals*, *in*, *notIn* \n\n`created_at`:  \n\n`updated_at`: "
-          required: false
-          style: deepObject
-          schema:
-            type: array
-            items:
-              properties:
-                key:
-                  type: string
-                  enum: [id, name, status, created_at, updated_at]
-                op:
-                  description: operator
-                  type: string
-                  enum: [equals, notEquals, in, notIn, contains, notContains, startsWith, endsWith]
-                value:
-                  description: 'The property value.'
-                  oneOf: [{ title: String, type: string }, { title: Array, type: array, items: { type: string } }]
-              type: object
-              additionalProperties: false
-        -
-          name: include
-          in: query
-          required: false
-          explode: false
-          schema:
-            type: array
-            items:
-              type: string
-              enum:
-                - 'test model'
-        -
-          name: per_page
-          in: query
-          description: 'Number of items per page. Default: 15, Max: 1337'
-          required: false
-          schema:
-            type: integer
-            example: 15
-        -
-          name: page
-          in: query
-          description: 'Page number.'
-          required: false
-          schema:
-            type: integer
-            example: 1
-      responses:
-        '200':
-          description: 'List test resources'
-          content:
-            application/json:
-              schema:
-                properties:
-                  data: { type: array, items: { $ref: '#/components/schemas/TestResource' }, x-description-ignore: true, x-example-ignore: true }
-                  meta: { description: 'Pagination meta data', properties: { current_page: { description: 'The current page number', type: integer, example: 1 }, from: { description: 'The first item being returned in the current page', type: integer, example: 1, nullable: true }, path: { description: 'The base path for the paginated results', type: string, example: 'https://api.example.com/items' }, per_page: { description: 'The number of items shown per page', type: integer, example: 15 }, last_page: { description: 'The last page number', type: integer, example: 10 }, to: { description: 'The last item being returned in the current page', type: integer, example: 15, nullable: true }, total: { description: 'The total number of items', type: integer, example: 150 }, links: { description: 'Pagination links array', type: array, items: { type: object } } }, type: object, x-example-ignore: true }
-                type: object
-        '401':
-          description: Unauthorized
-        '403':
-          description: Unauthorized
-        '429':
-          description: 'Too Many Requests'
-          content:
-            application/json:
-              schema:
-                properties:
-                  message: { description: 'Too Many Requests', type: string, example: 'Too Many Requests' }
-                type: object
-      x-feature_flag: beta-users
-      x-scopes:
-        - 'test-models:read'
-    post:
-      summary: 'update test resource V1'
-      description: 'update test resource'
-      operationId: 'POST::api-v1-test-models'
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateTestModelRequest'
-      responses:
-        '200':
-          description: 'update test resource'
-          content:
-            application/json:
-              schema:
-                properties:
-                  data: { $ref: '#/components/schemas/TestResource' }
-                type: object
-        '422':
-          description: 'Failed validation'
-          content:
-            application/json:
-              schema:
-                properties:
-                  message: { description: 'Error messages', type: string, example: 'The given data was invalid.' }
-                  errors: { description: 'Error messages', type: object, example: { name: ['The name field must be a string.'], status: ['The selected status is invalid.'] } }
-                type: object
-        '401':
-          description: Unauthorized
-        '403':
-          description: Unauthorized
-        '429':
-          description: 'Too Many Requests'
-          content:
-            application/json:
-              schema:
-                properties:
-                  message: { description: 'Too Many Requests', type: string, example: 'Too Many Requests' }
-                type: object
-  /api/v1/test-models-multi-pagination:
-    get:
-      summary: 'List test resources with multiple pagination options V1'
-      description: 'List test resources with multiple pagination options'
-      operationId: 'GET::api-v1-test-models-multi-pagination'
-      parameters:
-        -
-          name: filter
-          in: query
-          description: "The filter parameter is used to filter the results of the given endpoint. \n\n\n**Supported filter operators by key:** \n\n`id`: *equals*, *notEquals*, *in*, *notIn* \n\n`name`: *equals*, *notEquals*, *in*, *notIn*, *contains*, *notContains*, *startsWith*, *endsWith* \n\n`status`: *equals*, *notEquals*, *in*, *notIn*"
-          required: false
-          style: deepObject
-          schema:
-            type: array
-            items:
-              properties:
-                key:
-                  type: string
-                  enum: [id, name, status]
-                op:
-                  description: operator
-                  type: string
-                  enum: [equals, notEquals, in, notIn, contains, notContains, startsWith, endsWith]
-                value:
-                  description: 'The property value.'
-                  oneOf: [{ title: String, type: string }, { title: Array, type: array, items: { type: string } }]
-              type: object
-              additionalProperties: false
-        -
-          name: include
-          in: query
-          required: false
-          explode: false
-          schema:
-            type: array
-            items:
-              type: string
-              enum:
-                - 'test model'
-        -
-          name: x-pagination
-          in: header
-          description: "Controls the pagination format. Available types: simple, table, cursor. Defaults to 'simple' if not specified."
-          required: false
-          schema:
-            type: string
-            enum:
-              - simple
-              - table
-              - cursor
-            example: simple
-        -
-          name: per_page
-          in: query
-          description: 'Number of items per page. Default: 15, Max: 100'
-          required: false
-          schema:
-            type: integer
-            example: 15
-        -
-          name: page
-          in: query
-          description: 'Page number. Only used with simple and table pagination.'
-          required: false
-          schema:
-            type: integer
-            example: 1
-        -
-          name: cursor
-          in: query
-          description: 'The cursor to use for the paginated call. Only used with cursor pagination. Not compatible with page parameter'
-          required: false
-          schema:
-            type: string
-            example: eyJpZCI6MTUsIl9wb2ludHNUb05leHRJdGVtcyI6dHJ1ZX0
-      responses:
-        '200':
-          description: 'List test resources with multiple pagination options'
-          content:
-            application/json:
-              schema:
-                oneOf:
-                  - { title: 'Paginated Response: simple', properties: { data: { type: array, items: { $ref: '#/components/schemas/TestResource' }, x-description-ignore: true, x-example-ignore: true }, meta: { description: 'Pagination meta data', properties: { current_page: { description: 'The current page number', type: integer, example: 1 }, from: { description: 'The first item being returned in the current page', type: integer, example: 1, nullable: true }, path: { description: 'The base path for the paginated results', type: string, example: 'https://api.example.com/items' }, per_page: { description: 'The number of items shown per page', type: integer, example: 15 }, last_page: { description: 'The last page number', type: integer, example: 10 }, to: { description: 'The last item being returned in the current page', type: integer, example: 15, nullable: true }, total: { description: 'The total number of items', type: integer, example: 150 }, links: { description: 'Pagination links array', type: array, items: { type: object } } }, type: object, x-example-ignore: true } }, type: object }
-                  - { title: 'Paginated Response: table', properties: { data: { type: array, items: { $ref: '#/components/schemas/TestResource' }, x-description-ignore: true, x-example-ignore: true }, links: { properties: { first: { description: 'URL to the first page', type: string, example: 'https://api.example.com/items?page=1', nullable: true }, last: { description: 'URL to the last page', type: string, example: 'https://api.example.com/items?page=10', nullable: true }, prev: { description: 'URL to the previous page', type: string, example: null, nullable: true }, next: { description: 'URL to the next page', type: string, example: 'https://api.example.com/items?page=2', nullable: true } }, type: object, x-description-ignore: true, x-example-ignore: true }, meta: { properties: { current_page: { description: 'The current page number', type: integer, example: 1 }, from: { description: 'The first item being returned in the current page', type: integer, example: 1, nullable: true }, last_page: { description: 'The last page number', type: integer, example: 10 }, links: { type: array, items: { properties: { url: { description: 'URL for the pagination link', type: string, example: 'https://api.example.com/items?page=2', nullable: true }, label: { description: 'Label for the pagination link', type: string, example: '2' }, active: { description: 'Whether this link represents the current page', type: boolean, example: false } }, type: object } }, path: { description: 'The base path for the paginated results', type: string, example: 'https://api.example.com/items' }, per_page: { description: 'The number of items shown per page', type: integer, example: 15 }, to: { description: 'The last item being returned in the current page', type: integer, example: 15, nullable: true }, total: { description: 'The total number of items', type: integer, example: 150 } }, type: object, x-description-ignore: true, x-example-ignore: true } }, type: object }
-                  - { title: 'Paginated Response: cursor', properties: { data: { type: array, items: { $ref: '#/components/schemas/TestResource' }, x-description-ignore: true, x-example-ignore: true }, links: { description: 'Pagination links', properties: { first: { description: 'URL to the first page', type: string, example: 'https://api.example.com/items?cursor=eyJpZCI6MSwiX3BvaW50c1RvTmV4dEl0ZW1zIjp0cnVlfQ', nullable: true }, last: { description: 'URL to the last page', type: string, example: null, nullable: true }, prev: { description: 'URL to the previous page', type: string, example: null, nullable: true }, next: { description: 'URL to the next page', type: string, example: 'https://api.example.com/items?cursor=eyJpZCI6MTYsIl9wb2ludHNUb05leHRJdGVtcyI6dHJ1ZX0', nullable: true } }, type: object, x-example-ignore: true }, meta: { description: 'Pagination meta data', properties: { path: { description: 'The base path for the paginated results', type: string, example: 'https://api.example.com/items' }, per_page: { description: 'The number of items shown per page', type: integer, example: 15 }, next_cursor: { description: 'Cursor for the next page', type: string, example: eyJpZCI6MTYsIl9wb2ludHNUb05leHRJdGVtcyI6dHJ1ZX0, nullable: true }, prev_cursor: { description: 'Cursor for the previous page', type: string, example: null, nullable: true } }, type: object, x-example-ignore: true } }, type: object }
-        '401':
-          description: Unauthorized
-        '403':
-          description: Unauthorized
-        '429':
-          description: 'Too Many Requests'
-          content:
-            application/json:
-              schema:
-                properties:
-                  message: { description: 'Too Many Requests', type: string, example: 'Too Many Requests' }
-                type: object
-  '/api/v1/test-models/{id}':
-    get:
-      summary: 'get test resource V1'
-      description: 'get test resource'
-      operationId: 'GET::api-v1-test-models-id'
-      parameters:
-        -
-          name: id
-          in: path
-          required: true
-          schema:
-            type: string
-        -
-          name: include
-          in: query
-          required: false
-          explode: false
-          schema:
-            type: array
-            items:
-              type: string
-              enum:
-                - 'test resource'
-      responses:
-        '200':
-          description: 'get test resource'
-          content:
-            application/json:
-              schema:
-                properties:
-                  data: { $ref: '#/components/schemas/TestResource' }
-                type: object
-        '401':
-          description: Unauthorized
-        '403':
-          description: Unauthorized
-        '404':
-          description: 'Not Found'
-        '429':
-          description: 'Too Many Requests'
-          content:
-            application/json:
-              schema:
-                properties:
-                  message: { description: 'Too Many Requests', type: string, example: 'Too Many Requests' }
-                type: object
-    delete:
-      summary: 'delete test resource V1'
-      description: 'delete test resource'
-      operationId: 'DELETE::api-v1-test-models-id'
-      parameters:
-        -
-          name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '204':
-          description: 'Resource successfully deleted'
-        '401':
-          description: Unauthorized
-        '403':
-          description: Unauthorized
-        '404':
-          description: 'Not Found'
-        '429':
-          description: 'Too Many Requests'
-          content:
-            application/json:
-              schema:
-                properties:
-                  message: { description: 'Too Many Requests', type: string, example: 'Too Many Requests' }
-                type: object
-    patch:
-      summary: 'update test resource V1'
-      description: 'update test resource'
-      operationId: 'PATCH::api-v1-test-models-id'
-      parameters:
-        -
-          name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateTestModelRequest'
-      responses:
-        '200':
-          description: 'update test resource'
-          content:
-            application/json:
-              schema:
-                properties:
-                  data: { $ref: '#/components/schemas/TestResource' }
-                type: object
-        '422':
-          description: 'Failed validation'
-          content:
-            application/json:
-              schema:
-                properties:
-                  message: { description: 'Error messages', type: string, example: 'The given data was invalid.' }
-                  errors: { description: 'Error messages', type: object, example: { name: ['The name field is invalid.'], status: ['The status field is invalid.'] } }
-                type: object
-        '401':
-          description: Unauthorized
-        '403':
-          description: Unauthorized
-        '404':
-          description: 'Not Found'
-        '429':
-          description: 'Too Many Requests'
-          content:
-            application/json:
-              schema:
-                properties:
-                  message: { description: 'Too Many Requests', type: string, example: 'Too Many Requests' }
-                type: object
-  '/api/v1/test-models/{id}/actions/test':
-    patch:
-      summary: 'Execute test action on test resource V1'
-      description: 'Execute test action on test resource'
-      operationId: 'PATCH::api-v1-test-models-id-actions-test'
-      parameters:
-        -
-          name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '204':
-          description: 'No Content'
-        '401':
-          description: Unauthorized
-        '403':
-          description: Unauthorized
-        '404':
-          description: 'Not Found'
-        '429':
-          description: 'Too Many Requests'
-          content:
-            application/json:
-              schema:
-                properties:
-                  message: { description: 'Too Many Requests', type: string, example: 'Too Many Requests' }
-                type: object
-  '/api/v1/test-models/{id}/legacy':
-    get:
-      summary: 'Legacy endpoint for test resource V1'
-      description: 'Legacy endpoint for test resource'
-      operationId: 'GET::api-v1-test-models-id-legacy'
-      parameters:
-        -
-          name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: 'Legacy endpoint for test resource'
-          headers:
-            Sunset:
-              description: 'This endpoint is deprecated and will be sunset on the example date. If an endpoint is over this date but still accessible, it can be removed any time.'
-              schema:
-                type: string
-                format: http-date
-                example: 'Thu, 01 Jan 2026 00:00:00 GMT'
-          content:
-            application/json:
-              schema:
-                properties:
-                  data: { $ref: '#/components/schemas/TestResource' }
-                type: object
-        '401':
-          description: Unauthorized
-        '403':
-          description: Unauthorized
-        '404':
-          description: 'Not Found'
-        '429':
-          description: 'Too Many Requests'
-          content:
-            application/json:
-              schema:
-                properties:
-                  message: { description: 'Too Many Requests', type: string, example: 'Too Many Requests' }
-                type: object
-      deprecated: true
-  '/api/v1/test-models/{id}/with-problems':
-    patch:
-      summary: 'Update test resource with potential conflict V1'
-      description: 'Update test resource with potential conflict'
-      operationId: 'PATCH::api-v1-test-models-id-with-problems'
-      parameters:
-        -
-          name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateTestModelRequest'
-      responses:
-        '200':
-          description: 'Update test resource with potential conflict'
-          content:
-            application/json:
-              schema:
-                properties:
-                  data: { $ref: '#/components/schemas/TestResource' }
-                type: object
-        '422':
-          description: 'Failed validation'
-          content:
-            application/json:
-              schema:
-                properties:
-                  message: { description: 'Error messages', type: string, example: 'The given data was invalid.' }
-                  errors: { description: 'Error messages', type: object, example: { name: ['The name field is invalid.'], status: ['The status field is invalid.'] } }
-                type: object
-        '401':
-          description: Unauthorized
-        '403':
-          description: Unauthorized
-        '404':
-          description: 'Not Found'
-        '429':
-          description: 'Too Many Requests'
-          content:
-            application/json:
-              schema:
-                properties:
-                  message: { description: 'Too Many Requests', type: string, example: 'Too Many Requests' }
-                type: object
-        '409':
-          description: 'Conflict happened'
-          content:
-            application/json:
-              schema:
-                properties:
-                  type: { type: string, example: 'https://api.xentral.biz/problems/conflict' }
-                  title: { type: string, example: 'Conflict happened' }
-                type: object
 components:
   schemas:
-    CreateTestModelRequest:
+    CreateInvoiceRequest:
+      required:
+        - customer_id
+        - invoice_number
+        - status
+        - total_amount
       properties:
-        name:
+        customer_id:
+          description: 'ID of the customer'
+          type: integer
+        invoice_number:
           type: string
+          maxLength: 50
         status:
           enum:
-            - active
-            - inactive
+            - sent
+            - paid
+            - overdue
+        total_amount:
+          type: number
+          format: decimal
+          minimum: 0
+        issued_at:
+          type:
+            - string
+            - 'null'
+          format: date
+        due_at:
+          type:
+            - string
+            - 'null'
+          format: date
+        paid_at:
+          type:
+            - string
+            - 'null'
+          format: date
       type: object
       additionalProperties: false
     CustomerResource:
@@ -995,44 +650,6 @@ components:
           type: string
           format: date-time
           example: '2024-01-15T10:00:00+00:00'
-      type: object
-      additionalProperties: false
-    TestResource:
-      required:
-        - id
-        - name
-        - created_at
-        - updated_at
-      properties:
-        id:
-          type: integer
-        name:
-          type: string
-        status:
-          enum:
-            - active
-            - inactive
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-      type: object
-      additionalProperties: false
-    UpdateTestModelRequest:
-      properties:
-        name:
-          type:
-            - string
-            - 'null'
-        status:
-          type:
-            - string
-            - 'null'
-          enum:
-            - active
-            - inactive
       type: object
       additionalProperties: false
   securitySchemes:
