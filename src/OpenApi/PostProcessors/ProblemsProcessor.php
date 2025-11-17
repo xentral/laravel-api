@@ -58,7 +58,7 @@ class ProblemsProcessor
             response: (string) $config['status'],
             description: $config['body']['title'] ?? 'Problem occurred',
             content: new MediaType(
-                mediaType: 'application/json',
+                mediaType: $config['content_type'] ?? 'application/json',
                 schema: new Schema(
                     properties: $properties,
                     type: 'object'
