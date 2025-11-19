@@ -47,16 +47,30 @@ class ProblemsProcessor
     {
         $properties = [];
         foreach ($config['body'] as $key => $value) {
-            $properties[] = new Property(
-                property: $key,
-                type: 'string',
-                example: $value
-            );
+
+            if (is_string($value)) {
+                $properties[] = new Property(
+                    property: $key,
+                    description: $config['description'][$key],
+                    type: 'string',
+                    example: $value
+                );
+            } elseif (is_array($value)) {
+                $properties[] = new Property(
+                    ...array_merge(['property' => $key, 'type' => 'string'], $value),
+                );
+            } else {
+                throw new \InvalidArgumentException('Unsupported property type in problem response body.');
+            }
+
         }
+
+        $description = $config['description'] ??
+            (isset($config['body']['title']) && is_string($config['body']['title']) ? $config['body']['title'] : 'Problem occurred');
 
         return new Response(
             response: (string) $config['status'],
-            description: $config['body']['title'] ?? 'Problem occurred',
+            description: $description,
             content: new MediaType(
                 mediaType: $config['content_type'] ?? 'application/json',
                 schema: new Schema(
