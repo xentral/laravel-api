@@ -57,7 +57,7 @@ class ProblemsProcessor
                 );
             } elseif (is_array($value)) {
                 $properties[] = new Property(
-                    ...array_merge(['property' => $key], $value),
+                    ...array_merge(['property' => $key, 'type' => 'string'], $value),
                 );
             } else {
                 throw new \InvalidArgumentException('Unsupported property type in problem response body.');
@@ -65,7 +65,8 @@ class ProblemsProcessor
 
         }
 
-        $description = $config['description'] ?? isset($config['body']['title']) && is_string($config['body']['title']) ? $config['body']['title'] : 'Problem occurred';
+        $description = $config['description'] ??
+            (isset($config['body']['title']) && is_string($config['body']['title']) ? $config['body']['title'] : 'Problem occurred');
 
         return new Response(
             response: (string) $config['status'],
