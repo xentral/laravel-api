@@ -150,3 +150,60 @@ describe('Basic Show Operations', function () {
         expect($response->json('data'))->not->toHaveKey('line_items');
     });
 });
+
+describe('DummyInclude with nested includes', function () {
+    it('can include lineItems.customFields without explicitly including lineItems', function () {
+        $invoice = Invoice::factory()->hasLineItems(2)->create();
+
+        $response = $this->getJson("/api/v1/invoices/{$invoice->id}?include=lineItems.customFields");
+
+        $response->assertOk();
+        $response->assertJsonStructure([
+            'data' => [
+                'id',
+                'invoice_number',
+                'customer_id',
+                'status',
+                'total_amount',
+                'line_items' => [
+                    '*' => [
+                        'id',
+                        'product_name',
+                        'quantity',
+                        'unit_price',
+                        'total_price',
+                        'customFields',
+                    ],
+                ],
+            ],
+        ]);
+
+        $lineItems = $response->json('data.line_items');
+        expect($lineItems)->toHaveCount(2);
+        expect($lineItems[0])->toHaveKey('customFields');
+        expect($lineItems[0]['customFields'])->toBe(['foo' => 'bar']);
+    });
+
+    it('includes customFields when both lineItems and lineItems.customFields are requested', function () {
+        $invoice = Invoice::factory()->hasLineItems(2)->create();
+
+        $response = $this->getJson("/api/v1/invoices/{$invoice->id}?include=lineItems,lineItems.customFields");
+
+        $response->assertOk();
+        $lineItems = $response->json('data.line_items');
+        expect($lineItems)->toHaveCount(2);
+        expect($lineItems[0])->toHaveKey('customFields');
+        expect($lineItems[0]['customFields'])->toBe(['foo' => 'bar']);
+    });
+
+    it('does not include customFields when only lineItems is requested', function () {
+        $invoice = Invoice::factory()->hasLineItems(2)->create();
+
+        $response = $this->getJson("/api/v1/invoices/{$invoice->id}?include=lineItems");
+
+        $response->assertOk();
+        $lineItems = $response->json('data.line_items');
+        expect($lineItems)->toHaveCount(2);
+        expect($lineItems[0])->not->toHaveKey('customFields');
+    });
+});

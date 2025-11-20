@@ -734,7 +734,7 @@ describe('Invoice Relation Filters', function () {
         ]]);
         $response = $this->getJson("/api/v1/invoices?{$query}");
 
-        $response->assertOk();
+        $response->assertOk()->dump();
         $response->assertJsonCount(4, 'data');
     });
 

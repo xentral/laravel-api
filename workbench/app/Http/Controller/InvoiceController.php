@@ -16,6 +16,7 @@ use Xentral\LaravelApi\OpenApi\Filters\FilterParameter;
 use Xentral\LaravelApi\OpenApi\Filters\IdFilter;
 use Xentral\LaravelApi\OpenApi\Filters\StringFilter;
 use Xentral\LaravelApi\OpenApi\PaginationType;
+use Xentral\LaravelApi\Query\DummyInclude;
 use Xentral\LaravelApi\Query\Filters\QueryFilter;
 use Xentral\LaravelApi\Query\QueryBuilder;
 
@@ -65,7 +66,7 @@ class InvoiceController
                     QueryFilter::number('lineItems.unit_price', 'lineItems.unit_price'),
                     QueryFilter::number('lineItems.total_price', 'lineItems.total_price'),
                 )
-                ->allowedIncludes(['customer', 'lineItems'])
+                ->allowedIncludes(['customer', 'lineItems', DummyInclude::make('lineItems.customFields')])
                 ->apiPaginate(100, PaginationType::SIMPLE, PaginationType::TABLE, PaginationType::CURSOR)
         );
     }
@@ -80,7 +81,7 @@ class InvoiceController
     {
         $invoice = QueryBuilder::for(Invoice::class)
             ->where('id', $id)
-            ->allowedIncludes(['customer', 'lineItems'])
+            ->allowedIncludes(['customer', 'lineItems', DummyInclude::make('lineItems.customFields')])
             ->firstOrFail();
 
         return new InvoiceResource($invoice);

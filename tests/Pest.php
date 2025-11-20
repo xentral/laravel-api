@@ -3,6 +3,7 @@
 use Xentral\LaravelApi\Tests\TestCase;
 
 uses(TestCase::class)->in(__DIR__.'/Feature');
+uses(TestCase::class)->in(__DIR__.'/Unit');
 
 function buildFilterQuery(array $filters): string
 {
