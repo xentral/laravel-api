@@ -12,6 +12,19 @@ class DummyInclude implements IncludeInterface
 
     public static function make(string $name): Collection
     {
-        return AllowedInclude::custom($name, new self);
+        // AllowedInclude::custom() already returns a Collection
+        $includes = AllowedInclude::custom($name, new self);
+
+        // If this is a nested include (contains dots), we need to ensure
+        // the parent relationship is loaded so the resource can be rendered
+        if (str_contains($name, '.')) {
+            // Extract parent path (everything before the last dot)
+            $parentPath = substr($name, 0, strrpos($name, '.'));
+
+            // Add the parent relationship first so it loads before the dummy include
+            $includes = AllowedInclude::relationship($parentPath)->merge($includes);
+        }
+
+        return $includes;
     }
 }

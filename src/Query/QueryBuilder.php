@@ -23,6 +23,41 @@ class QueryBuilder extends \Spatie\QueryBuilder\QueryBuilder
             : app(QueryBuilderRequest::class);
     }
 
+    public function allowedIncludes($includes): static
+    {
+        // Call parent to set up allowed includes
+        $result = parent::allowedIncludes($includes);
+
+        // Check if any requested includes are nested DummyIncludes and ensure parent relationships are loaded
+        $this->ensureDummyIncludeParentsAreLoaded();
+
+        return $result;
+    }
+
+    protected function ensureDummyIncludeParentsAreLoaded(): void
+    {
+        $requestedIncludes = $this->request->includes();
+
+        // For each requested include that contains a dot, check if it's a DummyInclude
+        $parentIncludesToAdd = $requestedIncludes
+            ->filter(fn ($include) => str_contains((string) $include, '.'))
+            ->map(fn ($include) =>
+                // Extract parent path (everything before the last dot)
+                substr((string) $include, 0, strrpos((string) $include, '.')))
+            ->filter(fn ($parentPath) =>
+                // Only add if the parent isn't already requested
+                ! $requestedIncludes->contains($parentPath))
+            ->unique();
+
+        // Load the parent relationships
+        foreach ($parentIncludesToAdd as $parentInclude) {
+            $allowedInclude = $this->findInclude($parentInclude);
+            if ($allowedInclude) {
+                $allowedInclude->include($this);
+            }
+        }
+    }
+
     public function allowedFilters($filters): static
     {
         $filters = collect(is_array($filters) ? $filters : func_get_args())

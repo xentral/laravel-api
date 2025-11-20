@@ -14,13 +14,16 @@ use Xentral\LaravelApi\Http\ApiResource;
         new OA\Property(property: 'id', type: 'integer', example: 1),
         new OA\Property(property: 'invoice_id', type: 'integer', example: 1),
         new OA\Property(property: 'product_name', type: 'string', example: 'Premium Widget'),
-        new OA\Property(property: 'description', type: 'string', example: 'High-quality widget with extended warranty', nullable: true),
+        new OA\Property(property: 'description', type: 'string', example: 'High-quality widget with extended warranty',
+            nullable: true),
         new OA\Property(property: 'quantity', type: 'integer', example: 10),
         new OA\Property(property: 'unit_price', type: 'number', format: 'float', example: 50.00),
         new OA\Property(property: 'total_price', type: 'number', format: 'float', example: 500.00),
         new OA\Property(property: 'discount_percent', type: 'number', format: 'float', example: 10.00, nullable: true),
-        new OA\Property(property: 'created_at', type: 'string', format: 'date-time', example: '2024-01-15T10:00:00+00:00'),
-        new OA\Property(property: 'updated_at', type: 'string', format: 'date-time', example: '2024-01-15T10:00:00+00:00'),
+        new OA\Property(property: 'created_at', type: 'string', format: 'date-time',
+            example: '2024-01-15T10:00:00+00:00'),
+        new OA\Property(property: 'updated_at', type: 'string', format: 'date-time',
+            example: '2024-01-15T10:00:00+00:00'),
     ],
     type: 'object',
     additionalProperties: false,
@@ -41,6 +44,11 @@ class LineItemResource extends ApiResource
             'unit_price' => $this->resource->unit_price,
             'total_price' => $this->resource->total_price,
             'discount_percent' => $this->resource->discount_percent,
+            'customFields' => $this->when($this->wantsToInclude('lineItems.customFields'), function () {
+                return [
+                    'foo' => 'bar',
+                ];
+            }),
             'created_at' => $this->resource->created_at->toAtomString(),
             'updated_at' => $this->resource->updated_at->toAtomString(),
         ];
