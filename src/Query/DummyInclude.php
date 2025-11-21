@@ -3,6 +3,7 @@ namespace Xentral\LaravelApi\Query;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Spatie\QueryBuilder\AllowedInclude;
 use Spatie\QueryBuilder\Includes\IncludeInterface;
 
@@ -22,7 +23,9 @@ class DummyInclude implements IncludeInterface
             $parentPath = substr($name, 0, strrpos($name, '.'));
 
             // Add the parent relationship first so it loads before the dummy include
-            $includes = AllowedInclude::relationship($parentPath)->merge($includes);
+            $includes = AllowedInclude::relationship($parentPath)
+                ->filter(fn (AllowedInclude $include) => !Str::endsWith($include->getName(), ['Count', 'Exists']))
+                ->merge($includes);
         }
 
         return $includes;
