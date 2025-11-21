@@ -8,6 +8,12 @@ abstract class ApiResource extends JsonResource
 {
     use HasSunsetHeader;
 
+    public function __construct($resource)
+    {
+        parent::__construct($resource);
+        $this->initializeTraits();
+    }
+
     protected function wantsToInclude(string $include): bool
     {
         return app(QueryBuilderRequest::class)->includes()->contains($include);
@@ -41,5 +47,16 @@ abstract class ApiResource extends JsonResource
     public static function newCollection($resource): ApiResourceCollection
     {
         return new ApiResourceCollection($resource, static::class);
+    }
+
+    protected function initializeTraits()
+    {
+        $class = static::class;
+        foreach (class_uses_recursive($class) as $trait) {
+            $method = 'initialize'.class_basename($trait);
+            if (method_exists($this, $method)) {
+                call_user_func([$this, $method]);
+            }
+        }
     }
 }
