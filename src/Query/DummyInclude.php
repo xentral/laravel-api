@@ -24,7 +24,7 @@ class DummyInclude implements IncludeInterface
 
             // Add the parent relationship first so it loads before the dummy include
             $includes = AllowedInclude::relationship($parentPath)
-                ->filter(fn (AllowedInclude $include) => !Str::endsWith($include->getName(), ['Count', 'Exists']))
+                ->filter(fn (AllowedInclude $include) => ! Str::endsWith($include->getName(), ['Count', 'Exists']))
                 ->merge($includes);
         }
 
