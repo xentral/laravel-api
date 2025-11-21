@@ -8,9 +8,6 @@ class ApiServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
-        $this->publishes([
-            dirname(__DIR__).'/.ai/guidelines/how-to-write-apis.blade.php' => base_path('.ai/guidelines/how-to-write-apis.blade.php'),
-        ], 'xentral-testing');
         $this->mergeConfigFrom(__DIR__.'/../config/openapi.php', 'openapi');
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'openapi');
         $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
