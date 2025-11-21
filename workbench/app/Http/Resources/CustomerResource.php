@@ -30,6 +30,8 @@ use Xentral\LaravelApi\Http\ApiResource;
 )]
 class CustomerResource extends ApiResource
 {
+    use IsMetaFieldResource;
+
     /** @var Customer */
     public $resource;
 
@@ -45,6 +47,19 @@ class CustomerResource extends ApiResource
             'created_at' => $this->resource->created_at->toAtomString(),
             'updated_at' => $this->resource->updated_at->toAtomString(),
             'invoices' => InvoiceResource::collection($this->whenLoaded('invoices')),
+            ...$this->mergeAdditionalFields(),
         ];
+    }
+
+    private array $additionalFields = [];
+
+    protected function addAdditionalFields(array $fields): void
+    {
+        $this->additionalFields[] = $fields;
+    }
+
+    protected function mergeAdditionalFields(): array
+    {
+        return array_map(fn ($ref) => $this->merge($ref), $this->additionalFields);
     }
 }

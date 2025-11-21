@@ -83,4 +83,17 @@ describe('Basic Show Operations', function () {
         // Verify the structure doesn't include relationships by default
         expect($response->json('data'))->not->toHaveKey('invoices');
     });
+
+    it('Includes Trait Functionality in Resource', function () {
+        $customer = Customer::factory()->create();
+
+        $response = $this->getJson("/api/v1/customers/{$customer->id}");
+
+        $response->assertOk();
+        $responseData = $response->json('data');
+
+        // Assuming the trait adds a 'meta' field
+        expect($responseData)->toHaveKey('meta');
+        expect($responseData['meta'])->toBeArray();
+    });
 });
