@@ -16,7 +16,7 @@ abstract class ApiResource extends JsonResource
 
     protected function wantsToInclude(string $include): bool
     {
-        return app(QueryBuilderRequest::class)->includes()->contains($include);
+        return resolve(QueryBuilderRequest::class)->includes()->contains($include);
     }
 
     protected function nullWhenEmpty(array|Collection $data, string $key): mixed

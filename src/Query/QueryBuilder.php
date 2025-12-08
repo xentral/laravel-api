@@ -20,7 +20,7 @@ class QueryBuilder extends \Spatie\QueryBuilder\QueryBuilder
         // We need to override the request initialization to use our own request
         $this->request = $request
             ? QueryBuilderRequest::fromRequest($request)
-            : app(QueryBuilderRequest::class);
+            : resolve(QueryBuilderRequest::class);
     }
 
     public function allowedIncludes($includes): static
