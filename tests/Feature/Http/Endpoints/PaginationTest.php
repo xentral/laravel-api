@@ -373,3 +373,115 @@ describe('OpenAPI Pagination Parameters', function () {
             ->and($headerParam['description'])->toContain('Defaults to \'simple\'');
     });
 });
+
+describe('Pagination Links with Query String', function () {
+    it('preserves per_page in pagination links', function () {
+        $response = $this->getJson('/api/v1/invoices?per_page=10');
+
+        $response->assertOk();
+        $links = $response->json('links');
+
+        expect($links['first'])->toContain('per_page=10')
+            ->and($links['next'])->toContain('per_page=10');
+    });
+
+    it('preserves filter parameters in pagination links', function () {
+        $response = $this->getJson('/api/v1/invoices?filter[0][key]=invoice_number&filter[0][op]=equals&filter[0][value]=INV-001');
+
+        $response->assertOk();
+        $links = $response->json('links');
+
+        // The filter should be preserved in the pagination links
+        expect($links['first'])->toContain('filter');
+    });
+
+    it('preserves sort parameter in pagination links', function () {
+        $response = $this->getJson('/api/v1/invoices?sort=-invoice_number');
+
+        $response->assertOk();
+        $links = $response->json('links');
+
+        expect($links['first'])->toContain('sort=-invoice_number');
+    });
+
+    it('preserves include parameter in pagination links', function () {
+        $response = $this->getJson('/api/v1/invoices?include=customer');
+
+        $response->assertOk();
+        $links = $response->json('links');
+
+        expect($links['first'])->toContain('include=customer');
+    });
+
+    it('preserves multiple query parameters in pagination links', function () {
+        $response = $this->getJson('/api/v1/invoices?per_page=5&sort=-invoice_number&include=customer');
+
+        $response->assertOk();
+        $links = $response->json('links');
+
+        expect($links['first'])->toContain('per_page=5')
+            ->and($links['first'])->toContain('sort=-invoice_number')
+            ->and($links['first'])->toContain('include=customer');
+    });
+
+    it('preserves query string in table pagination links', function () {
+        $response = $this->getJson('/api/v1/invoices?per_page=10&sort=invoice_number', [
+            'x-pagination' => 'table',
+        ]);
+
+        $response->assertOk();
+        $links = $response->json('links');
+
+        expect($links['first'])->toContain('per_page=10')
+            ->and($links['first'])->toContain('sort=invoice_number')
+            ->and($links['last'])->toContain('per_page=10')
+            ->and($links['last'])->toContain('sort=invoice_number');
+    });
+
+    it('preserves query string in cursor pagination links', function () {
+        $response = $this->getJson('/api/v1/invoices?per_page=10&include=customer', [
+            'x-pagination' => 'cursor',
+        ]);
+
+        $response->assertOk();
+        $links = $response->json('links');
+
+        // Cursor pagination should preserve query parameters in next link
+        if ($links['next']) {
+            expect($links['next'])->toContain('per_page=10')
+                ->and($links['next'])->toContain('include=customer');
+        }
+    });
+
+    it('preserves legacy page object parameters in pagination links', function () {
+        $response = $this->getJson('/api/v1/invoices?page[size]=10&include=customer');
+
+        $response->assertOk();
+        $links = $response->json('links');
+
+        expect($links['first'])->toContain('include=customer');
+    });
+
+    it('has null last link for simple pagination', function () {
+        $response = $this->getJson('/api/v1/invoices?per_page=10');
+
+        $response->assertOk();
+        $links = $response->json('links');
+
+        expect($links['last'])->toBeNull()
+            ->and($links['first'])->not->toBeNull();
+    });
+
+    it('has populated last link for table pagination', function () {
+        $response = $this->getJson('/api/v1/invoices?per_page=10', [
+            'x-pagination' => 'table',
+        ]);
+
+        $response->assertOk();
+        $links = $response->json('links');
+
+        expect($links['last'])->not->toBeNull()
+            ->and($links['last'])->toContain('page=')
+            ->and($links['first'])->not->toBeNull();
+    });
+});
