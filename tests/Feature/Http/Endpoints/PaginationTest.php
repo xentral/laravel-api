@@ -144,6 +144,62 @@ describe('Pagination Response Casing', function () {
     });
 });
 
+describe('Legacy Page Object Pagination (page[number] and page[size])', function () {
+    it('supports page[size] for setting items per page', function () {
+        $response = $this->getJson('/api/v1/invoices?page[size]=25');
+
+        $response->assertOk();
+        $data = $response->json();
+
+        expect($data['meta']['per_page'])->toBe(25)
+            ->and(count($data['data']))->toBeLessThanOrEqual(25);
+    });
+
+    it('supports page[number] for setting current page', function () {
+        $response = $this->getJson('/api/v1/invoices?page[number]=2&page[size]=10');
+
+        $response->assertOk();
+        $data = $response->json();
+
+        expect($data['meta']['current_page'])->toBe(2)
+            ->and($data['meta']['per_page'])->toBe(10);
+    });
+
+    it('defaults to page 1 when only page[size] is provided', function () {
+        $response = $this->getJson('/api/v1/invoices?page[size]=20');
+
+        $response->assertOk();
+        $data = $response->json();
+
+        expect($data['meta']['current_page'])->toBe(1)
+            ->and($data['meta']['per_page'])->toBe(20);
+    });
+
+    it('caps page[size] at maximum of 100 items per page', function () {
+        $response = $this->getJson('/api/v1/invoices?page[size]=150');
+
+        $response->assertOk();
+        $data = $response->json();
+
+        expect($data['meta']['per_page'])->toBe(100)
+            ->and(count($data['data']))->toBeLessThanOrEqual(100);
+    });
+
+    it('works with table pagination type using page object', function () {
+        $response = $this->getJson('/api/v1/invoices?page[number]=2&page[size]=10', [
+            'x-pagination' => 'table',
+        ]);
+
+        $response->assertOk();
+        $data = $response->json();
+
+        expect($data['meta']['current_page'])->toBe(2)
+            ->and($data['meta']['per_page'])->toBe(10)
+            ->and($data['meta'])->toHaveKey('last_page')
+            ->and($data['meta'])->toHaveKey('total');
+    });
+});
+
 describe('Pagination Parameters (per_page vs perPage)', function () {
     it('uses snake_case per_page parameter for pagination', function () {
         $response = $this->getJson('/api/v1/invoices?per_page=25');
