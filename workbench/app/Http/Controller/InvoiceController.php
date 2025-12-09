@@ -67,6 +67,7 @@ class InvoiceController
                     QueryFilter::number('lineItems.total_price', 'lineItems.total_price'),
                 )
                 ->allowedIncludes(['customer', 'lineItems', DummyInclude::make('lineItems.customFields')])
+                ->allowedSorts(['invoice_number', 'total_amount', 'issued_at', 'created_at'])
                 ->apiPaginate(100, PaginationType::SIMPLE, PaginationType::TABLE, PaginationType::CURSOR)
         );
     }
@@ -89,9 +90,9 @@ class InvoiceController
 
     #[PostEndpoint(
         path: '/api/v1/invoices',
+        request: CreateInvoiceRequest::class,
         resource: InvoiceResource::class,
         description: 'Create invoice',
-        request: CreateInvoiceRequest::class,
     )]
     public function create(CreateInvoiceRequest $request): InvoiceResource
     {

@@ -55,4 +55,27 @@ class QueryBuilderRequest extends \Spatie\QueryBuilder\QueryBuilderRequest
             throw ValidationException::withMessages(['filter' => 'Invalid filter format.']);
         }
     }
+
+    public function sorts(): Collection
+    {
+        $sortParameterName = config('query-builder.parameters.sort', 'sort');
+
+        $sortParts = $this->getRequestData($sortParameterName);
+        if (! empty($sortParts)) {
+            if (is_string($sortParts)) {
+                $sortParts = explode(static::getSortsArrayValueDelimiter(), $sortParts);
+            }
+        }
+        if (empty($sortParts)) {
+            $sortParts = $this->collect('order')
+                ->map(fn (array $o) => $o['dir'] === 'asc' ? $o['field'] : '-'.$o['field'])
+                ->toArray();
+        }
+
+        if (is_string($sortParts)) {
+            $sortParts = explode(static::getSortsArrayValueDelimiter(), $sortParts);
+        }
+
+        return collect($sortParts)->filter();
+    }
 }
