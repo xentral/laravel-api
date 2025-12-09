@@ -70,14 +70,15 @@ class QueryBuilder extends \Spatie\QueryBuilder\QueryBuilder
 
     public function apiPaginate(int $maxPageSize = 100, PaginationType ...$allowedTypes): Paginator|LengthAwarePaginator|CursorPaginator
     {
+        $currentPage = $this->getCurrentPage();
         $perPage = $this->getPageSize($maxPageSize);
         $requestedType = $this->getRequestedPaginationType();
         $paginationType = $this->validatePaginationType($requestedType, $allowedTypes);
 
         return match ($paginationType) {
-            PaginationType::SIMPLE => $this->simplePaginate($perPage),
-            PaginationType::TABLE => $this->paginate($perPage),
-            PaginationType::CURSOR => $this->cursorPaginate($perPage),
+            PaginationType::SIMPLE => $this->simplePaginate($perPage, page: $currentPage)->withQueryString(),
+            PaginationType::TABLE => $this->paginate($perPage, page: $currentPage)->withQueryString()->withQueryString(),
+            PaginationType::CURSOR => $this->cursorPaginate($perPage)->withQueryString()->withQueryString(),
         };
     }
 
@@ -104,8 +105,23 @@ class QueryBuilder extends \Spatie\QueryBuilder\QueryBuilder
 
     private function getPageSize(int $maxPageSize): int
     {
+        $pageInfo = $this->request->query('page');
+        if (is_array($pageInfo)) {
+            return min($maxPageSize, (int) $pageInfo['size']);
+        }
+
         $perPage = $this->request->integer('per_page', $this->request->integer('perPage', 15));
 
         return min($maxPageSize, $perPage);
+    }
+
+    private function getCurrentPage(): int
+    {
+        $pageInfo = $this->request->query('page');
+        if (is_array($pageInfo)) {
+            return intval($pageInfo['number'] ?? 1);
+        }
+
+        return intval($pageInfo ?? 1);
     }
 }
