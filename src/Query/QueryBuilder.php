@@ -5,12 +5,17 @@ use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Xentral\LaravelApi\Http\QueryBuilderRequest;
 use Xentral\LaravelApi\OpenApi\PaginationType;
 use Xentral\LaravelApi\Query\Filters\QueryBuilderFilterCollection;
 
+/**
+ * @template TModel of Model
+ * @extends \Spatie\QueryBuilder\QueryBuilder<TModel>
+ */
 class QueryBuilder extends \Spatie\QueryBuilder\QueryBuilder
 {
     public function __construct(
