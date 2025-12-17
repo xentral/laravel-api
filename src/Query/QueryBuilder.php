@@ -14,6 +14,7 @@ use Xentral\LaravelApi\Query\Filters\QueryBuilderFilterCollection;
 
 /**
  * @template TModel of Model
+ *
  * @extends \Spatie\QueryBuilder\QueryBuilder<TModel>
  */
 class QueryBuilder extends \Spatie\QueryBuilder\QueryBuilder
