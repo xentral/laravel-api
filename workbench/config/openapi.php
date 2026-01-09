@@ -5,7 +5,7 @@ return [
         'enabled' => true,
         'prefix' => 'api-docs',
         'middleware' => ['web'],
-        'client' => 'scalar',
+        'client' => 'swagger',
     ],
     'problems' => [
         'conflict' => [

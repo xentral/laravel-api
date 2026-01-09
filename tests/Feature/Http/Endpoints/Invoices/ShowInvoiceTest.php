@@ -151,6 +151,43 @@ describe('Basic Show Operations', function () {
     });
 });
 
+describe('PDF Response', function () {
+    it('returns PDF when Accept header is application/pdf', function () {
+        $invoice = Invoice::factory()->create([
+            'invoice_number' => 'INV-2024-001',
+        ]);
+
+        $response = $this->getJson("/api/v1/invoices/{$invoice->id}", [
+            'Accept' => 'application/pdf',
+        ]);
+
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'application/pdf');
+        $response->assertHeader('Content-Disposition', 'attachment; filename="invoice-INV-2024-001.pdf"');
+        expect($response->getContent())->toContain('%PDF-1.4 Invoice: INV-2024-001');
+    });
+
+    it('returns JSON by default when no Accept header is set', function () {
+        $invoice = Invoice::factory()->create();
+
+        $response = $this->getJson("/api/v1/invoices/{$invoice->id}");
+
+        $response->assertOk();
+        $response->assertJsonStructure(['data' => ['id', 'invoice_number']]);
+    });
+
+    it('returns JSON when Accept header is application/json', function () {
+        $invoice = Invoice::factory()->create();
+
+        $response = $this->getJson("/api/v1/invoices/{$invoice->id}", [
+            'Accept' => 'application/json',
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonStructure(['data' => ['id', 'invoice_number']]);
+    });
+});
+
 describe('DummyInclude with nested includes', function () {
     it('can include lineItems.customFields without explicitly including lineItems', function () {
         $invoice = Invoice::factory()->hasLineItems(2)->create();

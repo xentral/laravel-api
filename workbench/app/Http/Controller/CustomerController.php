@@ -67,7 +67,7 @@ class CustomerController
         resource: CustomerResource::class,
         description: 'Get customer (legacy endpoint)',
         includes: ['invoices'],
-        deprecated: new \DateTimeImmutable('2025-07-01'),
+        deprecated: new \DateTimeImmutable('2025-11-01'),
     )]
     public function legacyShow(int $id): CustomerResource
     {
