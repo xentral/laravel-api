@@ -169,7 +169,7 @@ paths:
               schema:
                 type: string
                 format: http-date
-                example: 'Thu, 01 Jan 2026 00:00:00 GMT'
+                example: 'Fri, 01 May 2026 00:00:00 GMT'
           content:
             application/json:
               schema:
