@@ -2,7 +2,9 @@
 
 namespace Workbench\App\Http\Controller;
 
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
+use Illuminate\Http\Response;
 use Workbench\App\Enum\InvoiceStatusEnum;
 use Workbench\App\Http\Requests\CreateInvoiceRequest;
 use Workbench\App\Http\Resources\InvoiceResource;
@@ -16,6 +18,7 @@ use Xentral\LaravelApi\OpenApi\Filters\FilterParameter;
 use Xentral\LaravelApi\OpenApi\Filters\IdFilter;
 use Xentral\LaravelApi\OpenApi\Filters\StringFilter;
 use Xentral\LaravelApi\OpenApi\PaginationType;
+use Xentral\LaravelApi\OpenApi\Responses\PdfMediaType;
 use Xentral\LaravelApi\Query\DummyInclude;
 use Xentral\LaravelApi\Query\Filters\QueryFilter;
 use Xentral\LaravelApi\Query\QueryBuilder;
@@ -77,15 +80,31 @@ class InvoiceController
         resource: InvoiceResource::class,
         description: 'Get invoice',
         includes: ['customer', 'lineItems'],
+        additionalMediaTypes: [new PdfMediaType],
     )]
-    public function show(int $id): InvoiceResource
+    public function show(Request $request, int $id): InvoiceResource|Response
     {
         $invoice = QueryBuilder::for(Invoice::class)
             ->where('id', $id)
             ->allowedIncludes(['customer', 'lineItems', DummyInclude::make('lineItems.customFields')])
             ->firstOrFail();
 
+        if ($request->header('Accept') === 'application/pdf') {
+            $pdfContent = $this->generateInvoicePdf($invoice);
+
+            return new Response($pdfContent, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="invoice-'.$invoice->invoice_number.'.pdf"',
+            ]);
+        }
+
         return new InvoiceResource($invoice);
+    }
+
+    private function generateInvoicePdf(Invoice $invoice): string
+    {
+        // Dummy PDF content for testing purposes
+        return '%PDF-1.4 Invoice: '.$invoice->invoice_number;
     }
 
     #[PostEndpoint(

@@ -10,6 +10,7 @@ use OpenApi\Processors\CleanUnusedComponents;
 use OpenApi\Processors\ExpandEnums;
 use OpenApi\Processors\OperationId;
 use Xentral\LaravelApi\OpenApi\PostProcessors\AddMetaInfoProcessor;
+use Xentral\LaravelApi\OpenApi\PostProcessors\ContentNegotiationProcessor;
 use Xentral\LaravelApi\OpenApi\PostProcessors\CustomCleanUnusedComponents;
 use Xentral\LaravelApi\OpenApi\PostProcessors\DeprecationsProcessor;
 use Xentral\LaravelApi\OpenApi\PostProcessors\ExpandEnumsProcessor;
@@ -46,6 +47,7 @@ class OpenApiGeneratorFactory
         $generator->getProcessorPipeline()->add(new RateLimitResponseProcessor($schemaDefinition->config));
         $generator->getProcessorPipeline()->add(new ProblemsProcessor);
         $generator->getProcessorPipeline()->add(new FeatureFlagProcessor($schemaDefinition->config));
+        $generator->getProcessorPipeline()->add(new ContentNegotiationProcessor);
         $generator->getProcessorPipeline()->add(new SortComponentsProcessor);
         $generator->getProcessorPipeline()->add(new SortOperationsProcessor);
         if ($schemaDefinition->config->deprecationFilter->enabled) {

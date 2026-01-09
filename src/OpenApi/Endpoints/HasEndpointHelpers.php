@@ -26,6 +26,26 @@ trait HasEndpointHelpers
         return $this->response($status, $description, [new Property('data', ref: $resource, x: ['description-ignore' => true, 'example-ignore' => true])]);
     }
 
+    /**
+     * @param  MediaType[]  $additionalContent
+     */
+    protected function resourceResponseWithAdditionalContent(string $status, string $description, string $resource, array $additionalContent): Response
+    {
+        $jsonContent = new MediaType(
+            mediaType: 'application/json',
+            schema: new Schema(
+                properties: [new Property('data', ref: $resource, x: ['description-ignore' => true, 'example-ignore' => true])],
+                type: 'object'
+            )
+        );
+
+        return new Response(
+            response: $status,
+            description: $description,
+            content: [$jsonContent, ...$additionalContent]
+        );
+    }
+
     protected function response204(): Response
     {
         return new Response(response: '204', description: 'No Content');

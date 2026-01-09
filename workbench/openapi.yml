@@ -331,7 +331,7 @@ paths:
   '/api/v1/invoices/{id}':
     get:
       summary: 'Get invoice V1'
-      description: 'Get invoice'
+      description: "Get invoice\n\n**Content Negotiation:** This endpoint supports additional response formats: `application/pdf`. Use the `Accept` header to request a specific format."
       operationId: 'GET::api-v1-invoices-id'
       parameters:
         -
@@ -361,6 +361,11 @@ paths:
                 properties:
                   data: { $ref: '#/components/schemas/InvoiceResource' }
                 type: object
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+                example: 'Binary PDF content'
         '401':
           description: Unauthorized
         '403':

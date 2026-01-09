@@ -2,6 +2,7 @@
 namespace Xentral\LaravelApi\OpenApi\Endpoints;
 
 use OpenApi\Annotations\Get;
+use OpenApi\Attributes\MediaType;
 use OpenApi\Generator;
 
 #[\Attribute(\Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD)]
@@ -9,6 +10,9 @@ class GetEndpoint extends Get
 {
     use HasEndpointHelpers;
 
+    /**
+     * @param  MediaType[]  $additionalMediaTypes  Additional content types to include in the 200 response (e.g., application/pdf)
+     */
     public function __construct(
         string $path,
         string $resource,
@@ -24,9 +28,14 @@ class GetEndpoint extends Get
         \BackedEnum|string|null $featureFlag = null,
         string|array|null $scopes = null,
         ?array $problems = null,
+        array $additionalMediaTypes = [],
     ) {
+        $resourceResponse = empty($additionalMediaTypes)
+            ? $this->resourceResponse('200', $description, $resource)
+            : $this->resourceResponseWithAdditionalContent('200', $description, $resource, $additionalMediaTypes);
+
         $responses = [
-            $this->resourceResponse('200', $description, $resource),
+            $resourceResponse,
             ...$this->makeNegativeResponses(with404: true),
         ];
 

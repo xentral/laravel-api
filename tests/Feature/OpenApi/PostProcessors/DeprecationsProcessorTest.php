@@ -1,6 +1,5 @@
 <?php declare(strict_types=1);
 
-use Carbon\Carbon;
 use Symfony\Component\Yaml\Yaml;
 use Xentral\LaravelApi\OpenApi\OpenApiGeneratorFactory;
 
