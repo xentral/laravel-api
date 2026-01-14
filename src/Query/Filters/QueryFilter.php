@@ -86,6 +86,11 @@ class QueryFilter
         );
     }
 
+    public static function booleanInteger(string $name, ?string $internalName = null): AllowedFilter
+    {
+        return AllowedFilter::custom($name, new BooleanIntegerFilter, $internalName);
+    }
+
     public function make(
         string $name,
         array $allowedOperators = [],

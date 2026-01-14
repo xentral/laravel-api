@@ -14,6 +14,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $phone
  * @property string $country
  * @property bool $is_active
+ * @property int $is_verified
  * @property Carbon $updated_at
  * @property Carbon $created_at
  */

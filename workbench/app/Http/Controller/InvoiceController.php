@@ -51,7 +51,7 @@ class InvoiceController
                 ->allowedFilters(
                     QueryFilter::identifier(),
                     QueryFilter::string('invoice_number'),
-                    QueryFilter::string('status'),
+                    QueryFilter::string('status', enum: InvoiceStatusEnum::class),
                     QueryFilter::number('total_amount'),
                     QueryFilter::date('issued_at'),
                     QueryFilter::date('due_at'),
