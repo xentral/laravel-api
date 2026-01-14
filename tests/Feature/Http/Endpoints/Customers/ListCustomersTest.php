@@ -19,6 +19,7 @@ describe('Basic List Operations', function () {
                     'phone',
                     'country',
                     'is_active',
+                    'is_verified',
                     'created_at',
                     'updated_at',
                 ],
@@ -345,6 +346,97 @@ describe('Customer Boolean Filters', function () {
 
         $response->assertOk();
         $response->assertJsonCount(2, 'data');
+    });
+});
+
+describe('Customer BooleanInteger Filters', function () {
+    it('can filter by is_verified equals true', function () {
+        Customer::factory()->count(3)->verified()->create();
+        Customer::factory()->count(2)->unverified()->create();
+
+        $query = buildFilterQuery([[
+            'key' => 'is_verified',
+            'op' => 'equals',
+            'value' => true,
+        ]]);
+        $response = $this->getJson("/api/v1/customers?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(3, 'data');
+    });
+
+    it('can filter by is_verified equals false', function () {
+        Customer::factory()->count(3)->verified()->create();
+        Customer::factory()->count(2)->unverified()->create();
+
+        $query = buildFilterQuery([[
+            'key' => 'is_verified',
+            'op' => 'equals',
+            'value' => false,
+        ]]);
+        $response = $this->getJson("/api/v1/customers?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(2, 'data');
+    });
+
+    it('can filter by is_verified notEquals true', function () {
+        Customer::factory()->count(3)->verified()->create();
+        Customer::factory()->count(2)->unverified()->create();
+
+        $query = buildFilterQuery([[
+            'key' => 'is_verified',
+            'op' => 'notEquals',
+            'value' => true,
+        ]]);
+        $response = $this->getJson("/api/v1/customers?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(2, 'data');
+    });
+
+    it('can filter by is_verified using string true', function () {
+        Customer::factory()->count(3)->verified()->create();
+        Customer::factory()->count(2)->unverified()->create();
+
+        $query = buildFilterQuery([[
+            'key' => 'is_verified',
+            'op' => 'equals',
+            'value' => 'true',
+        ]]);
+        $response = $this->getJson("/api/v1/customers?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(3, 'data');
+    });
+
+    it('can filter by is_verified using string false', function () {
+        Customer::factory()->count(3)->verified()->create();
+        Customer::factory()->count(2)->unverified()->create();
+
+        $query = buildFilterQuery([[
+            'key' => 'is_verified',
+            'op' => 'equals',
+            'value' => 'false',
+        ]]);
+        $response = $this->getJson("/api/v1/customers?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(2, 'data');
+    });
+
+    it('returns validation error for invalid is_verified value', function () {
+        Customer::factory()->create();
+
+        $query = buildFilterQuery([[
+            'key' => 'is_verified',
+            'op' => 'equals',
+            'value' => 'invalid',
+        ]]);
+        $response = $this->getJson("/api/v1/customers?{$query}");
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['is_verified']);
     });
 });
 

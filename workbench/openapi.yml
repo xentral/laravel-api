@@ -501,6 +501,7 @@ components:
         - email
         - country
         - is_active
+        - is_verified
         - created_at
         - updated_at
       properties:
@@ -523,6 +524,9 @@ components:
           type: string
           example: US
         is_active:
+          type: boolean
+          example: true
+        is_verified:
           type: boolean
           example: true
         created_at:

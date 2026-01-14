@@ -17,6 +17,7 @@ class CustomerFactory extends Factory
             'phone' => $this->faker->optional()->phoneNumber(),
             'country' => $this->faker->countryCode(),
             'is_active' => $this->faker->boolean(80),
+            'is_verified' => $this->faker->randomElement([0, 1]),
         ];
     }
 
@@ -31,6 +32,20 @@ class CustomerFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'is_active' => false,
+        ]);
+    }
+
+    public function verified(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_verified' => 1,
+        ]);
+    }
+
+    public function unverified(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_verified' => 0,
         ]);
     }
 }

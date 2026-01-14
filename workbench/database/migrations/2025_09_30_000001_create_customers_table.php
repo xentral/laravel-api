@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('phone')->nullable();
             $table->string('country');
             $table->boolean('is_active')->default(true);
+            $table->integer('is_verified')->default(0);
             $table->timestamps();
         });
     }
