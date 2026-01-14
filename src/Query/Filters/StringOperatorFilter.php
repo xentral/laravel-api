@@ -180,28 +180,43 @@ class StringOperatorFilter extends FiltersExact
         if (is_array($value)) {
             return array_map(fn ($v) => $this->getInternalValue($v, $property), $value);
         }
-        if (! $this->enum
-            || ! enum_exists($this->enum)
-            || ! defined("{$this->enum}::MAPPING")
-        ) {
+
+        if (! $this->enum || ! enum_exists($this->enum)) {
             return $value;
         }
-        $map = $this->enum::MAPPING;
 
-        $mappedValue = null;
-        foreach ($map as $key => $val) {
-            $enumValue = $val instanceof \BackedEnum ? $val->value : $val->name;
-            if ($value === $enumValue) {
-                $mappedValue = $key;
-                break;
+        // If MAPPING const exists, it takes precedence
+        if (defined("{$this->enum}::MAPPING")) {
+            $map = $this->enum::MAPPING;
+
+            $mappedValue = null;
+            foreach ($map as $key => $val) {
+                $enumValue = $val instanceof \BackedEnum ? $val->value : $val->name;
+                if ($value === $enumValue) {
+                    $mappedValue = $key;
+                    break;
+                }
             }
-        }
-        if ($mappedValue === null) {
-            throw ValidationException::withMessages([
-                $property => 'Invalid value: '.$value.'. Valid values are: '.implode(', ', array_map(fn ($v) => $v instanceof \BackedEnum ? $v->value : $v->name, $this->enum::cases()))]);
+
+            if ($mappedValue === null) {
+                throw ValidationException::withMessages([
+                    $property => 'Invalid value: '.$value.'. Valid values are: '.implode(', ', array_map(fn ($v) => $v instanceof \BackedEnum ? $v->value : $v->name, $this->enum::cases())),
+                ]);
+            }
+
+            return $mappedValue;
         }
 
-        return $mappedValue;
+        // Otherwise, use enum values directly
+        $validValues = array_map(fn ($v) => $v instanceof \BackedEnum ? $v->value : $v->name, $this->enum::cases());
+
+        if (! in_array($value, $validValues, true)) {
+            throw ValidationException::withMessages([
+                $property => 'Invalid value: '.$value.'. Valid values are: '.implode(', ', $validValues),
+            ]);
+        }
+
+        return $value;
     }
 
     public function allowedOperators(): array

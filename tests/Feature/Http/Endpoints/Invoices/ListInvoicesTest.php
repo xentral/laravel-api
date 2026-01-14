@@ -339,6 +339,34 @@ describe('Invoice String Filters', function () {
         $response->assertOk();
         $response->assertJsonCount(5, 'data');
     });
+
+    it('returns validation error for invalid status value', function () {
+        Invoice::factory()->create();
+
+        $query = buildFilterQuery([[
+            'key' => 'status',
+            'op' => 'equals',
+            'value' => 'invalid_status',
+        ]]);
+        $response = $this->getJson("/api/v1/invoices?{$query}");
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['status']);
+    });
+
+    it('returns validation error for invalid status value in array', function () {
+        Invoice::factory()->create();
+
+        $query = buildFilterQuery([[
+            'key' => 'status',
+            'op' => 'in',
+            'value' => 'paid,invalid_status',
+        ]]);
+        $response = $this->getJson("/api/v1/invoices?{$query}");
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['status']);
+    });
 });
 
 describe('Invoice Number Filters', function () {
