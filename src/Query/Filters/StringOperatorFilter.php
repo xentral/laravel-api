@@ -3,11 +3,18 @@ namespace Xentral\LaravelApi\Query\Filters;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 use Spatie\QueryBuilder\Filters\FiltersExact;
 
 class StringOperatorFilter extends FiltersExact
 {
+    private const NEGATIVE_TO_POSITIVE_MAP = [
+        'notIn' => 'in',
+        'notEquals' => 'equals',
+        'notContains' => 'contains',
+    ];
+
     public function __construct(private readonly array $allowedOperators = [], private readonly ?string $enum = null) {}
 
     public function __invoke(Builder $query, mixed $value, string $property)
@@ -35,7 +42,34 @@ class StringOperatorFilter extends FiltersExact
         $this->applyFilter($query, $value, $property);
     }
 
-    private function applyFilter(Builder $query, array $value, string $property): void
+    protected function withRelationConstraint(Builder $query, mixed $value, string $property): void
+    {
+        [$relation, $property] = collect(explode('.', $property))
+            ->pipe(fn (Collection $parts) => [
+                $parts->except(count($parts) - 1)->implode('.'),
+                $parts->last(),
+            ]);
+
+        $operator = $value['operator'] ?? null;
+        $isNegativeOperator = $operator && isset(self::NEGATIVE_TO_POSITIVE_MAP[$operator]);
+
+        if ($isNegativeOperator) {
+            $positiveValue = $value;
+            $positiveValue['operator'] = self::NEGATIVE_TO_POSITIVE_MAP[$operator];
+
+            $query->whereDoesntHave($relation, function (Builder $query) use ($property, $positiveValue) {
+                $this->relationConstraints[] = $property = $query->qualifyColumn($property);
+                $this->applyFilter($query, $positiveValue, $property, skipValidation: true);
+            });
+        } else {
+            $query->whereHas($relation, function (Builder $query) use ($property, $value) {
+                $this->relationConstraints[] = $property = $query->qualifyColumn($property);
+                $this->applyFilter($query, $value, $property);
+            });
+        }
+    }
+
+    private function applyFilter(Builder $query, array $value, string $property, bool $skipValidation = false): void
     {
         try {
             $operator = FilterOperator::from($value['operator']);
@@ -43,7 +77,7 @@ class StringOperatorFilter extends FiltersExact
             throw ValidationException::withMessages([$property => "Unsupported filter operator: {$value['operator']}. Valid operators are ".implode(', ', array_map(fn ($v) => $v->value, $this->allowedOperators))]);
         }
 
-        if (! in_array($operator, $this->allowedOperators, true)) {
+        if (! $skipValidation && ! in_array($operator, $this->allowedOperators, true)) {
             throw ValidationException::withMessages([$property => "Unsupported filter operator: {$operator->value}. Valid operators are ".implode(', ', array_map(fn ($v) => $v->value, $this->allowedOperators))]);
         }
 
