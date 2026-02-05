@@ -63,8 +63,7 @@ class PaginationResponseProcessor
                         $paginationProperties = $this->getPaginationProperties($types[0]);
                         $mediaType->schema->properties = array_merge($mediaType->schema->properties, $paginationProperties);
                     } else {
-                        // Multiple pagination types - create oneOf schema
-                        $this->addOneOfPaginationSchema($mediaType->schema, $types);
+                        $this->addAnyOfPaginationSchema($mediaType->schema, $types);
                     }
                 }
                 break;
@@ -72,7 +71,7 @@ class PaginationResponseProcessor
         }
     }
 
-    private function addOneOfPaginationSchema(OA\Schema $schema, array $types): void
+    private function addAnyOfPaginationSchema(OA\Schema $schema, array $types): void
     {
         $dataProperty = null;
 
@@ -85,8 +84,7 @@ class PaginationResponseProcessor
             }
         }
 
-        // Create oneOf schemas for each pagination type
-        $oneOfSchemas = [];
+        $anyOfSchemas = [];
         foreach ($types as $type) {
             $paginationProperties = $this->getPaginationProperties($type);
             $properties = [];
@@ -99,15 +97,14 @@ class PaginationResponseProcessor
             // Add pagination properties
             $properties = array_merge($properties, $paginationProperties);
 
-            $oneOfSchemas[] = new Schema(
+            $anyOfSchemas[] = new Schema(
                 title: 'Paginated Response: '.$type->value,
                 properties: $properties,
                 type: 'object'
             );
         }
 
-        // Replace the schema with oneOf
-        $schema->oneOf = $oneOfSchemas;
+        $schema->anyOf = $anyOfSchemas;
         $schema->properties = Generator::UNDEFINED;
         $schema->type = Generator::UNDEFINED;
     }
