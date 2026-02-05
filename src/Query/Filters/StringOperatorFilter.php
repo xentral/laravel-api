@@ -53,6 +53,21 @@ class StringOperatorFilter extends FiltersExact
         $operator = $value['operator'] ?? null;
         $isNegativeOperator = $operator && isset(self::NEGATIVE_TO_POSITIVE_MAP[$operator]);
 
+        // For EQUALS with array values, create separate whereHas for each value (AND logic)
+        // This ensures that e.g. filtering tags with ['demo', 'demo2'] returns only records
+        // that have BOTH tags, not records that have at least one of them
+        if ($operator === 'equals' && is_array($value['value'] ?? null)) {
+            foreach ($value['value'] as $singleValue) {
+                $singleFilter = ['operator' => $operator, 'value' => $singleValue];
+                $query->whereHas($relation, function (Builder $query) use ($property, $singleFilter) {
+                    $this->relationConstraints[] = $property = $query->qualifyColumn($property);
+                    $this->applyFilter($query, $singleFilter, $property);
+                });
+            }
+
+            return;
+        }
+
         if ($isNegativeOperator) {
             $positiveValue = $value;
             $positiveValue['operator'] = self::NEGATIVE_TO_POSITIVE_MAP[$operator];
