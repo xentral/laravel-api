@@ -107,6 +107,63 @@ describe('StringOperatorFilter Relation Filtering', function () {
         });
     });
 
+    describe('equals operator with array values on relations (AND logic)', function () {
+        it('requires ALL values to match when using equals with array on relations', function () {
+            // Create invoice with two line items (Widget AND Gadget) - should be INCLUDED
+            $invoiceWithBoth = Invoice::factory()->create();
+            LineItem::factory()->for($invoiceWithBoth)->create(['product_name' => 'Widget']);
+            LineItem::factory()->for($invoiceWithBoth)->create(['product_name' => 'Gadget']);
+
+            // Create invoice with only Widget - should be EXCLUDED
+            $invoiceWithOnlyWidget = Invoice::factory()->create();
+            LineItem::factory()->for($invoiceWithOnlyWidget)->create(['product_name' => 'Widget']);
+
+            // Create invoice with only Gadget - should be EXCLUDED
+            $invoiceWithOnlyGadget = Invoice::factory()->create();
+            LineItem::factory()->for($invoiceWithOnlyGadget)->create(['product_name' => 'Gadget']);
+
+            // Create invoice without any line items - should be EXCLUDED
+            $invoiceWithoutLineItems = Invoice::factory()->create();
+
+            $filter = new StringOperatorFilter([FilterOperator::EQUALS]);
+
+            $query = Invoice::query();
+            $filter($query, ['operator' => 'equals', 'value' => ['Widget', 'Gadget']], 'lineItems.product_name');
+
+            $results = $query->get();
+
+            // Should only include invoice that has BOTH Widget AND Gadget
+            expect($results->pluck('id')->toArray())
+                ->toContain($invoiceWithBoth->id)
+                ->not->toContain($invoiceWithOnlyWidget->id)
+                ->not->toContain($invoiceWithOnlyGadget->id)
+                ->not->toContain($invoiceWithoutLineItems->id);
+
+            expect($results)->toHaveCount(1);
+        });
+
+        it('still works with single value for equals on relations', function () {
+            $invoiceWithWidget = Invoice::factory()->create();
+            LineItem::factory()->for($invoiceWithWidget)->create(['product_name' => 'Widget']);
+
+            $invoiceWithGadget = Invoice::factory()->create();
+            LineItem::factory()->for($invoiceWithGadget)->create(['product_name' => 'Gadget']);
+
+            $filter = new StringOperatorFilter([FilterOperator::EQUALS]);
+
+            $query = Invoice::query();
+            $filter($query, ['operator' => 'equals', 'value' => 'Widget'], 'lineItems.product_name');
+
+            $results = $query->get();
+
+            expect($results->pluck('id')->toArray())
+                ->toContain($invoiceWithWidget->id)
+                ->not->toContain($invoiceWithGadget->id);
+
+            expect($results)->toHaveCount(1);
+        });
+    });
+
     describe('positive operators on relations (should still work)', function () {
         it('uses whereHas for in operator on relations', function () {
             $invoiceWithWidget = Invoice::factory()->create();
