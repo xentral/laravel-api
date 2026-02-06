@@ -1,5 +1,6 @@
 <?php declare(strict_types=1);
 
+use Illuminate\Support\Facades\DB;
 use Workbench\App\Models\Customer;
 use Workbench\App\Models\Invoice;
 use Workbench\App\Models\LineItem;
@@ -967,6 +968,358 @@ describe('Invoice Multiple Filter Combinations', function () {
             'op' => 'equals',
             'value' => 'US',
         ]]);
+        $response = $this->getJson("/api/v1/invoices?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(2, 'data');
+    });
+});
+
+describe('Invoice Date Null Filters (Legacy 0000-00-00 Support)', function () {
+    it('can filter invoices by paid_at isNull (includes NULL)', function () {
+        // Create invoices with null paid_at
+        Invoice::factory()->count(2)->create(['paid_at' => null]);
+
+        // Create invoices with actual paid_at dates
+        Invoice::factory()->create(['paid_at' => today()]);
+        Invoice::factory()->create(['paid_at' => today()->subDays(5)]);
+
+        $query = buildFilterQuery([[
+            'key' => 'paid_at',
+            'op' => 'isNull',
+            'value' => null,
+        ]]);
+        $response = $this->getJson("/api/v1/invoices?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(2, 'data');
+
+        // Verify all returned invoices have null paid_at
+        $paidAtValues = collect($response->json('data'))->pluck('paid_at')->toArray();
+        foreach ($paidAtValues as $paidAt) {
+            expect($paidAt)->toBeNull();
+        }
+    });
+
+    it('can filter invoices by paid_at isNull (includes legacy 0000-00-00)', function () {
+        // Create invoice with null paid_at
+        $invoice1 = Invoice::factory()->create(['paid_at' => null]);
+
+        // Create invoices with legacy 0000-00-00 dates using raw DB insert to bypass Laravel date casting
+        $invoice2 = Invoice::factory()->create(['paid_at' => now()]);
+        $invoice3 = Invoice::factory()->create(['paid_at' => now()]);
+        DB::table('invoices')->where('id', $invoice2->id)->update(['paid_at' => '0000-00-00']);
+        DB::table('invoices')->where('id', $invoice3->id)->update(['paid_at' => '0000-00-00']);
+
+        // Create invoice with actual paid_at date
+        Invoice::factory()->create(['paid_at' => today()]);
+
+        $query = buildFilterQuery([[
+            'key' => 'paid_at',
+            'op' => 'isNull',
+            'value' => null,
+        ]]);
+        $response = $this->getJson("/api/v1/invoices?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(3, 'data');
+
+        // Verify all returned invoices have null or 0000-00-00 paid_at
+        // Note: The JSON resource might format 0000-00-00 differently (e.g., as null or -0001-11-30)
+        $returnedIds = collect($response->json('data'))->pluck('id')->sort()->values()->toArray();
+        expect($returnedIds)->toContain($invoice1->id);
+        expect($returnedIds)->toContain($invoice2->id);
+        expect($returnedIds)->toContain($invoice3->id);
+    });
+
+    it('can filter invoices by paid_at isNotNull (excludes NULL)', function () {
+        // Create invoices with null paid_at
+        Invoice::factory()->count(2)->create(['paid_at' => null]);
+
+        // Create invoices with actual paid_at dates
+        Invoice::factory()->create(['paid_at' => today()]);
+        Invoice::factory()->create(['paid_at' => today()->subDays(5)]);
+
+        $query = buildFilterQuery([[
+            'key' => 'paid_at',
+            'op' => 'isNotNull',
+            'value' => null,
+        ]]);
+        $response = $this->getJson("/api/v1/invoices?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(2, 'data');
+
+        // Verify all returned invoices have non-null paid_at
+        $paidAtValues = collect($response->json('data'))->pluck('paid_at')->toArray();
+        foreach ($paidAtValues as $paidAt) {
+            expect($paidAt)->not->toBeNull();
+        }
+    });
+
+    it('can filter invoices by paid_at isNotNull (excludes legacy 0000-00-00)', function () {
+        // Create invoice with null paid_at
+        Invoice::factory()->create(['paid_at' => null]);
+
+        // Create invoices with legacy 0000-00-00 dates using raw DB insert
+        $legacyInvoice1 = Invoice::factory()->create(['paid_at' => now()]);
+        $legacyInvoice2 = Invoice::factory()->create(['paid_at' => now()]);
+        DB::table('invoices')->where('id', $legacyInvoice1->id)->update(['paid_at' => '0000-00-00']);
+        DB::table('invoices')->where('id', $legacyInvoice2->id)->update(['paid_at' => '0000-00-00']);
+
+        // Create invoices with actual paid_at dates
+        Invoice::factory()->count(3)->create(['paid_at' => today()]);
+
+        $query = buildFilterQuery([[
+            'key' => 'paid_at',
+            'op' => 'isNotNull',
+            'value' => null,
+        ]]);
+        $response = $this->getJson("/api/v1/invoices?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(3, 'data');
+
+        // Verify all returned invoices have valid paid_at (not null or 0000-00-00)
+        $paidAtValues = collect($response->json('data'))->pluck('paid_at')->toArray();
+        foreach ($paidAtValues as $paidAt) {
+            expect($paidAt)->not->toBeNull();
+            expect($paidAt)->not->toBe('0000-00-00');
+        }
+    });
+
+    it('returns all invoices when all have null or 0000-00-00 paid_at and filtering by isNull', function () {
+        // Create invoices with null paid_at
+        Invoice::factory()->count(2)->create(['paid_at' => null]);
+
+        // Create invoices with legacy 0000-00-00 dates using raw DB insert
+        $legacy1 = Invoice::factory()->create(['paid_at' => now()]);
+        $legacy2 = Invoice::factory()->create(['paid_at' => now()]);
+        DB::table('invoices')->where('id', $legacy1->id)->update(['paid_at' => '0000-00-00']);
+        DB::table('invoices')->where('id', $legacy2->id)->update(['paid_at' => '0000-00-00']);
+
+        $query = buildFilterQuery([[
+            'key' => 'paid_at',
+            'op' => 'isNull',
+            'value' => null,
+        ]]);
+        $response = $this->getJson("/api/v1/invoices?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(4, 'data');
+    });
+
+    it('returns empty result when all have null or 0000-00-00 paid_at and filtering by isNotNull', function () {
+        // Create invoices with null paid_at
+        Invoice::factory()->count(2)->create(['paid_at' => null]);
+
+        // Create invoices with legacy 0000-00-00 dates using raw DB insert
+        $legacy1 = Invoice::factory()->create(['paid_at' => now()]);
+        $legacy2 = Invoice::factory()->create(['paid_at' => now()]);
+        DB::table('invoices')->where('id', $legacy1->id)->update(['paid_at' => '0000-00-00']);
+        DB::table('invoices')->where('id', $legacy2->id)->update(['paid_at' => '0000-00-00']);
+
+        $query = buildFilterQuery([[
+            'key' => 'paid_at',
+            'op' => 'isNotNull',
+            'value' => null,
+        ]]);
+        $response = $this->getJson("/api/v1/invoices?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(0, 'data');
+    });
+
+    it('can combine paid_at isNull filter with other filters', function () {
+        // Create invoices with varying data
+        Invoice::factory()->paid()->create(['paid_at' => null, 'total_amount' => 1000]);
+
+        // Create legacy date invoice
+        $legacyInvoice = Invoice::factory()->paid()->create(['paid_at' => now(), 'total_amount' => 2000]);
+        DB::table('invoices')->where('id', $legacyInvoice->id)->update(['paid_at' => '0000-00-00']);
+
+        Invoice::factory()->paid()->create(['paid_at' => today(), 'total_amount' => 1500]);
+        Invoice::factory()->draft()->create(['paid_at' => null, 'total_amount' => 1500]);
+
+        $query = buildFilterQuery([
+            [
+                'key' => 'paid_at',
+                'op' => 'isNull',
+                'value' => null,
+            ],
+            [
+                'key' => 'status',
+                'op' => 'equals',
+                'value' => 'paid',
+            ],
+        ]);
+        $response = $this->getJson("/api/v1/invoices?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(2, 'data');
+
+        // Verify all are paid status - checking that the filter logic works correctly
+        foreach ($response->json('data') as $invoice) {
+            expect($invoice['status'])->toBe('paid');
+            // The paid_at should be null or a legacy date (JSON formatting may vary)
+        }
+    });
+
+    it('can combine paid_at isNotNull filter with other filters', function () {
+        // Create invoices with varying data
+        Invoice::factory()->paid()->create(['paid_at' => today(), 'total_amount' => 1000]);
+        Invoice::factory()->paid()->create(['paid_at' => today(), 'total_amount' => 2000]);
+        Invoice::factory()->paid()->create(['paid_at' => null, 'total_amount' => 1500]);
+        Invoice::factory()->paid()->create(['paid_at' => '0000-00-00', 'total_amount' => 1500]);
+
+        $query = buildFilterQuery([
+            [
+                'key' => 'paid_at',
+                'op' => 'isNotNull',
+                'value' => null,
+            ],
+            [
+                'key' => 'total_amount',
+                'op' => 'greaterThan',
+                'value' => 1500,
+            ],
+        ]);
+        $response = $this->getJson("/api/v1/invoices?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(1, 'data');
+
+        $invoice = $response->json('data.0');
+        expect($invoice['paid_at'])->not->toBeNull();
+        expect($invoice['paid_at'])->not->toBe('0000-00-00');
+        expect($invoice['total_amount'])->toBeGreaterThan(1500);
+    });
+
+    it('can filter by paid_at isNull without passing value key', function () {
+        // Create invoices with null and legacy dates
+        Invoice::factory()->create(['paid_at' => null]);
+
+        $legacyInvoice = Invoice::factory()->create(['paid_at' => now()]);
+        DB::table('invoices')->where('id', $legacyInvoice->id)->update(['paid_at' => '0000-00-00']);
+
+        Invoice::factory()->create(['paid_at' => today()]);
+
+        // Build filter without 'value' key
+        $filters = [[
+            'key' => 'paid_at',
+            'op' => 'isNull',
+        ]];
+
+        $query = http_build_query(['filter' => json_encode($filters)]);
+        $response = $this->getJson("/api/v1/invoices?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(2, 'data');
+    });
+});
+
+describe('Invoice String Null Filters (Legacy Empty String Support)', function () {
+    it('can filter invoices by customer phone isNull (includes empty string)', function () {
+        // Create customer with null phone
+        $customer1 = Customer::factory()->create(['phone' => null]);
+
+        // Create customers with empty string phone (legacy data)
+        $customer2 = Customer::factory()->create(['phone' => '']);
+        $customer3 = Customer::factory()->create(['phone' => '']);
+
+        // Create customer with actual phone
+        $customer4 = Customer::factory()->create(['phone' => '+1234567890']);
+
+        Invoice::factory()->for($customer1)->create();
+        Invoice::factory()->for($customer2)->create();
+        Invoice::factory()->for($customer3)->create();
+        Invoice::factory()->for($customer4)->create();
+
+        $query = buildFilterQuery([[
+            'key' => 'customer.phone',
+            'op' => 'isNull',
+            'value' => null,
+        ]]);
+        $response = $this->getJson("/api/v1/invoices?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(3, 'data');
+    });
+
+    it('can filter invoices by customer phone isNotNull (excludes empty string)', function () {
+        // Create customer with null phone
+        $customer1 = Customer::factory()->create(['phone' => null]);
+
+        // Create customers with empty string phone
+        $customer2 = Customer::factory()->create(['phone' => '']);
+
+        // Create customers with actual phone
+        $customer3 = Customer::factory()->create(['phone' => '+1234567890']);
+        $customer4 = Customer::factory()->create(['phone' => '+0987654321']);
+
+        Invoice::factory()->for($customer1)->create();
+        Invoice::factory()->for($customer2)->create();
+        Invoice::factory()->for($customer3)->create();
+        Invoice::factory()->for($customer4)->create();
+
+        $query = buildFilterQuery([[
+            'key' => 'customer.phone',
+            'op' => 'isNotNull',
+            'value' => null,
+        ]]);
+        $response = $this->getJson("/api/v1/invoices?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(2, 'data');
+    });
+
+    it('can combine customer phone isNull filter with other filters', function () {
+        // Create customers with varying data
+        $customer1 = Customer::factory()->create(['phone' => null, 'country' => 'US']);
+        $customer2 = Customer::factory()->create(['phone' => '', 'country' => 'US']);
+        $customer3 = Customer::factory()->create(['phone' => '+1234567890', 'country' => 'US']);
+        $customer4 = Customer::factory()->create(['phone' => null, 'country' => 'CA']);
+
+        Invoice::factory()->for($customer1)->create();
+        Invoice::factory()->for($customer2)->create();
+        Invoice::factory()->for($customer3)->create();
+        Invoice::factory()->for($customer4)->create();
+
+        $query = buildFilterQuery([
+            [
+                'key' => 'customer.phone',
+                'op' => 'isNull',
+                'value' => null,
+            ],
+            [
+                'key' => 'customer.country',
+                'op' => 'equals',
+                'value' => 'US',
+            ],
+        ]);
+        $response = $this->getJson("/api/v1/invoices?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(2, 'data');
+    });
+
+    it('can filter by customer phone isNull without passing value key', function () {
+        // Create customers with null and empty phone
+        $customer1 = Customer::factory()->create(['phone' => null]);
+        $customer2 = Customer::factory()->create(['phone' => '']);
+        $customer3 = Customer::factory()->create(['phone' => '+1234567890']);
+
+        Invoice::factory()->for($customer1)->create();
+        Invoice::factory()->for($customer2)->create();
+        Invoice::factory()->for($customer3)->create();
+
+        // Build filter without 'value' key
+        $filters = [[
+            'key' => 'customer.phone',
+            'op' => 'isNull',
+        ]];
+
+        $query = http_build_query(['filter' => json_encode($filters)]);
         $response = $this->getJson("/api/v1/invoices?{$query}");
 
         $response->assertOk();

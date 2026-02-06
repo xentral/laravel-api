@@ -525,6 +525,449 @@ describe('LineItem Multiple Filter Combinations', function () {
     });
 });
 
+describe('LineItem Null Filters', function () {
+    it('can filter line items by description isNull', function () {
+        $invoice = Invoice::factory()->create();
+
+        // Create line items with null descriptions
+        LineItem::factory()->for($invoice)->count(2)->create(['description' => null]);
+
+        // Create line items with non-null descriptions
+        LineItem::factory()->for($invoice)->create(['description' => 'First description']);
+        LineItem::factory()->for($invoice)->create(['description' => 'Second description']);
+
+        $query = buildFilterQuery([[
+            'key' => 'description',
+            'op' => 'isNull',
+            'value' => null,
+        ]]);
+        $response = $this->getJson("/api/v1/invoices/{$invoice->id}/line-items?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(2, 'data');
+
+        // Verify all returned line items have null descriptions
+        $descriptions = collect($response->json('data'))->pluck('description')->toArray();
+        foreach ($descriptions as $description) {
+            expect($description)->toBeNull();
+        }
+    });
+
+    it('can filter line items by description isNotNull', function () {
+        $invoice = Invoice::factory()->create();
+
+        // Create line items with null descriptions
+        LineItem::factory()->for($invoice)->count(2)->create(['description' => null]);
+
+        // Create line items with non-null descriptions
+        LineItem::factory()->for($invoice)->create(['description' => 'First description']);
+        LineItem::factory()->for($invoice)->create(['description' => 'Second description']);
+
+        $query = buildFilterQuery([[
+            'key' => 'description',
+            'op' => 'isNotNull',
+            'value' => null,
+        ]]);
+        $response = $this->getJson("/api/v1/invoices/{$invoice->id}/line-items?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(2, 'data');
+
+        // Verify all returned line items have non-null descriptions
+        $descriptions = collect($response->json('data'))->pluck('description')->toArray();
+        foreach ($descriptions as $description) {
+            expect($description)->not->toBeNull();
+        }
+    });
+
+    it('can filter line items by discount_percent isNull', function () {
+        $invoice = Invoice::factory()->create();
+
+        // Create line items without discounts (null discount_percent)
+        LineItem::factory()->for($invoice)->count(3)->withoutDiscount()->create();
+
+        // Create line items with discounts
+        LineItem::factory()->for($invoice)->withDiscount(10.0)->create();
+        LineItem::factory()->for($invoice)->withDiscount(15.0)->create();
+
+        $query = buildFilterQuery([[
+            'key' => 'discount_percent',
+            'op' => 'isNull',
+            'value' => null,
+        ]]);
+        $response = $this->getJson("/api/v1/invoices/{$invoice->id}/line-items?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(3, 'data');
+
+        // Verify all returned line items have null discount_percent
+        $discounts = collect($response->json('data'))->pluck('discount_percent')->toArray();
+        foreach ($discounts as $discount) {
+            expect($discount)->toBeNull();
+        }
+    });
+
+    it('can filter line items by discount_percent isNotNull', function () {
+        $invoice = Invoice::factory()->create();
+
+        // Create line items without discounts (null discount_percent)
+        LineItem::factory()->for($invoice)->count(3)->withoutDiscount()->create();
+
+        // Create line items with discounts
+        LineItem::factory()->for($invoice)->withDiscount(10.0)->create();
+        LineItem::factory()->for($invoice)->withDiscount(15.0)->create();
+
+        $query = buildFilterQuery([[
+            'key' => 'discount_percent',
+            'op' => 'isNotNull',
+            'value' => null,
+        ]]);
+        $response = $this->getJson("/api/v1/invoices/{$invoice->id}/line-items?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(2, 'data');
+
+        // Verify all returned line items have non-null discount_percent
+        $discounts = collect($response->json('data'))->pluck('discount_percent')->toArray();
+        foreach ($discounts as $discount) {
+            expect($discount)->not->toBeNull();
+        }
+    });
+
+    it('returns all line items when all descriptions are null and filtering by isNull', function () {
+        $invoice = Invoice::factory()->create();
+
+        // Create line items all with null descriptions
+        LineItem::factory()->for($invoice)->count(4)->create(['description' => null]);
+
+        $query = buildFilterQuery([[
+            'key' => 'description',
+            'op' => 'isNull',
+            'value' => null,
+        ]]);
+        $response = $this->getJson("/api/v1/invoices/{$invoice->id}/line-items?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(4, 'data');
+    });
+
+    it('returns empty result when all descriptions are null and filtering by isNotNull', function () {
+        $invoice = Invoice::factory()->create();
+
+        // Create line items all with null descriptions
+        LineItem::factory()->for($invoice)->count(3)->create(['description' => null]);
+
+        $query = buildFilterQuery([[
+            'key' => 'description',
+            'op' => 'isNotNull',
+            'value' => null,
+        ]]);
+        $response = $this->getJson("/api/v1/invoices/{$invoice->id}/line-items?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(0, 'data');
+    });
+
+    it('can combine isNull filter with other filters', function () {
+        $invoice = Invoice::factory()->create();
+
+        // Create line items with varying data
+        LineItem::factory()->for($invoice)->create(['description' => null, 'quantity' => 10]);
+        LineItem::factory()->for($invoice)->create(['description' => null, 'quantity' => 5]);
+        LineItem::factory()->for($invoice)->create(['description' => 'Has description', 'quantity' => 10]);
+
+        $query = buildFilterQuery([
+            [
+                'key' => 'description',
+                'op' => 'isNull',
+                'value' => null,
+            ],
+            [
+                'key' => 'quantity',
+                'op' => 'equals',
+                'value' => 10,
+            ],
+        ]);
+        $response = $this->getJson("/api/v1/invoices/{$invoice->id}/line-items?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(1, 'data');
+        $response->assertJsonPath('data.0.quantity', 10);
+        expect($response->json('data.0.description'))->toBeNull();
+    });
+
+    it('can combine isNotNull filter with other filters', function () {
+        $invoice = Invoice::factory()->create();
+
+        // Create line items with varying data
+        LineItem::factory()->for($invoice)->withDiscount(10.0)->create(['product_name' => 'Premium Widget']);
+        LineItem::factory()->for($invoice)->withDiscount(15.0)->create(['product_name' => 'Basic Widget']);
+        LineItem::factory()->for($invoice)->withoutDiscount()->create(['product_name' => 'Premium Widget']);
+
+        $query = buildFilterQuery([
+            [
+                'key' => 'discount_percent',
+                'op' => 'isNotNull',
+                'value' => null,
+            ],
+            [
+                'key' => 'product_name',
+                'op' => 'contains',
+                'value' => 'Premium',
+            ],
+        ]);
+        $response = $this->getJson("/api/v1/invoices/{$invoice->id}/line-items?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(1, 'data');
+        $response->assertJsonPath('data.0.product_name', 'Premium Widget');
+        expect($response->json('data.0.discount_percent'))->not->toBeNull();
+    });
+
+    it('can filter by isNull without passing value key', function () {
+        $invoice = Invoice::factory()->create();
+
+        // Create line items with null descriptions
+        LineItem::factory()->for($invoice)->count(2)->create(['description' => null]);
+
+        // Create line items with non-null descriptions
+        LineItem::factory()->for($invoice)->create(['description' => 'First description']);
+
+        // Build filter without 'value' key
+        $filters = [[
+            'key' => 'description',
+            'op' => 'isNull',
+        ]];
+
+        $query = http_build_query(['filter' => json_encode($filters)]);
+        $response = $this->getJson("/api/v1/invoices/{$invoice->id}/line-items?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(2, 'data');
+
+        // Verify all returned line items have null descriptions
+        $descriptions = collect($response->json('data'))->pluck('description')->toArray();
+        foreach ($descriptions as $description) {
+            expect($description)->toBeNull();
+        }
+    });
+
+    it('can filter by isNotNull without passing value key', function () {
+        $invoice = Invoice::factory()->create();
+
+        // Create line items with null discount_percent
+        LineItem::factory()->for($invoice)->count(2)->withoutDiscount()->create();
+
+        // Create line items with non-null discount_percent
+        LineItem::factory()->for($invoice)->withDiscount(10.0)->create();
+
+        // Build filter without 'value' key
+        $filters = [[
+            'key' => 'discount_percent',
+            'op' => 'isNotNull',
+        ]];
+
+        $query = http_build_query(['filter' => json_encode($filters)]);
+        $response = $this->getJson("/api/v1/invoices/{$invoice->id}/line-items?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(1, 'data');
+
+        // Verify returned line item has non-null discount_percent
+        expect($response->json('data.0.discount_percent'))->not->toBeNull();
+    });
+});
+
+describe('LineItem String Null Filters (Legacy Empty String Support)', function () {
+    it('can filter line items by description isNull (includes empty string)', function () {
+        $invoice = Invoice::factory()->create();
+
+        // Create line items with null descriptions
+        LineItem::factory()->for($invoice)->create(['description' => null]);
+
+        // Create line items with empty string descriptions (legacy data)
+        LineItem::factory()->for($invoice)->count(2)->create(['description' => '']);
+
+        // Create line items with actual descriptions
+        LineItem::factory()->for($invoice)->create(['description' => 'Valid description']);
+
+        $query = buildFilterQuery([[
+            'key' => 'description',
+            'op' => 'isNull',
+            'value' => null,
+        ]]);
+        $response = $this->getJson("/api/v1/invoices/{$invoice->id}/line-items?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(3, 'data');
+
+        // Verify all returned line items have null or empty descriptions
+        $descriptions = collect($response->json('data'))->pluck('description')->toArray();
+        foreach ($descriptions as $description) {
+            expect($description === null || $description === '')->toBeTrue();
+        }
+    });
+
+    it('can filter line items by description isNotNull (excludes empty string)', function () {
+        $invoice = Invoice::factory()->create();
+
+        // Create line items with null descriptions
+        LineItem::factory()->for($invoice)->create(['description' => null]);
+
+        // Create line items with empty string descriptions
+        LineItem::factory()->for($invoice)->count(2)->create(['description' => '']);
+
+        // Create line items with actual descriptions
+        LineItem::factory()->for($invoice)->count(2)->create(['description' => 'Valid description']);
+
+        $query = buildFilterQuery([[
+            'key' => 'description',
+            'op' => 'isNotNull',
+            'value' => null,
+        ]]);
+        $response = $this->getJson("/api/v1/invoices/{$invoice->id}/line-items?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(2, 'data');
+
+        // Verify all returned line items have non-empty descriptions
+        $descriptions = collect($response->json('data'))->pluck('description')->toArray();
+        foreach ($descriptions as $description) {
+            expect($description)->not->toBeNull();
+            expect($description)->not->toBe('');
+            expect(strlen($description))->toBeGreaterThan(0);
+        }
+    });
+
+    it('returns all line items when all have null or empty description and filtering by isNull', function () {
+        $invoice = Invoice::factory()->create();
+
+        // Create line items with null descriptions
+        LineItem::factory()->for($invoice)->count(2)->create(['description' => null]);
+
+        // Create line items with empty string descriptions
+        LineItem::factory()->for($invoice)->count(2)->create(['description' => '']);
+
+        $query = buildFilterQuery([[
+            'key' => 'description',
+            'op' => 'isNull',
+            'value' => null,
+        ]]);
+        $response = $this->getJson("/api/v1/invoices/{$invoice->id}/line-items?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(4, 'data');
+    });
+
+    it('returns empty result when all have null or empty description and filtering by isNotNull', function () {
+        $invoice = Invoice::factory()->create();
+
+        // Create line items with null descriptions
+        LineItem::factory()->for($invoice)->count(2)->create(['description' => null]);
+
+        // Create line items with empty string descriptions
+        LineItem::factory()->for($invoice)->count(2)->create(['description' => '']);
+
+        $query = buildFilterQuery([[
+            'key' => 'description',
+            'op' => 'isNotNull',
+            'value' => null,
+        ]]);
+        $response = $this->getJson("/api/v1/invoices/{$invoice->id}/line-items?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(0, 'data');
+    });
+
+    it('can combine description isNull filter with other filters', function () {
+        $invoice = Invoice::factory()->create();
+
+        // Create line items with varying data
+        LineItem::factory()->for($invoice)->create(['description' => null, 'quantity' => 10]);
+        LineItem::factory()->for($invoice)->create(['description' => '', 'quantity' => 10]);
+        LineItem::factory()->for($invoice)->create(['description' => 'Has description', 'quantity' => 10]);
+        LineItem::factory()->for($invoice)->create(['description' => null, 'quantity' => 5]);
+
+        $query = buildFilterQuery([
+            [
+                'key' => 'description',
+                'op' => 'isNull',
+                'value' => null,
+            ],
+            [
+                'key' => 'quantity',
+                'op' => 'equals',
+                'value' => 10,
+            ],
+        ]);
+        $response = $this->getJson("/api/v1/invoices/{$invoice->id}/line-items?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(2, 'data');
+
+        // Verify all have quantity 10 and null/empty description
+        foreach ($response->json('data') as $lineItem) {
+            expect($lineItem['quantity'])->toBe(10);
+            expect($lineItem['description'] === null || $lineItem['description'] === '')->toBeTrue();
+        }
+    });
+
+    it('can combine description isNotNull filter with other filters', function () {
+        $invoice = Invoice::factory()->create();
+
+        // Create line items with varying data
+        LineItem::factory()->for($invoice)->create(['description' => 'Premium Widget', 'product_name' => 'Widget A']);
+        LineItem::factory()->for($invoice)->create(['description' => 'Basic Widget', 'product_name' => 'Widget B']);
+        LineItem::factory()->for($invoice)->create(['description' => null, 'product_name' => 'Widget A']);
+        LineItem::factory()->for($invoice)->create(['description' => '', 'product_name' => 'Widget A']);
+
+        $query = buildFilterQuery([
+            [
+                'key' => 'description',
+                'op' => 'isNotNull',
+                'value' => null,
+            ],
+            [
+                'key' => 'product_name',
+                'op' => 'contains',
+                'value' => 'Widget',
+            ],
+        ]);
+        $response = $this->getJson("/api/v1/invoices/{$invoice->id}/line-items?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(2, 'data');
+
+        // Verify all have non-empty descriptions and contain 'Widget'
+        foreach ($response->json('data') as $lineItem) {
+            expect($lineItem['description'])->not->toBeNull();
+            expect($lineItem['description'])->not->toBe('');
+            expect($lineItem['product_name'])->toContain('Widget');
+        }
+    });
+
+    it('can filter by description isNull without passing value key', function () {
+        $invoice = Invoice::factory()->create();
+
+        // Create line items with null and empty descriptions
+        LineItem::factory()->for($invoice)->create(['description' => null]);
+        LineItem::factory()->for($invoice)->create(['description' => '']);
+        LineItem::factory()->for($invoice)->create(['description' => 'Valid']);
+
+        // Build filter without 'value' key
+        $filters = [[
+            'key' => 'description',
+            'op' => 'isNull',
+        ]];
+
+        $query = http_build_query(['filter' => json_encode($filters)]);
+        $response = $this->getJson("/api/v1/invoices/{$invoice->id}/line-items?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(2, 'data');
+    });
+});
+
 describe('LineItem Edge Cases', function () {
     it('returns empty result when no line items match filter', function () {
         $invoice = Invoice::factory()->hasLineItems(3)->create();
