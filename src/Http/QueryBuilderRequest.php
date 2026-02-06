@@ -33,7 +33,7 @@ class QueryBuilderRequest extends \Spatie\QueryBuilder\QueryBuilderRequest
                 $key = $filter['key'];
                 $filterValue = [
                     'operator' => $filter['op'],
-                    'value' => $this->getFilterValue($filter['value']),
+                    'value' => $this->getFilterValue($filter['value'] ?? null),
                 ];
 
                 // If the key already exists, make it an array of filters

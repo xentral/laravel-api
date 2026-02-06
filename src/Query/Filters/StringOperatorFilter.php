@@ -113,12 +113,16 @@ class StringOperatorFilter extends FiltersExact
                     switch ($operator) {
                         case FilterOperator::IS_NULL:
                             $query->whereHas($relationName, function (Builder $query) use ($relationProperty) {
-                                $query->whereNull($query->qualifyColumn($relationProperty));
+                                $query->where(function (Builder $query) use ($relationProperty) {
+                                    $query->whereNull($query->qualifyColumn($relationProperty))
+                                        ->orWhere($query->qualifyColumn($relationProperty), '');
+                                });
                             });
                             break;
                         case FilterOperator::IS_NOT_NULL:
                             $query->whereHas($relationName, function (Builder $query) use ($relationProperty) {
-                                $query->whereNotNull($query->qualifyColumn($relationProperty));
+                                $query->whereNotNull($query->qualifyColumn($relationProperty))
+                                    ->where($query->qualifyColumn($relationProperty), '!=', '');
                             });
                             break;
                     }
@@ -127,10 +131,12 @@ class StringOperatorFilter extends FiltersExact
                 $query->where(function (Builder $query) use ($operator, $property) {
                     switch ($operator) {
                         case FilterOperator::IS_NULL:
-                            $query->whereNull($query->qualifyColumn($property));
+                            $query->whereNull($query->qualifyColumn($property))
+                                ->orWhere($query->qualifyColumn($property), '');
                             break;
                         case FilterOperator::IS_NOT_NULL:
-                            $query->whereNotNull($query->qualifyColumn($property));
+                            $query->whereNotNull($query->qualifyColumn($property))
+                                ->where($query->qualifyColumn($property), '!=', '');
                             break;
                     }
                 });

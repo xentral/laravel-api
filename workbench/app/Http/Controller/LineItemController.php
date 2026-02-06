@@ -23,6 +23,7 @@ class LineItemController
             new FilterParameter([
                 new IdFilter,
                 new StringFilter(name: 'product_name'),
+                new StringFilter(name: 'description'),
             ]),
         ],
     )]
@@ -37,9 +38,11 @@ class LineItemController
                 ->allowedFilters(
                     QueryFilter::identifier(),
                     QueryFilter::string('product_name'),
+                    QueryFilter::string('description'),
                     QueryFilter::number('quantity'),
                     QueryFilter::number('unit_price'),
                     QueryFilter::number('total_price'),
+                    QueryFilter::number('discount_percent'),
                 )
                 ->apiPaginate()
         );

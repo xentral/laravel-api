@@ -389,7 +389,7 @@ paths:
         -
           name: filter
           in: query
-          description: "The filter parameter is used to filter the results of the given endpoint. \n\n\n**Supported filter operators by key:** \n\n`id`: *equals*, *notEquals*, *in*, *notIn* \n\n`product_name`: *equals*, *notEquals*, *in*, *notIn*, *contains*, *notContains*, *startsWith*, *endsWith*"
+          description: "The filter parameter is used to filter the results of the given endpoint. \n\n\n**Supported filter operators by key:** \n\n`id`: *equals*, *notEquals*, *in*, *notIn* \n\n`product_name`: *equals*, *notEquals*, *in*, *notIn*, *contains*, *notContains*, *startsWith*, *endsWith* \n\n`description`: *equals*, *notEquals*, *in*, *notIn*, *contains*, *notContains*, *startsWith*, *endsWith*"
           required: false
           style: deepObject
           schema:
@@ -398,7 +398,7 @@ paths:
               properties:
                 key:
                   type: string
-                  enum: [id, product_name]
+                  enum: [id, product_name, description]
                 op:
                   description: operator
                   type: string
