@@ -60,7 +60,7 @@ class QueryFilter
     {
         return AllowedFilter::custom(
             $name,
-            new NumberOperatorFilter,
+            new NumberOperatorFilter($name),
             $internalName,
         );
     }

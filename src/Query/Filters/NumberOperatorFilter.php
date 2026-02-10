@@ -24,6 +24,8 @@ class NumberOperatorFilter extends FiltersExact
         FilterOperator::IS_NOT_NULL,
     ];
 
+    public function __construct(private readonly string $filterName) {}
+
     public function __invoke(Builder $query, mixed $value, string $property): void
     {
         if (isset($value[0]) && is_array($value[0])) {
@@ -53,7 +55,7 @@ class NumberOperatorFilter extends FiltersExact
     {
         [$relation, $property] = collect(explode('.', $property))
             ->pipe(fn (Collection $parts) => [
-                $parts->except(count($parts) - 1)->implode('.'),
+                $parts->except([count($parts) - 1])->implode('.'),
                 $parts->last(),
             ]);
 
@@ -82,13 +84,13 @@ class NumberOperatorFilter extends FiltersExact
             $operator = FilterOperator::from($value['operator']);
         } catch (\Throwable) {
             throw ValidationException::withMessages([
-                $property => "Unsupported filter operator: {$value['operator']}. Valid operators are ".implode(', ', array_map(fn ($v) => $v->value, self::ALLOWED_OPERATORS)),
+                $this->filterName => "Unsupported filter operator: {$value['operator']}. Valid operators are ".implode(', ', array_map(fn ($v) => $v->value, self::ALLOWED_OPERATORS)),
             ]);
         }
 
         if (! $skipValidation && ! in_array($operator, self::ALLOWED_OPERATORS, true)) {
             throw ValidationException::withMessages([
-                $property => "Unsupported filter operator: {$operator->value}. Valid operators are ".implode(', ', array_map(fn ($v) => $v->value, self::ALLOWED_OPERATORS)),
+                $this->filterName => "Unsupported filter operator: {$operator->value}. Valid operators are ".implode(', ', array_map(fn ($v) => $v->value, self::ALLOWED_OPERATORS)),
             ]);
         }
 
@@ -135,7 +137,7 @@ class NumberOperatorFilter extends FiltersExact
         $wasArray = is_array($value['value']);
         $filterValues = Arr::wrap($value['value']);
 
-        $this->validateNumericValues($filterValues, $property);
+        $this->validateNumericValues($filterValues);
 
         if (! $wasArray && count($filterValues) === 1) {
             $filterValues = $filterValues[0];
@@ -173,12 +175,12 @@ class NumberOperatorFilter extends FiltersExact
         });
     }
 
-    private function validateNumericValues(array $values, string $property): void
+    private function validateNumericValues(array $values): void
     {
         foreach ($values as $value) {
             if (! is_numeric($value)) {
                 throw ValidationException::withMessages([
-                    $property => "The filter value '{$value}' for '{$property}' is not a valid number.",
+                    $this->filterName => "The filter value '{$value}' for '{$this->filterName}' is not a valid number.",
                 ]);
             }
         }
