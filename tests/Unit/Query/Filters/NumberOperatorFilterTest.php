@@ -2,7 +2,6 @@
 
 use Illuminate\Validation\ValidationException;
 use Workbench\App\Models\Invoice;
-use Xentral\LaravelApi\Query\Filters\FilterOperator;
 use Xentral\LaravelApi\Query\Filters\NumberOperatorFilter;
 
 describe('NumberOperatorFilter', function () {
