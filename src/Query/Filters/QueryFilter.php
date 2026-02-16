@@ -36,6 +36,15 @@ class QueryFilter
         );
     }
 
+    public static function datetime(string $name, ?string $internalName = null): AllowedFilter
+    {
+        return AllowedFilter::custom(
+            $name,
+            new DateTimeOperatorFilter,
+            $internalName,
+        );
+    }
+
     public static function string(string $name, ?string $internalName = null, ?string $enum = null): AllowedFilter
     {
         return AllowedFilter::custom(
