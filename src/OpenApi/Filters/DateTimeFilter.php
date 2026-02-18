@@ -16,6 +16,8 @@ class DateTimeFilter extends FilterProperty
             FilterOperator::LESS_THAN_OR_EQUALS,
             FilterOperator::GREATER_THAN,
             FilterOperator::GREATER_THAN_OR_EQUALS,
+            FilterOperator::IS_NULL,
+            FilterOperator::IS_NOT_NULL,
         ],
     ) {
         parent::__construct(

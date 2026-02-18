@@ -1,5 +1,6 @@
 <?php declare(strict_types=1);
 
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Workbench\App\Models\Invoice;
 use Xentral\LaravelApi\Query\Filters\DateTimeOperatorFilter;
@@ -94,6 +95,84 @@ describe('DateTimeOperatorFilter', function () {
         it('filters isNotNull for datetime columns', function () {
             Invoice::factory()->create(['paid_at' => null]);
             Invoice::factory()->create(['paid_at' => '2026-02-16 10:00:00']);
+
+            $filter = new DateTimeOperatorFilter;
+            $query = Invoice::query();
+            $filter($query, ['operator' => 'isNotNull'], 'paid_at');
+
+            expect($query->count())->toBe(1);
+        });
+
+        it('treats legacy 0000-00-00 00:00:00 as null with isNull', function () {
+            Invoice::factory()->create(['paid_at' => null]);
+            Invoice::factory()->create(['paid_at' => '2026-02-16 10:00:00']);
+
+            DB::table('invoices')->insert([
+                'invoice_number' => 'LEGACY-DT',
+                'customer_id' => Invoice::first()->customer_id,
+                'status' => 'draft',
+                'total_amount' => 0,
+                'paid_at' => '0000-00-00 00:00:00',
+                'issued_at' => now(),
+            ]);
+
+            $filter = new DateTimeOperatorFilter;
+            $query = Invoice::query();
+            $filter($query, ['operator' => 'isNull'], 'paid_at');
+
+            expect($query->count())->toBe(2);
+        });
+
+        it('treats legacy 0000-00-00 as null with isNull', function () {
+            Invoice::factory()->create(['paid_at' => null]);
+            Invoice::factory()->create(['paid_at' => '2026-02-16 10:00:00']);
+
+            DB::table('invoices')->insert([
+                'invoice_number' => 'LEGACY-D',
+                'customer_id' => Invoice::first()->customer_id,
+                'status' => 'draft',
+                'total_amount' => 0,
+                'paid_at' => '0000-00-00',
+                'issued_at' => now(),
+            ]);
+
+            $filter = new DateTimeOperatorFilter;
+            $query = Invoice::query();
+            $filter($query, ['operator' => 'isNull'], 'paid_at');
+
+            expect($query->count())->toBe(2);
+        });
+
+        it('excludes legacy 0000-00-00 00:00:00 with isNotNull', function () {
+            Invoice::factory()->create(['paid_at' => '2026-02-16 10:00:00']);
+
+            DB::table('invoices')->insert([
+                'invoice_number' => 'LEGACY-DT2',
+                'customer_id' => Invoice::first()->customer_id,
+                'status' => 'draft',
+                'total_amount' => 0,
+                'paid_at' => '0000-00-00 00:00:00',
+                'issued_at' => now(),
+            ]);
+
+            $filter = new DateTimeOperatorFilter;
+            $query = Invoice::query();
+            $filter($query, ['operator' => 'isNotNull'], 'paid_at');
+
+            expect($query->count())->toBe(1);
+        });
+
+        it('excludes legacy 0000-00-00 with isNotNull', function () {
+            Invoice::factory()->create(['paid_at' => '2026-02-16 10:00:00']);
+
+            DB::table('invoices')->insert([
+                'invoice_number' => 'LEGACY-D2',
+                'customer_id' => Invoice::first()->customer_id,
+                'status' => 'draft',
+                'total_amount' => 0,
+                'paid_at' => '0000-00-00',
+                'issued_at' => now(),
+            ]);
 
             $filter = new DateTimeOperatorFilter;
             $query = Invoice::query();

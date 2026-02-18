@@ -9,6 +9,10 @@ use Spatie\QueryBuilder\Filters\FiltersExact;
 
 class DateTimeOperatorFilter extends FiltersExact
 {
+    private const LEGACY_ZERO_DATETIME = '0000-00-00 00:00:00';
+
+    private const LEGACY_ZERO_DATE = '0000-00-00';
+
     private const ALLOWED_OPERATORS = [
         FilterOperator::EQUALS,
         FilterOperator::NOT_EQUALS,
@@ -72,29 +76,36 @@ class DateTimeOperatorFilter extends FiltersExact
                         case FilterOperator::IS_NULL:
                             $query->whereHas($relationName, function (Builder $query) use ($relationProperty) {
                                 $query->where(function (Builder $query) use ($relationProperty) {
-                                    $query->whereNull($query->qualifyColumn($relationProperty))
-                                        ->orWhere($query->qualifyColumn($relationProperty), '0000-00-00 00:00:00');
+                                    $column = $query->qualifyColumn($relationProperty);
+                                    $query->whereNull($column)
+                                        ->orWhere($column, self::LEGACY_ZERO_DATETIME)
+                                        ->orWhere($column, self::LEGACY_ZERO_DATE);
                                 });
                             });
                             break;
                         case FilterOperator::IS_NOT_NULL:
                             $query->whereHas($relationName, function (Builder $query) use ($relationProperty) {
-                                $query->whereNotNull($query->qualifyColumn($relationProperty))
-                                    ->where($query->qualifyColumn($relationProperty), '!=', '0000-00-00 00:00:00');
+                                $column = $query->qualifyColumn($relationProperty);
+                                $query->whereNotNull($column)
+                                    ->where($column, '!=', self::LEGACY_ZERO_DATETIME)
+                                    ->where($column, '!=', self::LEGACY_ZERO_DATE);
                             });
                             break;
                     }
                 });
             } else {
                 $query->where(function (Builder $query) use ($operator, $property) {
+                    $column = $query->qualifyColumn($property);
                     switch ($operator) {
                         case FilterOperator::IS_NULL:
-                            $query->whereNull($query->qualifyColumn($property))
-                                ->orWhere($query->qualifyColumn($property), '0000-00-00 00:00:00');
+                            $query->whereNull($column)
+                                ->orWhere($column, self::LEGACY_ZERO_DATETIME)
+                                ->orWhere($column, self::LEGACY_ZERO_DATE);
                             break;
                         case FilterOperator::IS_NOT_NULL:
-                            $query->whereNotNull($query->qualifyColumn($property))
-                                ->where($query->qualifyColumn($property), '!=', '0000-00-00 00:00:00');
+                            $query->whereNotNull($column)
+                                ->where($column, '!=', self::LEGACY_ZERO_DATETIME)
+                                ->where($column, '!=', self::LEGACY_ZERO_DATE);
                             break;
                     }
                 });
