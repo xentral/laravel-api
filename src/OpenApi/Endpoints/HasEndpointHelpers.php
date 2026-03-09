@@ -145,10 +145,14 @@ trait HasEndpointHelpers
         string|array|null $scopes = null,
         string|array|null $request = null,
         ?array $problems = null,
+        bool $isBeta = false,
     ): string|array {
         $x = [];
         if ($isInternal) {
             $x['internal'] = true;
+        }
+        if ($isBeta) {
+            $x['beta'] = true;
         }
         if ($deprecated) {
             $x['deprecated_on'] = $deprecated->format('Y-m-d');

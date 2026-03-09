@@ -24,6 +24,7 @@ class GetEndpoint extends Get
         ?string $operationId = null,
         array $includes = [],
         bool $isInternal = false,
+        bool $isBeta = false,
         ?\DateTimeInterface $deprecated = null,
         \BackedEnum|string|null $featureFlag = null,
         string|array|null $scopes = null,
@@ -51,7 +52,7 @@ class GetEndpoint extends Get
             'tags' => $tags ?? Generator::UNDEFINED,
             'callbacks' => Generator::UNDEFINED,
             'deprecated' => $deprecated !== null ? true : Generator::UNDEFINED,
-            'x' => $this->compileX($isInternal, $deprecated, $featureFlag, $scopes, null, $problems),
+            'x' => $this->compileX($isInternal, $deprecated, $featureFlag, $scopes, null, $problems, $isBeta),
             'value' => $this->combine($responses, $parameters),
         ]);
     }

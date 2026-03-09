@@ -27,6 +27,7 @@ class ListEndpoint extends Get
         int $maxPageSize = 100,
         PaginationType|array $paginationType = PaginationType::SIMPLE,
         bool $isInternal = false,
+        bool $isBeta = false,
         ?\DateTimeInterface $deprecated = null,
         \BackedEnum|string|null $featureFlag = null,
         string|array|null $scopes = null,
@@ -50,7 +51,7 @@ class ListEndpoint extends Get
             'tags' => $tags ?? Generator::UNDEFINED,
             'callbacks' => Generator::UNDEFINED,
             'deprecated' => $deprecated !== null ? true : Generator::UNDEFINED,
-            'x' => $this->mergeX($this->compileX($isInternal, $deprecated, $featureFlag, $scopes, null, $problems), [
+            'x' => $this->mergeX($this->compileX($isInternal, $deprecated, $featureFlag, $scopes, null, $problems, $isBeta), [
                 'pagination_type' => $paginationType,
                 'pagination_config' => [
                     'default_page_size' => $defaultPageSize,
