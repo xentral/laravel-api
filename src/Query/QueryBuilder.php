@@ -20,9 +20,11 @@ use Xentral\LaravelApi\Query\Filters\QueryBuilderFilterCollection;
 class QueryBuilder extends \Spatie\QueryBuilder\QueryBuilder
 {
     public function __construct(
-        protected EloquentBuilder|Relation $subject,
+        EloquentBuilder|Relation $subject,
         ?Request $request = null
     ) {
+        $this->subject = $subject;
+
         // We need to override the request initialization to use our own request
         $this->request = $request
             ? QueryBuilderRequest::fromRequest($request)
