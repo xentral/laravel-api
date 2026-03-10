@@ -81,7 +81,7 @@ paths:
         '401':
           description: Unauthorized
         '403':
-          description: Unauthorized
+          description: Forbidden
         '429':
           description: 'Too Many Requests'
           content:
@@ -126,7 +126,7 @@ paths:
         '401':
           description: Unauthorized
         '403':
-          description: Unauthorized
+          description: Forbidden
         '404':
           description: 'Not Found'
         '429':
@@ -179,7 +179,7 @@ paths:
         '401':
           description: Unauthorized
         '403':
-          description: Unauthorized
+          description: Forbidden
         '404':
           description: 'Not Found'
         '429':
@@ -280,7 +280,7 @@ paths:
         '401':
           description: Unauthorized
         '403':
-          description: Unauthorized
+          description: Forbidden
         '429':
           description: 'Too Many Requests'
           content:
@@ -319,7 +319,7 @@ paths:
         '401':
           description: Unauthorized
         '403':
-          description: Unauthorized
+          description: Forbidden
         '429':
           description: 'Too Many Requests'
           content:
@@ -369,7 +369,7 @@ paths:
         '401':
           description: Unauthorized
         '403':
-          description: Unauthorized
+          description: Forbidden
         '404':
           description: 'Not Found'
         '429':
@@ -444,7 +444,7 @@ paths:
         '401':
           description: Unauthorized
         '403':
-          description: Unauthorized
+          description: Forbidden
         '429':
           description: 'Too Many Requests'
           content:

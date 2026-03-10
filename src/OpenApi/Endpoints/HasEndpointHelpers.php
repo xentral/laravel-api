@@ -58,7 +58,7 @@ trait HasEndpointHelpers
 
     protected function response403(): Response
     {
-        return new Response(response: '403', description: 'Unauthorized');
+        return new Response(response: '403', description: 'Forbidden');
     }
 
     protected function response404(): Response
