@@ -19,6 +19,7 @@ class DeleteEndpoint extends Delete
         ?string $operationId = null,
         array $validates = [],
         bool $isInternal = false,
+        bool $isBeta = false,
         ?\DateTimeInterface $deprecated = null,
         \BackedEnum|string|null $featureFlag = null,
         string|array|null $scopes = null,
@@ -41,7 +42,7 @@ class DeleteEndpoint extends Delete
             'tags' => $tags ?? Generator::UNDEFINED,
             'callbacks' => Generator::UNDEFINED,
             'deprecated' => $deprecated !== null ? true : Generator::UNDEFINED,
-            'x' => $this->compileX($isInternal, $deprecated, $featureFlag, $scopes, ! empty($validates) ? $validates : null, $problems),
+            'x' => $this->compileX($isInternal, $deprecated, $featureFlag, $scopes, ! empty($validates) ? $validates : null, $problems, $isBeta),
             'value' => $this->combine($responses, $parameters),
         ]);
     }

@@ -24,8 +24,7 @@ class SummaryPostProcessor
                 $operation->summary .= ' '.$version;
             }
 
-            // If operation is behind a feature flag, prepend lock emoji
-            if (isset($operation->x['feature_flag'])) {
+            if (isset($operation->x['feature_flag']) || isset($operation->x['beta'])) {
                 $operation->summary = '🔒 '.$operation->summary;
             }
         }

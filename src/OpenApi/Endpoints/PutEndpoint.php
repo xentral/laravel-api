@@ -20,6 +20,7 @@ class PutEndpoint extends Put
         ?array $parameters = [],
         ?string $operationId = null,
         bool $isInternal = false,
+        bool $isBeta = false,
         ?\DateTimeInterface $deprecated = null,
         \BackedEnum|string|null $featureFlag = null,
         string|array|null $scopes = null,
@@ -46,7 +47,7 @@ class PutEndpoint extends Put
             'tags' => $tags ?? Generator::UNDEFINED,
             'callbacks' => Generator::UNDEFINED,
             'deprecated' => $deprecated !== null ? true : Generator::UNDEFINED,
-            'x' => $this->compileX($isInternal, $deprecated, $featureFlag, $scopes, $request, $problems),
+            'x' => $this->compileX($isInternal, $deprecated, $featureFlag, $scopes, $request, $problems, $isBeta),
             'value' => $this->combine($requestBody, $responses, $parameters),
         ]);
     }

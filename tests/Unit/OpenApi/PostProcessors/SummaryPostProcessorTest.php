@@ -132,6 +132,38 @@ it('handles path without version gracefully', function () {
     expect($operation->summary)->toBe('List test resources');
 });
 
+it('prepends test tube emoji to summary when operation has beta flag', function () {
+    $processor = new SummaryPostProcessor;
+    $analysis = new Analysis([], new Context);
+
+    $operation = new OA\Get(['path' => '/api/v1/test-models']);
+    $operation->summary = Generator::UNDEFINED;
+    $operation->description = 'List test resources';
+    $operation->x = ['beta' => true];
+
+    $analysis->addAnnotation($operation, new Context);
+
+    $processor($analysis);
+
+    expect($operation->summary)->toBe('🔒 List test resources V1');
+});
+
+it('prepends both emojis when operation has feature flag and beta flag', function () {
+    $processor = new SummaryPostProcessor;
+    $analysis = new Analysis([], new Context);
+
+    $operation = new OA\Get(['path' => '/api/v1/test-models']);
+    $operation->summary = Generator::UNDEFINED;
+    $operation->description = 'List test resources';
+    $operation->x = ['feature_flag' => 'beta-users', 'beta' => true];
+
+    $analysis->addAnnotation($operation, new Context);
+
+    $processor($analysis);
+
+    expect($operation->summary)->toBe('🔒 List test resources V1');
+});
+
 it('falls back to path when description is undefined', function () {
     $processor = new SummaryPostProcessor;
     $analysis = new Analysis([], new Context);
