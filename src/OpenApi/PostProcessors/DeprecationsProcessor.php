@@ -2,6 +2,7 @@
 namespace Xentral\LaravelApi\OpenApi\PostProcessors;
 
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Date;
 use OpenApi\Analysis;
 use OpenApi\Annotations as OA;
 use OpenApi\Attributes\Header;
@@ -66,7 +67,7 @@ class DeprecationsProcessor
 
     private function makeSunsetDate(string $deprecationDate): CarbonImmutable
     {
-        return \Illuminate\Support\Facades\Date::createFromFormat('Y-m-d', $deprecationDate)
+        return Date::createFromFormat('Y-m-d', $deprecationDate)
             ->startOfDay()
             ->addMonths($this->config->deprecationFilter->monthsBeforeRemoval)
             ->toImmutable();

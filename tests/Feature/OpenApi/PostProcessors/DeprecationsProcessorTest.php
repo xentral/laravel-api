@@ -1,5 +1,6 @@
 <?php declare(strict_types=1);
 
+use Illuminate\Support\Facades\Date;
 use Symfony\Component\Yaml\Yaml;
 use Xentral\LaravelApi\OpenApi\OpenApiGeneratorFactory;
 
@@ -39,7 +40,7 @@ it('calculates sunset date as deprecation date plus configured months', function
 });
 
 it('removes deprecated endpoints past the removal window', function () {
-    \Illuminate\Support\Facades\Date::setTestNow(\Illuminate\Support\Facades\Date::parse('2026-06-01'));
+    Date::setTestNow(Date::parse('2026-06-01'));
 
     $factory = new OpenApiGeneratorFactory;
     $generator = $factory->create(config('openapi.schemas.default'));
@@ -51,7 +52,7 @@ it('removes deprecated endpoints past the removal window', function () {
     // because we're now in June 2026
     expect($data['paths']['/api/v1/customers/{id}/legacy'] ?? null)->toBeNull();
 
-    \Illuminate\Support\Facades\Date::setTestNow();
+    Date::setTestNow();
 });
 
 it('does not add sunset header to non-deprecated endpoints', function () {

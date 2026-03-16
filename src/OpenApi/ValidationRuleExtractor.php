@@ -3,6 +3,8 @@ namespace Xentral\LaravelApi\OpenApi;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rules\Exists;
+use Illuminate\Validation\Rules\Unique;
 use ReflectionClass;
 use ReflectionMethod;
 use Spatie\LaravelData\Data;
@@ -119,8 +121,8 @@ class ValidationRuleExtractor
         if (is_object($rule)) {
             $className = $rule::class;
             $databaseRuleClasses = [
-                \Illuminate\Validation\Rules\Exists::class,
-                \Illuminate\Validation\Rules\Unique::class,
+                Exists::class,
+                Unique::class,
             ];
 
             foreach ($databaseRuleClasses as $dbRuleClass) {
