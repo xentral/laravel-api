@@ -2,7 +2,9 @@
 
 namespace Xentral\LaravelApi\Http;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Date;
 
 trait HasSunsetHeader
 {
@@ -10,14 +12,14 @@ trait HasSunsetHeader
 
     public function deprecatedSince(\DateTimeInterface $date): self
     {
-        $this->deprecatedSince = \Illuminate\Support\Facades\Date::instance($date);
+        $this->deprecatedSince = Date::instance($date);
 
         return $this;
     }
 
     public function toResponse($request)
     {
-        /** @var \Illuminate\Http\JsonResponse $response */
+        /** @var JsonResponse $response */
         $response = parent::toResponse($request);
 
         if ($this->deprecatedSince) {

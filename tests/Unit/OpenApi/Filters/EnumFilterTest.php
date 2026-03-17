@@ -68,7 +68,7 @@ it('throws exception for invalid enum class', function () {
         name: 'invalid',
         enumSource: 'NonExistentClass',
     );
-})->throws(\InvalidArgumentException::class);
+})->throws(InvalidArgumentException::class);
 
 it('generates correct OpenAPI property for multiple values', function () {
     $filter = new EnumFilter(
@@ -91,7 +91,7 @@ it('generates correct OpenAPI property for single value', function () {
     );
 
     // Set multiple to false via reflection since it's a parent property
-    $reflection = new \ReflectionProperty($filter, 'multiple');
+    $reflection = new ReflectionProperty($filter, 'multiple');
     $reflection->setValue($filter, false);
 
     $property = $filter->toProperty();

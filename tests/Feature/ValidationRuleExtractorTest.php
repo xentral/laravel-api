@@ -42,7 +42,7 @@ it('returns empty array for non-existent class', function () {
 });
 
 it('returns empty array for class without rules method or validation structure', function () {
-    $rules = $this->extractor->extractRules(\stdClass::class);
+    $rules = $this->extractor->extractRules(stdClass::class);
 
     expect($rules)->toBeEmpty();
 });
@@ -53,7 +53,7 @@ it('handles extraction errors gracefully', function () {
     {
         public function rules(): array
         {
-            throw new \Exception('Test exception');
+            throw new Exception('Test exception');
         }
     };
 
