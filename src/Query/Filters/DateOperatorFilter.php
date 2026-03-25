@@ -9,6 +9,8 @@ use Spatie\QueryBuilder\Filters\FiltersExact;
 
 class DateOperatorFilter extends FiltersExact
 {
+    public function __construct(private readonly string $filterName = '') {}
+
     private const ALLOWED_OPERATORS = [
         FilterOperator::EQUALS,
         FilterOperator::NOT_EQUALS,
@@ -117,6 +119,8 @@ class DateOperatorFilter extends FiltersExact
         $wasArray = is_array($value['value']);
         $filterValue = Arr::wrap($value['value']);
 
+        $this->validateDateValues($filterValue);
+
         // If it wasn't originally an array and we only have one element, extract it
         if (! $wasArray && count($filterValue) === 1) {
             $filterValue = $filterValue[0];
@@ -161,6 +165,18 @@ class DateOperatorFilter extends FiltersExact
                     break;
             }
         });
+    }
+
+    private function validateDateValues(array $values): void
+    {
+        foreach ($values as $value) {
+            $parsed = \DateTimeImmutable::createFromFormat('Y-m-d', $value);
+            if ($parsed === false || $parsed->format('Y-m-d') !== $value) {
+                throw ValidationException::withMessages([
+                    $this->filterName => "The filter value '{$value}' for '{$this->filterName}' is not a valid date. Expected format: Y-m-d.",
+                ]);
+            }
+        }
     }
 
     public function allowedOperators(): array
