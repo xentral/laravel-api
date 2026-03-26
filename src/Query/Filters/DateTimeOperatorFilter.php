@@ -9,6 +9,8 @@ use Spatie\QueryBuilder\Filters\FiltersExact;
 
 class DateTimeOperatorFilter extends FiltersExact
 {
+    public function __construct(private readonly string $filterName = '') {}
+
     private const LEGACY_ZERO_DATETIME = '0000-00-00 00:00:00';
 
     private const LEGACY_ZERO_DATE = '0000-00-00';
@@ -121,6 +123,8 @@ class DateTimeOperatorFilter extends FiltersExact
         $wasArray = is_array($value['value']);
         $filterValue = Arr::wrap($value['value']);
 
+        $this->validateDateTimeValues($filterValue);
+
         if (! $wasArray && count($filterValue) === 1) {
             $filterValue = $filterValue[0];
         }
@@ -164,6 +168,28 @@ class DateTimeOperatorFilter extends FiltersExact
                     break;
             }
         });
+    }
+
+    private function validateDateTimeValues(array $values): void
+    {
+        $formats = ['Y-m-d\TH:i:sP', 'Y-m-d H:i:s'];
+
+        foreach ($values as $value) {
+            $valid = false;
+            foreach ($formats as $format) {
+                $parsed = \DateTimeImmutable::createFromFormat($format, $value);
+                if ($parsed !== false && $parsed->format($format) === $value) {
+                    $valid = true;
+                    break;
+                }
+            }
+
+            if (! $valid) {
+                throw ValidationException::withMessages([
+                    $this->filterName => "The filter value '{$value}' for '{$this->filterName}' is not a valid datetime. Expected format: Y-m-d\TH:i:sP or Y-m-d H:i:s.",
+                ]);
+            }
+        }
     }
 
     public function allowedOperators(): array

@@ -31,7 +31,7 @@ class QueryFilter
     {
         return AllowedFilter::custom(
             $name,
-            new DateOperatorFilter,
+            new DateOperatorFilter($name),
             $internalName,
         );
     }
@@ -40,7 +40,7 @@ class QueryFilter
     {
         return AllowedFilter::custom(
             $name,
-            new DateTimeOperatorFilter,
+            new DateTimeOperatorFilter($name),
             $internalName,
         );
     }

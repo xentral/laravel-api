@@ -222,6 +222,65 @@ describe('DateTimeOperatorFilter', function () {
         });
     });
 
+    describe('invalid datetime values', function () {
+        it('throws ValidationException for non-datetime string', function () {
+            $filter = new DateTimeOperatorFilter('issuedAt');
+            $query = Invoice::query();
+            $filter($query, ['operator' => 'equals', 'value' => 'not-a-datetime'], 'issued_at');
+        })->throws(ValidationException::class);
+
+        it('throws ValidationException for date-only value', function () {
+            $filter = new DateTimeOperatorFilter('issuedAt');
+            $query = Invoice::query();
+            $filter($query, ['operator' => 'equals', 'value' => '2026-02-16'], 'issued_at');
+        })->throws(ValidationException::class);
+
+        it('throws ValidationException for invalid month in datetime', function () {
+            $filter = new DateTimeOperatorFilter('issuedAt');
+            $query = Invoice::query();
+            $filter($query, ['operator' => 'equals', 'value' => '2025-13-01 10:00:00'], 'issued_at');
+        })->throws(ValidationException::class);
+
+        it('throws ValidationException for invalid leap year', function () {
+            $filter = new DateTimeOperatorFilter('issuedAt');
+            $query = Invoice::query();
+            $filter($query, ['operator' => 'equals', 'value' => '2026-02-29 10:00:00'], 'issued_at');
+        })->throws(ValidationException::class);
+
+        it('throws ValidationException for invalid value in array', function () {
+            $filter = new DateTimeOperatorFilter('issuedAt');
+            $query = Invoice::query();
+            $filter($query, ['operator' => 'equals', 'value' => ['2026-02-16 10:00:00', 'bad']], 'issued_at');
+        })->throws(ValidationException::class);
+
+        it('accepts ISO 8601 format', function () {
+            Invoice::factory()->create(['issued_at' => '2026-02-16 10:00:00']);
+
+            $filter = new DateTimeOperatorFilter('issuedAt');
+            $query = Invoice::query();
+            $filter($query, ['operator' => 'greaterThan', 'value' => '2026-02-15T10:00:00+00:00'], 'issued_at');
+
+            expect($query->count())->toBe(1);
+        });
+
+        it('includes filter name and value in error message', function () {
+            $filter = new DateTimeOperatorFilter('issuedAt');
+            $query = Invoice::query();
+
+            try {
+                $filter($query, ['operator' => 'equals', 'value' => 'bad'], 'issued_at');
+            } catch (ValidationException $e) {
+                expect($e->errors()['issuedAt'][0])
+                    ->toContain('bad')
+                    ->toContain('issuedAt');
+
+                return;
+            }
+
+            $this->fail('Expected ValidationException was not thrown');
+        });
+    });
+
     describe('multiple filters', function () {
         it('applies multiple filters via nested arrays', function () {
             Invoice::factory()->create(['issued_at' => '2026-02-16 08:00:00']);
