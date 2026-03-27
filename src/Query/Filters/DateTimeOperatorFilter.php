@@ -125,6 +125,12 @@ class DateTimeOperatorFilter extends FiltersExact
 
         $this->validateDateTimeValues($filterValue);
 
+        $filterValue = array_map(function (string $val): string {
+            $parsed = new \DateTimeImmutable($val);
+
+            return $parsed->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i:s');
+        }, $filterValue);
+
         if (! $wasArray && count($filterValue) === 1) {
             $filterValue = $filterValue[0];
         }
