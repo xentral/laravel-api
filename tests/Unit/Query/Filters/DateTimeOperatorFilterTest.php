@@ -263,6 +263,31 @@ describe('DateTimeOperatorFilter', function () {
             expect($query->count())->toBe(1);
         });
 
+        it('converts ISO 8601 format to MySQL format for equals comparison', function () {
+            Invoice::factory()->create(['issued_at' => '2024-01-02 11:00:00']);
+            Invoice::factory()->create(['issued_at' => '2024-01-02 12:00:00']);
+
+            $filter = new DateTimeOperatorFilter('issuedAt');
+            $query = Invoice::query();
+            $filter($query, ['operator' => 'equals', 'value' => '2024-01-02T11:00:00+00:00'], 'issued_at');
+
+            expect($query->count())->toBe(1)
+                ->and($query->first()->issued_at->format('Y-m-d H:i:s'))->toBe('2024-01-02 11:00:00');
+        });
+
+        it('converts ISO 8601 format with timezone offset correctly', function () {
+            Invoice::factory()->create(['issued_at' => '2024-01-02 10:00:00']);
+            Invoice::factory()->create(['issued_at' => '2024-01-02 12:00:00']);
+
+            $filter = new DateTimeOperatorFilter('issuedAt');
+            $query = Invoice::query();
+            // +02:00 offset means 12:00:00+02:00 = 10:00:00 UTC
+            $filter($query, ['operator' => 'equals', 'value' => '2024-01-02T12:00:00+02:00'], 'issued_at');
+
+            expect($query->count())->toBe(1)
+                ->and($query->first()->issued_at->format('Y-m-d H:i:s'))->toBe('2024-01-02 10:00:00');
+        });
+
         it('includes filter name and value in error message', function () {
             $filter = new DateTimeOperatorFilter('issuedAt');
             $query = Invoice::query();
