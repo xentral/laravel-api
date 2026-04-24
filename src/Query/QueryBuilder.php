@@ -102,14 +102,14 @@ class QueryBuilder extends \Spatie\QueryBuilder\QueryBuilder
 
                     $query->orWhereHas($relation, function (EloquentBuilder $relationQuery) use ($field, $pattern) {
                         $qualifiedField = $relationQuery->qualifyColumn($field);
-                        $relationQuery->whereRaw("{$qualifiedField} LIKE ? ESCAPE '\\'", [$pattern]);
+                        $relationQuery->whereRaw("{$qualifiedField} LIKE ? ESCAPE ?", [$pattern, '\\']);
                     });
 
                     continue;
                 }
 
                 $qualifiedColumn = $query->qualifyColumn($column);
-                $query->orWhereRaw("{$qualifiedColumn} LIKE ? ESCAPE '\\'", [$pattern]);
+                $query->orWhereRaw("{$qualifiedColumn} LIKE ? ESCAPE ?", [$pattern, '\\']);
             }
         });
 
