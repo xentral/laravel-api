@@ -76,6 +76,46 @@ class QueryBuilder extends \Spatie\QueryBuilder\QueryBuilder
         return parent::allowedFilters($filters);
     }
 
+    public function allowSearch(array $columns): static
+    {
+        $term = $this->request->input(
+            config('query-builder.parameters.search', 'search')
+        );
+
+        if (! is_string($term)) {
+            return $this;
+        }
+
+        $term = trim($term);
+        if ($term === '' || $columns === []) {
+            return $this;
+        }
+
+        $pattern = '%'.$this->escapeLikePattern($term).'%';
+
+        $this->getEloquentBuilder()->where(function (EloquentBuilder $query) use ($columns, $pattern) {
+            foreach ($columns as $column) {
+                if (str_contains($column, '.')) {
+                    $lastDot = strrpos($column, '.');
+                    $relation = substr($column, 0, $lastDot);
+                    $field = substr($column, $lastDot + 1);
+
+                    $query->orWhereHas($relation, function (EloquentBuilder $relationQuery) use ($field, $pattern) {
+                        $qualifiedField = $relationQuery->qualifyColumn($field);
+                        $relationQuery->whereRaw("{$qualifiedField} LIKE ? ESCAPE '\\'", [$pattern]);
+                    });
+
+                    continue;
+                }
+
+                $qualifiedColumn = $query->qualifyColumn($column);
+                $query->orWhereRaw("{$qualifiedColumn} LIKE ? ESCAPE '\\'", [$pattern]);
+            }
+        });
+
+        return $this;
+    }
+
     public function apiPaginate(int $maxPageSize = 100, PaginationType ...$allowedTypes): Paginator|LengthAwarePaginator|CursorPaginator
     {
         $currentPage = $this->getCurrentPage();
@@ -131,5 +171,10 @@ class QueryBuilder extends \Spatie\QueryBuilder\QueryBuilder
         }
 
         return intval($pageInfo ?? 1);
+    }
+
+    private function escapeLikePattern(string $value): string
+    {
+        return str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $value);
     }
 }

@@ -75,6 +75,15 @@ describe('Basic List Operations', function () {
         $response->assertOk();
         $response->assertJsonCount(0, 'data');
     });
+
+    it('ignores the search parameter on an endpoint that does not call allowSearch()', function () {
+        Customer::factory()->count(3)->create();
+
+        $response = $this->getJson('/api/v1/customers?search=anything');
+
+        $response->assertOk();
+        $response->assertJsonCount(3, 'data');
+    });
 });
 
 describe('Customer ID Filters', function () {

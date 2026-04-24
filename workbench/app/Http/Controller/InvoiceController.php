@@ -19,6 +19,7 @@ use Xentral\LaravelApi\OpenApi\Filters\IdFilter;
 use Xentral\LaravelApi\OpenApi\Filters\StringFilter;
 use Xentral\LaravelApi\OpenApi\PaginationType;
 use Xentral\LaravelApi\OpenApi\Responses\PdfMediaType;
+use Xentral\LaravelApi\OpenApi\SearchParameter;
 use Xentral\LaravelApi\Query\DummyInclude;
 use Xentral\LaravelApi\Query\Filters\QueryFilter;
 use Xentral\LaravelApi\Query\QueryBuilder;
@@ -41,6 +42,7 @@ class InvoiceController
                 new DateFilter(name: 'created_at'),
                 new DateFilter(name: 'updated_at'),
             ]),
+            new SearchParameter,
         ],
         paginationType: [PaginationType::SIMPLE, PaginationType::TABLE, PaginationType::CURSOR],
     )]
@@ -69,6 +71,12 @@ class InvoiceController
                     QueryFilter::number('lineItems.unit_price', 'lineItems.unit_price'),
                     QueryFilter::number('lineItems.total_price', 'lineItems.total_price'),
                 )
+                ->allowSearch([
+                    'invoice_number',
+                    'customer.name',
+                    'customer.email',
+                    'lineItems.product_name',
+                ])
                 ->allowedIncludes(['customer', 'lineItems', DummyInclude::make('lineItems.customFields')])
                 ->allowedSorts(['invoice_number', 'total_amount', 'issued_at', 'created_at'])
                 ->apiPaginate(100, PaginationType::SIMPLE, PaginationType::TABLE, PaginationType::CURSOR)
