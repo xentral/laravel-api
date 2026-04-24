@@ -93,14 +93,21 @@ class QueryBuilder extends \Spatie\QueryBuilder\QueryBuilder
 
         $pattern = '%'.$this->escapeLikePattern($term).'%';
 
-        $directColumns = array_filter($columns, fn (string $column) => ! str_contains($column, '.'));
+        $this->getEloquentBuilder()->where(function (EloquentBuilder $query) use ($columns, $pattern) {
+            foreach ($columns as $column) {
+                if (str_contains($column, '.')) {
+                    $lastDot = strrpos($column, '.');
+                    $relation = substr($column, 0, $lastDot);
+                    $field = substr($column, $lastDot + 1);
 
-        if ($directColumns === []) {
-            return $this;
-        }
+                    $query->orWhereHas($relation, function (EloquentBuilder $relationQuery) use ($field, $pattern) {
+                        $qualifiedField = $relationQuery->qualifyColumn($field);
+                        $relationQuery->whereRaw("{$qualifiedField} LIKE ? ESCAPE '\\'", [$pattern]);
+                    });
 
-        $this->getEloquentBuilder()->where(function (EloquentBuilder $query) use ($directColumns, $pattern) {
-            foreach ($directColumns as $column) {
+                    continue;
+                }
+
                 $qualifiedColumn = $query->qualifyColumn($column);
                 $query->orWhereRaw("{$qualifiedColumn} LIKE ? ESCAPE '\\'", [$pattern]);
             }
