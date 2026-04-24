@@ -1,6 +1,8 @@
 <?php declare(strict_types=1);
 
+use Workbench\App\Models\Customer;
 use Workbench\App\Models\Invoice;
+use Workbench\App\Models\LineItem;
 
 describe('Invoice Search — direct columns', function () {
     it('matches by invoice_number', function () {
@@ -102,8 +104,8 @@ describe('Invoice Search — LIKE wildcard escaping', function () {
 
 describe('Invoice Search — relation columns', function () {
     it('matches by customer name (single-level relation)', function () {
-        $acme = Workbench\App\Models\Customer::factory()->create(['name' => 'Acme Corp']);
-        $other = Workbench\App\Models\Customer::factory()->create(['name' => 'Contoso']);
+        $acme = Customer::factory()->create(['name' => 'Acme Corp']);
+        $other = Customer::factory()->create(['name' => 'Contoso']);
         Invoice::factory()->for($acme)->create(['invoice_number' => 'INV-A']);
         Invoice::factory()->for($other)->create(['invoice_number' => 'INV-B']);
 
@@ -115,8 +117,8 @@ describe('Invoice Search — relation columns', function () {
     });
 
     it('matches by customer email (single-level relation)', function () {
-        $a = Workbench\App\Models\Customer::factory()->create(['email' => 'alice@example.com']);
-        $b = Workbench\App\Models\Customer::factory()->create(['email' => 'bob@example.com']);
+        $a = Customer::factory()->create(['email' => 'alice@example.com']);
+        $b = Customer::factory()->create(['email' => 'bob@example.com']);
         Invoice::factory()->for($a)->create(['invoice_number' => 'INV-A']);
         Invoice::factory()->for($b)->create(['invoice_number' => 'INV-B']);
 
@@ -130,8 +132,8 @@ describe('Invoice Search — relation columns', function () {
     it('matches by line item product_name (hasMany relation)', function () {
         $invoiceWithWidget = Invoice::factory()->create(['invoice_number' => 'INV-W']);
         $invoiceWithGadget = Invoice::factory()->create(['invoice_number' => 'INV-G']);
-        Workbench\App\Models\LineItem::factory()->for($invoiceWithWidget)->create(['product_name' => 'Super Widget']);
-        Workbench\App\Models\LineItem::factory()->for($invoiceWithGadget)->create(['product_name' => 'Mega Gadget']);
+        LineItem::factory()->for($invoiceWithWidget)->create(['product_name' => 'Super Widget']);
+        LineItem::factory()->for($invoiceWithGadget)->create(['product_name' => 'Mega Gadget']);
 
         $response = $this->getJson('/api/v1/invoices?search=Widget');
 
@@ -142,15 +144,15 @@ describe('Invoice Search — relation columns', function () {
 
     it('unions matches from direct and relation columns', function () {
         // Direct-column match
-        $other = Workbench\App\Models\Customer::factory()->create(['name' => 'Unrelated']);
+        $other = Customer::factory()->create(['name' => 'Unrelated']);
         Invoice::factory()->for($other)->create(['invoice_number' => 'INV-ACME-123']);
 
         // Relation-column match (customer.name)
-        $acme = Workbench\App\Models\Customer::factory()->create(['name' => 'Acme Corp']);
+        $acme = Customer::factory()->create(['name' => 'Acme Corp']);
         Invoice::factory()->for($acme)->create(['invoice_number' => 'INV-000']);
 
         // Non-match
-        $zzz = Workbench\App\Models\Customer::factory()->create(['name' => 'ZZZ']);
+        $zzz = Customer::factory()->create(['name' => 'ZZZ']);
         Invoice::factory()->for($zzz)->create(['invoice_number' => 'INV-999']);
 
         $response = $this->getJson('/api/v1/invoices?search=Acme');
@@ -165,7 +167,7 @@ describe('Invoice Search — relation columns', function () {
 
 describe('Invoice Search — integration with filters, sort, pagination', function () {
     it('ANDs the search group with a filter', function () {
-        $acme = Workbench\App\Models\Customer::factory()->create(['name' => 'Acme Corp']);
+        $acme = Customer::factory()->create(['name' => 'Acme Corp']);
 
         // Matches search AND matches filter
         Invoice::factory()->paid()->for($acme)->create(['invoice_number' => 'INV-A']);
@@ -174,7 +176,7 @@ describe('Invoice Search — integration with filters, sort, pagination', functi
         Invoice::factory()->draft()->for($acme)->create(['invoice_number' => 'INV-B']);
 
         // Matches filter but NOT search (different customer, no "Acme" anywhere)
-        $other = Workbench\App\Models\Customer::factory()->create(['name' => 'Contoso']);
+        $other = Customer::factory()->create(['name' => 'Contoso']);
         Invoice::factory()->paid()->for($other)->create(['invoice_number' => 'INV-C']);
 
         $filterQuery = buildFilterQuery([[
@@ -190,12 +192,12 @@ describe('Invoice Search — integration with filters, sort, pagination', functi
     });
 
     it('composes with sort and pagination', function () {
-        $acme = Workbench\App\Models\Customer::factory()->create(['name' => 'Acme Corp']);
+        $acme = Customer::factory()->create(['name' => 'Acme Corp']);
         Invoice::factory()->for($acme)->create(['invoice_number' => 'INV-1', 'total_amount' => 100]);
         Invoice::factory()->for($acme)->create(['invoice_number' => 'INV-2', 'total_amount' => 300]);
         Invoice::factory()->for($acme)->create(['invoice_number' => 'INV-3', 'total_amount' => 200]);
 
-        $other = Workbench\App\Models\Customer::factory()->create(['name' => 'Contoso']);
+        $other = Customer::factory()->create(['name' => 'Contoso']);
         Invoice::factory()->for($other)->create(['invoice_number' => 'INV-NO', 'total_amount' => 999]);
 
         $response = $this->getJson('/api/v1/invoices?search=Acme&sort=-total_amount&per_page=2');
