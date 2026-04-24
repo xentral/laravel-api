@@ -87,6 +87,17 @@ describe('Invoice Search — LIKE wildcard escaping', function () {
         $response->assertJsonCount(1, 'data');
         $response->assertJsonPath('data.0.invoice_number', 'INV_001');
     });
+
+    it('treats a literal backslash in the search term as a character, not an escape', function () {
+        Invoice::factory()->create(['invoice_number' => 'INV\\001']);
+        Invoice::factory()->create(['invoice_number' => 'INVX001']);
+
+        $response = $this->getJson('/api/v1/invoices?search=INV%5C');
+
+        $response->assertOk();
+        $response->assertJsonCount(1, 'data');
+        $response->assertJsonPath('data.0.invoice_number', 'INV\\001');
+    });
 });
 
 describe('Invoice Search — relation columns', function () {
@@ -149,5 +160,49 @@ describe('Invoice Search — relation columns', function () {
 
         $returnedNumbers = collect($response->json('data'))->pluck('invoice_number')->sort()->values()->all();
         expect($returnedNumbers)->toBe(['INV-000', 'INV-ACME-123']);
+    });
+});
+
+describe('Invoice Search — integration with filters, sort, pagination', function () {
+    it('ANDs the search group with a filter', function () {
+        $acme = Workbench\App\Models\Customer::factory()->create(['name' => 'Acme Corp']);
+
+        // Matches search AND matches filter
+        Invoice::factory()->paid()->for($acme)->create(['invoice_number' => 'INV-A']);
+
+        // Matches search but NOT filter (wrong status)
+        Invoice::factory()->draft()->for($acme)->create(['invoice_number' => 'INV-B']);
+
+        // Matches filter but NOT search (different customer, no "Acme" anywhere)
+        $other = Workbench\App\Models\Customer::factory()->create(['name' => 'Contoso']);
+        Invoice::factory()->paid()->for($other)->create(['invoice_number' => 'INV-C']);
+
+        $filterQuery = buildFilterQuery([[
+            'key' => 'status',
+            'op' => 'equals',
+            'value' => 'paid',
+        ]]);
+        $response = $this->getJson("/api/v1/invoices?search=Acme&{$filterQuery}");
+
+        $response->assertOk();
+        $response->assertJsonCount(1, 'data');
+        $response->assertJsonPath('data.0.invoice_number', 'INV-A');
+    });
+
+    it('composes with sort and pagination', function () {
+        $acme = Workbench\App\Models\Customer::factory()->create(['name' => 'Acme Corp']);
+        Invoice::factory()->for($acme)->create(['invoice_number' => 'INV-1', 'total_amount' => 100]);
+        Invoice::factory()->for($acme)->create(['invoice_number' => 'INV-2', 'total_amount' => 300]);
+        Invoice::factory()->for($acme)->create(['invoice_number' => 'INV-3', 'total_amount' => 200]);
+
+        $other = Workbench\App\Models\Customer::factory()->create(['name' => 'Contoso']);
+        Invoice::factory()->for($other)->create(['invoice_number' => 'INV-NO', 'total_amount' => 999]);
+
+        $response = $this->getJson('/api/v1/invoices?search=Acme&sort=-total_amount&per_page=2');
+
+        $response->assertOk();
+        $response->assertJsonCount(2, 'data');
+        $response->assertJsonPath('data.0.invoice_number', 'INV-2'); // 300
+        $response->assertJsonPath('data.1.invoice_number', 'INV-3'); // 200
     });
 });
