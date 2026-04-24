@@ -42,7 +42,7 @@ class InvoiceController
                 new DateFilter(name: 'created_at'),
                 new DateFilter(name: 'updated_at'),
             ]),
-            new SearchParameter(),
+            new SearchParameter,
         ],
         paginationType: [PaginationType::SIMPLE, PaginationType::TABLE, PaginationType::CURSOR],
     )]
