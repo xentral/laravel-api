@@ -13,13 +13,13 @@ use Xentral\LaravelApi\OpenApi\Endpoints\GetEndpoint;
 use Xentral\LaravelApi\OpenApi\Endpoints\ListEndpoint;
 use Xentral\LaravelApi\OpenApi\Endpoints\PostEndpoint;
 use Xentral\LaravelApi\OpenApi\Filters\DateFilter;
-use Xentral\LaravelApi\OpenApi\SearchParameter;
 use Xentral\LaravelApi\OpenApi\Filters\EnumFilter;
 use Xentral\LaravelApi\OpenApi\Filters\FilterParameter;
 use Xentral\LaravelApi\OpenApi\Filters\IdFilter;
 use Xentral\LaravelApi\OpenApi\Filters\StringFilter;
 use Xentral\LaravelApi\OpenApi\PaginationType;
 use Xentral\LaravelApi\OpenApi\Responses\PdfMediaType;
+use Xentral\LaravelApi\OpenApi\SearchParameter;
 use Xentral\LaravelApi\Query\DummyInclude;
 use Xentral\LaravelApi\Query\Filters\QueryFilter;
 use Xentral\LaravelApi\Query\QueryBuilder;
@@ -42,7 +42,7 @@ class InvoiceController
                 new DateFilter(name: 'created_at'),
                 new DateFilter(name: 'updated_at'),
             ]),
-            new SearchParameter,
+            new SearchParameter(),
         ],
         paginationType: [PaginationType::SIMPLE, PaginationType::TABLE, PaginationType::CURSOR],
     )]
