@@ -76,6 +76,11 @@ class QueryBuilder extends \Spatie\QueryBuilder\QueryBuilder
         return parent::allowedFilters($filters);
     }
 
+    public function allowSearch(array $columns): static
+    {
+        return $this;
+    }
+
     public function apiPaginate(int $maxPageSize = 100, PaginationType ...$allowedTypes): Paginator|LengthAwarePaginator|CursorPaginator
     {
         $currentPage = $this->getCurrentPage();

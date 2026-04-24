@@ -220,6 +220,13 @@ paths:
               type: object
               additionalProperties: false
         -
+          name: search
+          in: query
+          description: 'Full-text-style search across predefined columns.'
+          required: false
+          schema:
+            type: string
+        -
           name: include
           in: query
           required: false
