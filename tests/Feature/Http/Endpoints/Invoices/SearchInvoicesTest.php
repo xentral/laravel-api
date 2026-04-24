@@ -116,7 +116,7 @@ describe('Invoice Search — relation columns', function () {
         $response->assertJsonPath('data.0.invoice_number', 'INV-A');
     });
 
-    it('matches by line item product_name (multi-level hasMany relation)', function () {
+    it('matches by line item product_name (hasMany relation)', function () {
         $invoiceWithWidget = Invoice::factory()->create(['invoice_number' => 'INV-W']);
         $invoiceWithGadget = Invoice::factory()->create(['invoice_number' => 'INV-G']);
         Workbench\App\Models\LineItem::factory()->for($invoiceWithWidget)->create(['product_name' => 'Super Widget']);
