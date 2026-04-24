@@ -78,6 +78,34 @@ class QueryBuilder extends \Spatie\QueryBuilder\QueryBuilder
 
     public function allowSearch(array $columns): static
     {
+        $term = $this->request->input(
+            config('query-builder.parameters.search', 'search')
+        );
+
+        if (! is_string($term)) {
+            return $this;
+        }
+
+        $term = trim($term);
+        if ($term === '' || $columns === []) {
+            return $this;
+        }
+
+        $pattern = '%'.$this->escapeLikePattern($term).'%';
+
+        $directColumns = array_filter($columns, fn (string $column) => ! str_contains($column, '.'));
+
+        if ($directColumns === []) {
+            return $this;
+        }
+
+        $this->getEloquentBuilder()->where(function (EloquentBuilder $query) use ($directColumns, $pattern) {
+            foreach ($directColumns as $column) {
+                $qualifiedColumn = $query->qualifyColumn($column);
+                $query->orWhereRaw("{$qualifiedColumn} LIKE ? ESCAPE '\\'", [$pattern]);
+            }
+        });
+
         return $this;
     }
 
@@ -136,5 +164,10 @@ class QueryBuilder extends \Spatie\QueryBuilder\QueryBuilder
         }
 
         return intval($pageInfo ?? 1);
+    }
+
+    private function escapeLikePattern(string $value): string
+    {
+        return str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $value);
     }
 }
