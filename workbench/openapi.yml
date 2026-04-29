@@ -91,6 +91,55 @@ paths:
                   message: { description: 'Too Many Requests', type: string, example: 'Too Many Requests' }
                 type: object
       x-feature_flag: beta-customers
+  /api/v1/customers/lookup:
+    get:
+      summary: 'List all customers without pagination (lookup data) V1'
+      description: 'List all customers without pagination (lookup data)'
+      operationId: 'GET::api-v1-customers-lookup'
+      parameters:
+        -
+          name: filter
+          in: query
+          description: "The filter parameter is used to filter the results of the given endpoint. \n\n\n**Supported filter operators by key:** \n\n`country`: *equals*, *notEquals*, *in*, *notIn*, *contains*, *notContains*, *startsWith*, *endsWith*"
+          required: false
+          style: deepObject
+          schema:
+            type: array
+            items:
+              properties:
+                key:
+                  type: string
+                  enum: [country]
+                op:
+                  description: operator
+                  type: string
+                  enum: [equals, notEquals, in, notIn, contains, notContains, startsWith, endsWith]
+                value:
+                  description: 'The property value.'
+                  oneOf: [{ title: String, type: string }, { title: Array, type: array, items: { type: string } }]
+              type: object
+              additionalProperties: false
+      responses:
+        '200':
+          description: 'List all customers without pagination (lookup data)'
+          content:
+            application/json:
+              schema:
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/CustomerResource' }, x-description-ignore: true, x-example-ignore: true }
+                type: object
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '429':
+          description: 'Too Many Requests'
+          content:
+            application/json:
+              schema:
+                properties:
+                  message: { description: 'Too Many Requests', type: string, example: 'Too Many Requests' }
+                type: object
   '/api/v1/customers/{id}':
     get:
       summary: 'Get customer V1'

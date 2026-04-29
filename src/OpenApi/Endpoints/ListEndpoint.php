@@ -25,7 +25,7 @@ class ListEndpoint extends Get
         ?string $operationId = null,
         int $defaultPageSize = 15,
         int $maxPageSize = 100,
-        PaginationType|array $paginationType = PaginationType::SIMPLE,
+        PaginationType|array|null $paginationType = PaginationType::SIMPLE,
         bool $isInternal = false,
         bool $isBeta = false,
         ?\DateTimeInterface $deprecated = null,
@@ -64,7 +64,11 @@ class ListEndpoint extends Get
 
     private function mergeX(string|array $baseX, array $additionalX): string|array
     {
-        if ($baseX === Generator::UNDEFINED && empty($additionalX['pagination_type'])) {
+        if (array_key_exists('pagination_type', $additionalX) && $additionalX['pagination_type'] === null) {
+            unset($additionalX['pagination_type'], $additionalX['pagination_config']);
+        }
+
+        if ($baseX === Generator::UNDEFINED && empty($additionalX)) {
             return Generator::UNDEFINED;
         }
 
