@@ -37,6 +37,7 @@ class TestCase extends Orchestra
     {
         // Customer routes
         $router->get('/api/v1/customers', [CustomerController::class, 'index']);
+        $router->get('/api/v1/customers/lookup', [CustomerController::class, 'lookup']);
         $router->get('/api/v1/customers/{id}', [CustomerController::class, 'show']);
         $router->get('/api/v1/customers/{id}/legacy', [CustomerController::class, 'legacyShow']);
 

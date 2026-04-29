@@ -47,6 +47,28 @@ class CustomerController
         );
     }
 
+    #[ListEndpoint(
+        path: '/api/v1/customers/lookup',
+        resource: CustomerResource::class,
+        description: 'List all customers without pagination (lookup data)',
+        paginationType: null,
+        parameters: [
+            new FilterParameter([
+                new StringFilter(name: 'country'),
+            ]),
+        ],
+    )]
+    public function lookup(): ResourceCollection
+    {
+        return CustomerResource::collection(
+            QueryBuilder::for(Customer::class)
+                ->allowedFilters([
+                    QueryFilter::string('country'),
+                ])
+                ->get()
+        );
+    }
+
     #[GetEndpoint(
         path: '/api/v1/customers/{id}',
         resource: CustomerResource::class,
