@@ -62,9 +62,9 @@ class CustomerController
     {
         return CustomerResource::collection(
             QueryBuilder::for(Customer::class)
-                ->allowedFilters([
+                ->allowedFilters(
                     QueryFilter::string('country'),
-                ])
+                )
                 ->get()
         );
     }
