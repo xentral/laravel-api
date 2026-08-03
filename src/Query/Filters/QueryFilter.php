@@ -35,7 +35,7 @@ class QueryFilter
      * query to rows matching any of those ids. Operators, validation and negation
      * are handled by the filter.
      *
-     * @param  callable(Builder, non-empty-list<int>): void  $apply
+     * @param  callable(Builder, non-empty-list<int>): mixed  $apply
      */
     public static function identifierCallback(string $name, callable $apply, IdFilterTarget $target): AllowedFilter
     {

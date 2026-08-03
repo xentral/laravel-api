@@ -29,7 +29,10 @@ class IdCallbackFilter implements Filter
     ];
 
     /**
-     * @param  Closure(Builder, non-empty-list<int>): void  $apply
+     * The return value of `$apply` is discarded, so a single expression arrow function
+     * returning the builder is as valid as a block closure returning nothing.
+     *
+     * @param  Closure(Builder, non-empty-list<int>): mixed  $apply
      */
     public function __construct(
         private readonly Closure $apply,
