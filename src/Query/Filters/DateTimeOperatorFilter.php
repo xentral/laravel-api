@@ -120,65 +120,94 @@ class DateTimeOperatorFilter extends FiltersExact
             return;
         }
 
-        $wasArray = is_array($value['value']);
         $filterValue = Arr::wrap($value['value']);
 
         $this->validateDateTimeValues($filterValue);
 
-        $filterValue = array_map(function (string $val): string {
-            $parsed = new \DateTimeImmutable($val);
-
-            return $parsed->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i:s');
-        }, $filterValue);
-
-        if (! $wasArray && count($filterValue) === 1) {
-            $filterValue = $filterValue[0];
-        }
+        $filterValue = $this->resolveFilterValues($filterValue);
 
         $query->where(function (Builder $query) use ($filterValue, $operator, $property) {
-            switch ($operator) {
-                case FilterOperator::EQUALS:
-                    if (is_array($filterValue)) {
-                        foreach ($filterValue as $val) {
-                            $query->orWhere($query->qualifyColumn($property), '=', $val);
+            $column = $query->qualifyColumn($property);
+
+            foreach ($filterValue as $val) {
+                switch ($operator) {
+                    case FilterOperator::EQUALS:
+                        if (is_array($val)) {
+                            $query->orWhere(function (Builder $query) use ($column, $val) {
+                                $query->where($column, '>=', $val['start'])->where($column, '<', $val['end']);
+                            });
+                        } else {
+                            $query->orWhere($column, '=', $val);
                         }
-                    } else {
-                        $query->where($query->qualifyColumn($property), '=', $filterValue);
-                    }
-                    break;
+                        break;
 
-                case FilterOperator::NOT_EQUALS:
-                    if (is_array($filterValue)) {
-                        foreach ($filterValue as $val) {
-                            $query->where($query->qualifyColumn($property), '!=', $val);
+                    case FilterOperator::NOT_EQUALS:
+                        if (is_array($val)) {
+                            $query->where(function (Builder $query) use ($column, $val) {
+                                $query->where($column, '<', $val['start'])->orWhere($column, '>=', $val['end']);
+                            });
+                        } else {
+                            $query->where($column, '!=', $val);
                         }
-                    } else {
-                        $query->where($query->qualifyColumn($property), '!=', $filterValue);
-                    }
-                    break;
+                        break;
 
-                case FilterOperator::LESS_THAN:
-                    $query->where($query->qualifyColumn($property), '<', $filterValue);
-                    break;
+                    case FilterOperator::LESS_THAN:
+                        $query->where($column, '<', is_array($val) ? $val['start'] : $val);
+                        break;
 
-                case FilterOperator::LESS_THAN_OR_EQUALS:
-                    $query->where($query->qualifyColumn($property), '<=', $filterValue);
-                    break;
+                    case FilterOperator::LESS_THAN_OR_EQUALS:
+                        if (is_array($val)) {
+                            $query->where($column, '<', $val['end']);
+                        } else {
+                            $query->where($column, '<=', $val);
+                        }
+                        break;
 
-                case FilterOperator::GREATER_THAN:
-                    $query->where($query->qualifyColumn($property), '>', $filterValue);
-                    break;
+                    case FilterOperator::GREATER_THAN:
+                        if (is_array($val)) {
+                            $query->where($column, '>=', $val['end']);
+                        } else {
+                            $query->where($column, '>', $val);
+                        }
+                        break;
 
-                case FilterOperator::GREATER_THAN_OR_EQUALS:
-                    $query->where($query->qualifyColumn($property), '>=', $filterValue);
-                    break;
+                    case FilterOperator::GREATER_THAN_OR_EQUALS:
+                        $query->where($column, '>=', is_array($val) ? $val['start'] : $val);
+                        break;
+                }
             }
         });
     }
 
+    /**
+     * Resolves each value to an app-timezone wall clock instant, or to a
+     * day interval (start inclusive, end exclusive) for plain Y-m-d dates.
+     *
+     * @param  list<string>  $values
+     * @return list<string|array{start: string, end: string}>
+     */
+    private function resolveFilterValues(array $values): array
+    {
+        $appTimezone = new \DateTimeZone(config('app.timezone'));
+
+        return array_map(function (string $value) use ($appTimezone): string|array {
+            $day = \DateTimeImmutable::createFromFormat('!Y-m-d', $value, $appTimezone);
+            if ($day instanceof \DateTimeImmutable && $day->format('Y-m-d') === $value) {
+                return [
+                    'start' => $day->format('Y-m-d H:i:s'),
+                    'end' => $day->modify('+1 day')->format('Y-m-d H:i:s'),
+                ];
+            }
+
+            return (new \DateTimeImmutable($value, $appTimezone))
+                ->setTimezone($appTimezone)
+                ->format('Y-m-d H:i:s');
+        }, $values);
+    }
+
     private function validateDateTimeValues(array $values): void
     {
-        $formats = ['Y-m-d\TH:i:sP', 'Y-m-d H:i:s'];
+        $formats = ['Y-m-d\TH:i:sP', 'Y-m-d\TH:i:s', 'Y-m-d H:i:s', 'Y-m-d'];
 
         foreach ($values as $value) {
             $valid = false;
@@ -192,7 +221,7 @@ class DateTimeOperatorFilter extends FiltersExact
 
             if (! $valid) {
                 throw ValidationException::withMessages([
-                    $this->filterName => "The filter value '{$value}' for '{$this->filterName}' is not a valid datetime. Expected format: Y-m-d\TH:i:sP or Y-m-d H:i:s.",
+                    $this->filterName => "The filter value '{$value}' for '{$this->filterName}' is not a valid datetime. Expected format: Y-m-d\TH:i:sP, Y-m-d\TH:i:s, Y-m-d H:i:s or Y-m-d.",
                 ]);
             }
         }
