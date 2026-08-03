@@ -5,6 +5,8 @@ use Symfony\Component\Yaml\Yaml;
 use Xentral\LaravelApi\OpenApi\OpenApiGeneratorFactory;
 
 it('adds sunset header to deprecated endpoints within the removal window', function () {
+    Date::setTestNow(Date::parse('2026-01-01'));
+
     $factory = new OpenApiGeneratorFactory;
     $generator = $factory->create(config('openapi.schemas.default'));
 
@@ -22,9 +24,13 @@ it('adds sunset header to deprecated endpoints within the removal window', funct
         ->and($response200['headers']['Sunset']['schema']['type'])->toBe('string')
         ->and($response200['headers']['Sunset']['schema']['format'])->toBe('http-date')
         ->and($response200['headers']['Sunset']['schema']['example'])->toMatch('/^[A-Za-z]{3}, \d{2} [A-Za-z]{3} \d{4} \d{2}:\d{2}:\d{2} GMT$/');
+
+    Date::setTestNow();
 });
 
 it('calculates sunset date as deprecation date plus configured months', function () {
+    Date::setTestNow(Date::parse('2026-01-01'));
+
     $factory = new OpenApiGeneratorFactory;
     $generator = $factory->create(config('openapi.schemas.default'));
 
@@ -37,6 +43,8 @@ it('calculates sunset date as deprecation date plus configured months', function
     // CustomerController has deprecated: 2025-11-01, config has months_before_removal: 6
     // So sunset should be 2026-05-01
     expect($sunsetExample)->toContain('01 May 2026');
+
+    Date::setTestNow();
 });
 
 it('removes deprecated endpoints past the removal window', function () {
