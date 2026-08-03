@@ -10,10 +10,13 @@ use Illuminate\Validation\ValidationException;
  * Filters that build their own predicate - including relation based ones outside
  * this package - should reuse these helpers instead of re-implementing the
  * accepted value spellings and their error messages.
+ *
+ * The `$filterName` argument keys the thrown `ValidationException`, so pass the
+ * API facing filter name rather than the internal column a query is built on.
  */
 final class FilterValue
 {
-    public static function toBool(mixed $value, string $property): bool
+    public static function toBool(mixed $value, string $filterName): bool
     {
         if ($value === true || $value === 1 || $value === '1' || $value === 'true') {
             return true;
@@ -24,27 +27,27 @@ final class FilterValue
         }
 
         throw ValidationException::withMessages([
-            $property => 'Invalid value: '.self::printable($value).'. Valid values are: true, false.',
+            $filterName => 'Invalid value: '.self::printable($value).'. Valid values are: true, false.',
         ]);
     }
 
     /**
      * @return non-empty-list<int>
      */
-    public static function toIds(mixed $value, string $property): array
+    public static function toIds(mixed $value, string $filterName): array
     {
         $ids = array_values(Arr::wrap($value));
 
         if ($ids === []) {
             throw ValidationException::withMessages([
-                $property => 'Invalid value: []. Expected one or more numeric ids.',
+                $filterName => 'Invalid value: []. Expected one or more numeric ids.',
             ]);
         }
 
-        return array_map(static function (mixed $id) use ($property): int {
+        return array_map(static function (mixed $id) use ($filterName): int {
             if (! is_numeric($id)) {
                 throw ValidationException::withMessages([
-                    $property => 'Invalid value: '.self::printable($id).'. Expected one or more numeric ids.',
+                    $filterName => 'Invalid value: '.self::printable($id).'. Expected one or more numeric ids.',
                 ]);
             }
 

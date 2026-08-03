@@ -3,10 +3,11 @@
 use Illuminate\Validation\ValidationException;
 use Workbench\App\Models\Customer;
 use Xentral\LaravelApi\Query\Filters\BooleanIntegerFilter;
+use Xentral\LaravelApi\Query\Filters\QueryFilter;
 
 function applyBooleanIntegerFilter(mixed $value, string $property = 'is_verified'): int
 {
-    $filter = new BooleanIntegerFilter;
+    $filter = new BooleanIntegerFilter($property);
     $query = Customer::query();
     $filter($query, $value, $property);
 
@@ -64,7 +65,7 @@ describe('BooleanIntegerFilter truthy semantics', function () {
         Customer::factory()->create(['country' => 'DE', 'is_archived' => null]);
         Customer::factory()->create(['country' => 'AT', 'is_archived' => null]);
 
-        $filter = new BooleanIntegerFilter;
+        $filter = new BooleanIntegerFilter('is_archived');
         $query = Customer::query()->where('country', 'DE');
         $filter($query, ['operator' => 'equals', 'value' => false], 'is_archived');
 
@@ -106,6 +107,56 @@ describe('BooleanIntegerFilter value coercion', function () {
             applyBooleanIntegerFilter(['operator' => 'in', 'value' => true]);
         } catch (ValidationException $e) {
             expect($e->errors()['is_verified'][0])->toBe("Unsupported operator: in. Use 'equals' or 'notEquals'.");
+
+            return;
+        }
+
+        $this->fail('Expected a ValidationException');
+    });
+});
+
+describe('BooleanIntegerFilter error naming', function () {
+    it('keys an invalid value error by the API filter name, not the internal column', function () {
+        $filter = new BooleanIntegerFilter('isVariant');
+        $query = Customer::query();
+
+        try {
+            $filter($query, ['operator' => 'equals', 'value' => 'maybe'], 'variante');
+        } catch (ValidationException $e) {
+            expect($e->errors())->toHaveKey('isVariant')
+                ->and($e->errors())->not->toHaveKey('variante');
+
+            return;
+        }
+
+        $this->fail('Expected a ValidationException');
+    });
+
+    it('keys an unsupported operator error by the API filter name, not the internal column', function () {
+        $filter = new BooleanIntegerFilter('isVariant');
+        $query = Customer::query();
+
+        try {
+            $filter($query, ['operator' => 'in', 'value' => true], 'variante');
+        } catch (ValidationException $e) {
+            expect($e->errors())->toHaveKey('isVariant')
+                ->and($e->errors())->not->toHaveKey('variante');
+
+            return;
+        }
+
+        $this->fail('Expected a ValidationException');
+    });
+
+    it('keys errors by the API name when wired through QueryFilter::booleanInteger', function () {
+        $filter = QueryFilter::booleanInteger('isVariant', 'variante')->getFilterClass();
+        $query = Customer::query();
+
+        try {
+            $filter($query, ['operator' => 'equals', 'value' => 'maybe'], 'variante');
+        } catch (ValidationException $e) {
+            expect($e->errors())->toHaveKey('isVariant')
+                ->and($e->errors())->not->toHaveKey('variante');
 
             return;
         }

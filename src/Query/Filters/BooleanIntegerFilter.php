@@ -16,6 +16,8 @@ class BooleanIntegerFilter implements Filter
 {
     use HasRepeatedFilterKeys;
 
+    public function __construct(private readonly string $filterName) {}
+
     public function __invoke(Builder $query, mixed $value, string $property): void
     {
         if ($this->applyRepeatedFilters($query, $value, $property)) {
@@ -23,12 +25,12 @@ class BooleanIntegerFilter implements Filter
         }
 
         $operator = $value['operator'] ?? 'equals';
-        $isTruthy = FilterValue::toBool($value['value'], $property);
+        $isTruthy = FilterValue::toBool($value['value'], $this->filterName);
 
         $matchesTruthy = match ($operator) {
             'equals' => $isTruthy,
             'notEquals' => ! $isTruthy,
-            default => throw ValidationException::withMessages([$property => "Unsupported operator: {$operator}. Use 'equals' or 'notEquals'."]),
+            default => throw ValidationException::withMessages([$this->filterName => "Unsupported operator: {$operator}. Use 'equals' or 'notEquals'."]),
         };
 
         $column = $query->qualifyColumn($property);

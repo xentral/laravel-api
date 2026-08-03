@@ -296,12 +296,15 @@ Filters that build their own predicate - a relation based boolean filter using
 ```php
 use Xentral\LaravelApi\Query\Filters\FilterValue;
 
-FilterValue::toBool($value['value'], $property);  // true|1|'1'|'true' / false|0|'0'|'false'
-FilterValue::toIds($value['value'], $property);   // non-empty list<int>
+FilterValue::toBool($value['value'], $filterName);  // true|1|'1'|'true' / false|0|'0'|'false'
+FilterValue::toIds($value['value'], $filterName);   // non-empty list<int>
 ```
 
 Both throw a `ValidationException` carrying the messages documented above, so a hand-written filter
-stays consistent with the packaged ones.
+stays consistent with the packaged ones. The second argument keys that exception, so pass the API
+facing filter name - not the `$property` a filter receives, which is the internal column name when
+one is mapped. The packaged filters take the name for exactly this reason, as in
+`QueryFilter::booleanInteger('isVariant', 'variante')`, which reports errors under `isVariant`.
 
 #### Pagination
 

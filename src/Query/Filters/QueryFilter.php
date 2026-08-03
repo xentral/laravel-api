@@ -106,7 +106,7 @@ class QueryFilter
 
     public static function booleanInteger(string $name, ?string $internalName = null): AllowedFilter
     {
-        return AllowedFilter::custom($name, new BooleanIntegerFilter, $internalName);
+        return AllowedFilter::custom($name, new BooleanIntegerFilter($name), $internalName);
     }
 
     public function make(
