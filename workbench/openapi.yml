@@ -186,60 +186,6 @@ paths:
                 properties:
                   message: { description: 'Too Many Requests', type: string, example: 'Too Many Requests' }
                 type: object
-  '/api/v1/customers/{id}/legacy':
-    get:
-      summary: 'Get customer (legacy endpoint) V1'
-      description: 'Get customer (legacy endpoint)'
-      operationId: 'GET::api-v1-customers-id-legacy'
-      parameters:
-        -
-          name: id
-          in: path
-          required: true
-          schema:
-            type: string
-        -
-          name: include
-          in: query
-          required: false
-          explode: false
-          schema:
-            type: array
-            items:
-              type: string
-              enum:
-                - invoices
-      responses:
-        '200':
-          description: 'Get customer (legacy endpoint)'
-          headers:
-            Sunset:
-              description: 'This endpoint is deprecated and will be sunset on the example date. If an endpoint is over this date but still accessible, it can be removed any time.'
-              schema:
-                type: string
-                format: http-date
-                example: 'Fri, 01 May 2026 00:00:00 GMT'
-          content:
-            application/json:
-              schema:
-                properties:
-                  data: { $ref: '#/components/schemas/CustomerResource' }
-                type: object
-        '401':
-          description: Unauthorized
-        '403':
-          description: Forbidden
-        '404':
-          description: 'Not Found'
-        '429':
-          description: 'Too Many Requests'
-          content:
-            application/json:
-              schema:
-                properties:
-                  message: { description: 'Too Many Requests', type: string, example: 'Too Many Requests' }
-                type: object
-      deprecated: true
   /api/v1/invoices:
     get:
       summary: 'List invoices V1'

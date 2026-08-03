@@ -30,7 +30,7 @@
         "larastan/larastan": "^3.5",
         "laravel/boost": "^1.0",
         "laravel/pint": "^1.8",
-        "orchestra/testbench": "^9.14",
+        "orchestra/testbench": "^10.11",
         "pestphp/pest": "^3.7",
         "phpunit/phpunit": "^11.5",
         "xentral/laravel-testing": "^0.3.0"
