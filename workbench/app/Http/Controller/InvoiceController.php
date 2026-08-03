@@ -2,6 +2,7 @@
 
 namespace Workbench\App\Http\Controller;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Http\Response;
@@ -21,6 +22,7 @@ use Xentral\LaravelApi\OpenApi\PaginationType;
 use Xentral\LaravelApi\OpenApi\Responses\PdfMediaType;
 use Xentral\LaravelApi\OpenApi\SearchParameter;
 use Xentral\LaravelApi\Query\DummyInclude;
+use Xentral\LaravelApi\Query\Filters\IdFilterTarget;
 use Xentral\LaravelApi\Query\Filters\QueryFilter;
 use Xentral\LaravelApi\Query\QueryBuilder;
 
@@ -70,6 +72,14 @@ class InvoiceController
                     QueryFilter::number('lineItems.quantity', 'lineItems.quantity'),
                     QueryFilter::number('lineItems.unit_price', 'lineItems.unit_price'),
                     QueryFilter::number('lineItems.total_price', 'lineItems.total_price'),
+                    QueryFilter::identifierCallback(
+                        'lineItem.id',
+                        fn (Builder $query, array $ids) => $query->whereHas(
+                            'lineItems',
+                            fn (Builder $lineItems) => $lineItems->whereIn('line_items.id', $ids),
+                        ),
+                        IdFilterTarget::Relation,
+                    ),
                 )
                 ->allowSearch([
                     'invoice_number',

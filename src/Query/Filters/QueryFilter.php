@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 namespace Xentral\LaravelApi\Query\Filters;
 
+use Illuminate\Database\Eloquent\Builder;
 use Spatie\QueryBuilder\AllowedFilter;
 
 class QueryFilter
@@ -24,6 +25,23 @@ class QueryFilter
                 FilterOperator::IS_NOT_NULL,
             ]),
             $internalName,
+        );
+    }
+
+    /**
+     * Filters by id where the target is a predicate rather than a column.
+     *
+     * `$apply` receives the query and a non-empty list of ints, and constrains the
+     * query to rows matching any of those ids. Operators, validation and negation
+     * are handled by the filter.
+     *
+     * @param  callable(Builder, non-empty-list<int>): void  $apply
+     */
+    public static function identifierCallback(string $name, callable $apply, IdFilterTarget $target): AllowedFilter
+    {
+        return AllowedFilter::custom(
+            $name,
+            new IdCallbackFilter(\Closure::fromCallable($apply), $target),
         );
     }
 

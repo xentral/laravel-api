@@ -1,7 +1,10 @@
 <?php declare(strict_types=1);
 
+use Illuminate\Database\Eloquent\Builder;
 use Spatie\QueryBuilder\AllowedFilter;
 use Xentral\LaravelApi\Query\Filters\FilterOperator;
+use Xentral\LaravelApi\Query\Filters\IdCallbackFilter;
+use Xentral\LaravelApi\Query\Filters\IdFilterTarget;
 use Xentral\LaravelApi\Query\Filters\QueryFilter;
 use Xentral\LaravelApi\Query\Filters\StringOperatorFilter;
 
@@ -74,5 +77,31 @@ describe('QueryFilter', function () {
         // When empty array is passed, it should default to all FilterOperator cases
         expect($customFilter)->toBeInstanceOf(StringOperatorFilter::class)
             ->and($customFilter->allowedOperators())->toEqual(FilterOperator::cases());
+    });
+
+    it('can create an id filter from a callback', function () {
+        $result = QueryFilter::identifierCallback(
+            'categories.id',
+            fn (Builder $query, array $ids) => $query->whereIn('typ', $ids),
+            IdFilterTarget::Relation,
+        );
+
+        expect($result)->toBeInstanceOf(AllowedFilter::class)
+            ->and($result->getName())->toBe('categories.id')
+            ->and($result->getFilterClass())->toBeInstanceOf(IdCallbackFilter::class);
+    });
+
+    it('accepts any callable, not only a closure, as the id predicate', function () {
+        $predicate = new class
+        {
+            public function __invoke(Builder $query, array $ids): void
+            {
+                $query->whereIn('typ', $ids);
+            }
+        };
+
+        $result = QueryFilter::identifierCallback('merchandiseGroup.id', $predicate, IdFilterTarget::Column);
+
+        expect($result->getFilterClass())->toBeInstanceOf(IdCallbackFilter::class);
     });
 });
