@@ -230,6 +230,77 @@ contains `key`, `op`, and `value` parameters. Here are some examples:
 /api/v1/sales-orders?filter[0][key]=customer.name&filter[0][op]=contains&filter[0][value]=John
 ```
 
+##### Truthy integer flags
+
+`QueryFilter::booleanInteger()` filters a legacy integer column that is semantically boolean. It
+matches by *truthiness*, not by an exact `1`, because consumers expose such a column as
+`(bool) $row->column`:
+
+| Filter | SQL |
+|---|---|
+| `equals true`, `notEquals false` | `column > 0` |
+| `equals false`, `notEquals true` | `(column = 0 or column is null)` |
+
+`false` deliberately matches `NULL`. A `NULL` is rendered as `false` in the payload, so a filter
+skipping those rows would contradict what the API returns for them.
+
+Accepted values are `true`, `1`, `'1'`, `'true'` and `false`, `0`, `'0'`, `'false'`; anything else is
+a validation error. Only `equals` and `notEquals` are supported.
+
+A negative value matches neither side, even though PHP would cast it to `true` - the filter exists
+for columns holding `0`, `1` or `NULL`. Use `QueryFilter::number()` if a column carries real
+quantities.
+
+##### Id filters on relations and expressions
+
+`QueryFilter::identifier()` resolves to a column. When the target is a computed predicate instead -
+a pivot relation, or a legacy column that stores the id inside another value - use
+`QueryFilter::identifierCallback()` and hand it that predicate:
+
+```php
+use Illuminate\Database\Eloquent\Builder;
+use Xentral\LaravelApi\Query\Filters\IdFilterTarget;
+use Xentral\LaravelApi\Query\Filters\QueryFilter;
+
+QueryFilter::identifierCallback(
+    'categories.id',
+    fn (Builder $query, array $ids) => $query->whereHas(
+        'categories',
+        fn (Builder $categories) => $categories->whereIn('product_category.id', $ids),
+    ),
+    IdFilterTarget::Relation,
+),
+```
+
+The callback does one thing: constrain the query to rows matching **any** of the ids it receives.
+Everything else is owned by the filter:
+
+- supported operators are `equals`, `notEquals`, `in` and `notIn`; anything else is a validation error
+- every id must be numeric and reaches the callback cast to `int`
+- the callback is guaranteed a non-empty list, so `notIn` can never degrade into "match everything"
+- `notEquals` and `notIn` negate the predicate, so both mean "matches none of these ids"
+- `equals` with several ids on an `IdFilterTarget::Relation` requires **all** of them and applies the
+  predicate once per id, consistent with relation filters elsewhere in this package. On an
+  `IdFilterTarget::Column` it stays "any of them", because one column cannot hold two values at once
+
+Pair it with the `IdFilter` spec attribute, which exposes exactly the same four operators.
+
+##### Reusing the filter value coercion
+
+Filters that build their own predicate - a relation based boolean filter using
+`whereHas`/`whereDoesntHave`, for instance - should not re-implement the accepted value spellings.
+`FilterValue` exposes the coercion the packaged filters use:
+
+```php
+use Xentral\LaravelApi\Query\Filters\FilterValue;
+
+FilterValue::toBool($value['value'], $property);  // true|1|'1'|'true' / false|0|'0'|'false'
+FilterValue::toIds($value['value'], $property);   // non-empty list<int>
+```
+
+Both throw a `ValidationException` carrying the messages documented above, so a hand-written filter
+stays consistent with the packaged ones.
+
 #### Pagination
 
 This package provides flexible pagination options that can be configured per endpoint. You can choose from three different pagination types, each optimized for different use cases:

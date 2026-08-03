@@ -343,6 +343,7 @@ All filter classes live in `Xentral\LaravelApi\OpenApi\Filters\` and extend `Fil
 | QueryFilter Method | Operators |
 |---|---|
 | `QueryFilter::identifier()` | equals, notEquals, in, notIn, isNull, isNotNull |
+| `QueryFilter::identifierCallback()` | equals, notEquals, in, notIn |
 | `QueryFilter::string()` | equals, notEquals, in, notIn, contains, notContains, startsWith, endsWith, isNull, isNotNull |
 | `QueryFilter::number()` | equals, notEquals, lessThan, lessThanOrEquals, greaterThan, greaterThanOrEquals, isNull, isNotNull |
 | `QueryFilter::date()` | equals, notEquals, lessThan, lessThanOrEquals, greaterThan, greaterThanOrEquals, isNull, isNotNull |
@@ -364,6 +365,8 @@ Both layers must be declared for every filter. Use this mapping:
 | `DateTimeFilter(name: 'createdAt')` | `QueryFilter::datetime('createdAt', 'created_at')` | |
 | `EnumFilter(name: 'status', enumSource: E::class)` | `QueryFilter::string('status', enum: E::class)` | Pass enum class to both |
 | `BooleanFilter(name: 'isActive')` | `QueryFilter::boolean('isActive', 'is_active')` | |
+| `BooleanFilter(name: 'isVariant')` | `QueryFilter::booleanInteger('isVariant', 'variante')` | Legacy integer flag: `true` is `> 0`, `false` is `= 0 or is null` |
+| `IdFilter(name: 'categories.id')` | `QueryFilter::identifierCallback('categories.id', $apply, IdFilterTarget::Relation)` | When the id target is a relation or an expression, not a column |
 
 ## Sorting
 
