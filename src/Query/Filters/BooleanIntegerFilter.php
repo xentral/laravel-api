@@ -25,7 +25,7 @@ class BooleanIntegerFilter implements Filter
         }
 
         $operator = $value['operator'] ?? 'equals';
-        $isTruthy = FilterValue::toBool($value['value'], $this->filterName);
+        $isTruthy = FilterValue::toBool($value['value'] ?? null, $this->filterName);
 
         $matchesTruthy = match ($operator) {
             'equals' => $isTruthy,

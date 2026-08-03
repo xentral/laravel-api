@@ -190,3 +190,20 @@ describe('BooleanIntegerFilter repeated filter keys', function () {
         expect(applyBooleanIntegerFilter($agreeing))->toBe(1);
     });
 });
+
+describe('BooleanIntegerFilter missing value key', function () {
+    it('rejects a filter without a value instead of raising an undefined key warning', function () {
+        $filter = new BooleanIntegerFilter('isVerified');
+        $query = Customer::query();
+
+        try {
+            $filter($query, ['operator' => 'equals'], 'is_verified');
+        } catch (ValidationException $e) {
+            expect($e->errors()['isVerified'][0])->toBe('Invalid value: NULL. Valid values are: true, false.');
+
+            return;
+        }
+
+        $this->fail('Expected a ValidationException');
+    });
+});
