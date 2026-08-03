@@ -41,6 +41,7 @@ class CustomerController
                     QueryFilter::string('country'),
                     QueryFilter::boolean('is_active'),
                     QueryFilter::booleanInteger('is_verified'),
+                    QueryFilter::booleanInteger('is_archived'),
                 )
                 ->allowedIncludes(['invoices'])
                 ->apiPaginate()

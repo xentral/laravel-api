@@ -447,6 +447,37 @@ describe('Customer BooleanInteger Filters', function () {
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['is_verified']);
     });
+
+    it('treats a flag value above one as true, matching what the payload shows', function () {
+        Customer::factory()->create(['is_verified' => 2]);
+        Customer::factory()->count(2)->unverified()->create();
+
+        $query = buildFilterQuery([[
+            'key' => 'is_verified',
+            'op' => 'equals',
+            'value' => true,
+        ]]);
+        $response = $this->getJson("/api/v1/customers?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(1, 'data');
+    });
+
+    it('counts a null flag as false', function () {
+        Customer::factory()->count(2)->create(['is_archived' => null]);
+        Customer::factory()->notArchived()->create();
+        Customer::factory()->archived()->create();
+
+        $query = buildFilterQuery([[
+            'key' => 'is_archived',
+            'op' => 'equals',
+            'value' => false,
+        ]]);
+        $response = $this->getJson("/api/v1/customers?{$query}");
+
+        $response->assertOk();
+        $response->assertJsonCount(3, 'data');
+    });
 });
 
 describe('Customer Multiple Filter Combinations', function () {

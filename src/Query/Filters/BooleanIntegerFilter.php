@@ -6,37 +6,41 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\ValidationException;
 use Spatie\QueryBuilder\Filters\Filter;
 
+/**
+ * Filters a legacy integer flag column by truthiness rather than by an exact 1.
+ *
+ * Consumers expose such columns as `(bool) $row->column`, so the filter mirrors
+ * that cast: any value greater than zero is true, zero and NULL are false.
+ */
 class BooleanIntegerFilter implements Filter
 {
+    use HasRepeatedFilterKeys;
+
     public function __invoke(Builder $query, mixed $value, string $property): void
     {
-        if (isset($value[0]) && is_array($value[0])) {
-            foreach ($value as $filter) {
-                $this->__invoke($query, $filter, $property);
-            }
-
+        if ($this->applyRepeatedFilters($query, $value, $property)) {
             return;
         }
 
         $operator = $value['operator'] ?? 'equals';
-        $filterValue = $value['value'];
-        $dbValue = $this->toDbValue($filterValue, $property);
+        $isTruthy = FilterValue::toBool($value['value'], $property);
 
-        match ($operator) {
-            'equals' => $query->where($query->qualifyColumn($property), $dbValue),
-            'notEquals' => $query->whereNot($query->qualifyColumn($property), $dbValue),
+        $matchesTruthy = match ($operator) {
+            'equals' => $isTruthy,
+            'notEquals' => ! $isTruthy,
             default => throw ValidationException::withMessages([$property => "Unsupported operator: {$operator}. Use 'equals' or 'notEquals'."]),
         };
-    }
 
-    private function toDbValue(mixed $value, string $property): int
-    {
-        if ($value === true || $value === 1 || $value === '1' || $value === 'true') {
-            return 1;
+        $column = $query->qualifyColumn($property);
+
+        if ($matchesTruthy) {
+            $query->where($column, '>', 0);
+
+            return;
         }
-        if ($value === false || $value === 0 || $value === '0' || $value === 'false') {
-            return 0;
-        }
-        throw ValidationException::withMessages([$property => "Invalid value: {$value}. Valid values are: true, false."]);
+
+        $query->where(function (Builder $query) use ($column): void {
+            $query->where($column, 0)->orWhereNull($column);
+        });
     }
 }
