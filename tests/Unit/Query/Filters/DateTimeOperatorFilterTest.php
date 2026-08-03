@@ -11,7 +11,7 @@ describe('DateTimeOperatorFilter', function () {
             Invoice::factory()->create(['issued_at' => '2026-02-16 09:00:00']);
             Invoice::factory()->create(['issued_at' => '2026-02-16 11:00:00']);
 
-            $filter = new DateTimeOperatorFilter;
+            $filter = new DateTimeOperatorFilter('issuedAt');
             $query = Invoice::query();
             $filter($query, ['operator' => 'greaterThan', 'value' => '2026-02-16 10:00:00'], 'issued_at');
 
@@ -23,7 +23,7 @@ describe('DateTimeOperatorFilter', function () {
             Invoice::factory()->create(['issued_at' => '2026-02-16 09:00:00']);
             Invoice::factory()->create(['issued_at' => '2026-02-16 11:00:00']);
 
-            $filter = new DateTimeOperatorFilter;
+            $filter = new DateTimeOperatorFilter('issuedAt');
             $query = Invoice::query();
             $filter($query, ['operator' => 'lessThan', 'value' => '2026-02-16 10:00:00'], 'issued_at');
 
@@ -35,7 +35,7 @@ describe('DateTimeOperatorFilter', function () {
             Invoice::factory()->create(['issued_at' => '2026-02-16 10:00:00']);
             Invoice::factory()->create(['issued_at' => '2026-02-16 10:30:00']);
 
-            $filter = new DateTimeOperatorFilter;
+            $filter = new DateTimeOperatorFilter('issuedAt');
             $query = Invoice::query();
             $filter($query, ['operator' => 'equals', 'value' => '2026-02-16 10:00:00'], 'issued_at');
 
@@ -47,7 +47,7 @@ describe('DateTimeOperatorFilter', function () {
             Invoice::factory()->create(['issued_at' => '2026-02-16 10:00:00']);
             Invoice::factory()->create(['issued_at' => '2026-02-16 10:30:00']);
 
-            $filter = new DateTimeOperatorFilter;
+            $filter = new DateTimeOperatorFilter('issuedAt');
             $query = Invoice::query();
             $filter($query, ['operator' => 'notEquals', 'value' => '2026-02-16 10:00:00'], 'issued_at');
 
@@ -60,7 +60,7 @@ describe('DateTimeOperatorFilter', function () {
             Invoice::factory()->create(['issued_at' => '2026-02-16 10:00:00']);
             Invoice::factory()->create(['issued_at' => '2026-02-16 11:00:00']);
 
-            $filter = new DateTimeOperatorFilter;
+            $filter = new DateTimeOperatorFilter('issuedAt');
             $query = Invoice::query();
             $filter($query, ['operator' => 'greaterThanOrEquals', 'value' => '2026-02-16 10:00:00'], 'issued_at');
 
@@ -72,7 +72,7 @@ describe('DateTimeOperatorFilter', function () {
             Invoice::factory()->create(['issued_at' => '2026-02-16 10:00:00']);
             Invoice::factory()->create(['issued_at' => '2026-02-16 11:00:00']);
 
-            $filter = new DateTimeOperatorFilter;
+            $filter = new DateTimeOperatorFilter('issuedAt');
             $query = Invoice::query();
             $filter($query, ['operator' => 'lessThanOrEquals', 'value' => '2026-02-16 10:00:00'], 'issued_at');
 
@@ -85,7 +85,7 @@ describe('DateTimeOperatorFilter', function () {
             Invoice::factory()->create(['paid_at' => null]);
             Invoice::factory()->create(['paid_at' => '2026-02-16 10:00:00']);
 
-            $filter = new DateTimeOperatorFilter;
+            $filter = new DateTimeOperatorFilter('paidAt');
             $query = Invoice::query();
             $filter($query, ['operator' => 'isNull'], 'paid_at');
 
@@ -96,7 +96,7 @@ describe('DateTimeOperatorFilter', function () {
             Invoice::factory()->create(['paid_at' => null]);
             Invoice::factory()->create(['paid_at' => '2026-02-16 10:00:00']);
 
-            $filter = new DateTimeOperatorFilter;
+            $filter = new DateTimeOperatorFilter('paidAt');
             $query = Invoice::query();
             $filter($query, ['operator' => 'isNotNull'], 'paid_at');
 
@@ -116,7 +116,7 @@ describe('DateTimeOperatorFilter', function () {
                 'issued_at' => now(),
             ]);
 
-            $filter = new DateTimeOperatorFilter;
+            $filter = new DateTimeOperatorFilter('paidAt');
             $query = Invoice::query();
             $filter($query, ['operator' => 'isNull'], 'paid_at');
 
@@ -136,7 +136,7 @@ describe('DateTimeOperatorFilter', function () {
                 'issued_at' => now(),
             ]);
 
-            $filter = new DateTimeOperatorFilter;
+            $filter = new DateTimeOperatorFilter('paidAt');
             $query = Invoice::query();
             $filter($query, ['operator' => 'isNull'], 'paid_at');
 
@@ -155,7 +155,7 @@ describe('DateTimeOperatorFilter', function () {
                 'issued_at' => now(),
             ]);
 
-            $filter = new DateTimeOperatorFilter;
+            $filter = new DateTimeOperatorFilter('paidAt');
             $query = Invoice::query();
             $filter($query, ['operator' => 'isNotNull'], 'paid_at');
 
@@ -174,7 +174,7 @@ describe('DateTimeOperatorFilter', function () {
                 'issued_at' => now(),
             ]);
 
-            $filter = new DateTimeOperatorFilter;
+            $filter = new DateTimeOperatorFilter('paidAt');
             $query = Invoice::query();
             $filter($query, ['operator' => 'isNotNull'], 'paid_at');
 
@@ -188,7 +188,7 @@ describe('DateTimeOperatorFilter', function () {
             Invoice::factory()->create(['issued_at' => '2026-02-16 10:00:00']);
             Invoice::factory()->create(['issued_at' => '2026-02-16 11:00:00']);
 
-            $filter = new DateTimeOperatorFilter;
+            $filter = new DateTimeOperatorFilter('issuedAt');
             $query = Invoice::query();
             $filter($query, ['operator' => 'equals', 'value' => ['2026-02-16 09:00:00', '2026-02-16 11:00:00']], 'issued_at');
 
@@ -198,13 +198,13 @@ describe('DateTimeOperatorFilter', function () {
 
     describe('unsupported operators', function () {
         it('throws ValidationException for contains operator', function () {
-            $filter = new DateTimeOperatorFilter;
+            $filter = new DateTimeOperatorFilter('issuedAt');
             $query = Invoice::query();
             $filter($query, ['operator' => 'contains', 'value' => '2026-02-16'], 'issued_at');
         })->throws(ValidationException::class);
 
         it('throws ValidationException for invalid operator', function () {
-            $filter = new DateTimeOperatorFilter;
+            $filter = new DateTimeOperatorFilter('issuedAt');
             $query = Invoice::query();
             $filter($query, ['operator' => 'invalidOp', 'value' => '2026-02-16'], 'issued_at');
         })->throws(ValidationException::class);
@@ -214,7 +214,7 @@ describe('DateTimeOperatorFilter', function () {
         it('skips filter when value is empty', function () {
             Invoice::factory()->create(['issued_at' => '2026-02-16 10:00:00']);
 
-            $filter = new DateTimeOperatorFilter;
+            $filter = new DateTimeOperatorFilter('issuedAt');
             $query = Invoice::query();
             $filter($query, ['operator' => 'equals', 'value' => ''], 'issued_at');
 
@@ -304,6 +304,10 @@ describe('DateTimeOperatorFilter', function () {
 
             $this->fail('Expected ValidationException was not thrown');
         });
+
+        it('requires a filter name at construction', function () {
+            new DateTimeOperatorFilter;
+        })->throws(ArgumentCountError::class);
     });
 
     describe('app timezone handling', function () {
@@ -450,7 +454,7 @@ describe('DateTimeOperatorFilter', function () {
             Invoice::factory()->create(['issued_at' => '2026-02-16 10:00:00']);
             Invoice::factory()->create(['issued_at' => '2026-02-16 12:00:00']);
 
-            $filter = new DateTimeOperatorFilter;
+            $filter = new DateTimeOperatorFilter('issuedAt');
             $query = Invoice::query();
             $filter($query, [
                 ['operator' => 'greaterThan', 'value' => '2026-02-16 09:00:00'],

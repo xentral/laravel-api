@@ -9,7 +9,7 @@ use Spatie\QueryBuilder\Filters\FiltersExact;
 
 class DateOperatorFilter extends FiltersExact
 {
-    public function __construct(private readonly string $filterName = '') {}
+    public function __construct(private readonly string $filterName) {}
 
     private const ALLOWED_OPERATORS = [
         FilterOperator::EQUALS,

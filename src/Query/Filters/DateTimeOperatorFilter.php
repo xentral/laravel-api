@@ -9,7 +9,7 @@ use Spatie\QueryBuilder\Filters\FiltersExact;
 
 class DateTimeOperatorFilter extends FiltersExact
 {
-    public function __construct(private readonly string $filterName = '') {}
+    public function __construct(private readonly string $filterName) {}
 
     private const LEGACY_ZERO_DATETIME = '0000-00-00 00:00:00';
 

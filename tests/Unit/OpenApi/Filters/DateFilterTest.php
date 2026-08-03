@@ -7,7 +7,7 @@ use Xentral\LaravelApi\Query\Filters\FilterOperator;
 it('documents the same operators as the runtime date filter by default', function () {
     $filter = new DateFilter(name: 'issuedAt');
 
-    expect($filter->operators)->toBe((new DateOperatorFilter)->allowedOperators());
+    expect($filter->operators)->toBe((new DateOperatorFilter('issuedAt'))->allowedOperators());
 });
 
 it('documents isNull and isNotNull by default', function () {

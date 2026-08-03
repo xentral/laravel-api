@@ -80,6 +80,10 @@ describe('DateOperatorFilter', function () {
 
             $this->fail('Expected ValidationException was not thrown');
         });
+
+        it('requires a filter name at construction', function () {
+            new DateOperatorFilter;
+        })->throws(ArgumentCountError::class);
     });
 
     describe('isNull and isNotNull operators', function () {
