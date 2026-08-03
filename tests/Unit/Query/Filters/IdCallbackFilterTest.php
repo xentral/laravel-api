@@ -5,8 +5,10 @@ use Illuminate\Validation\ValidationException;
 use Workbench\App\Models\Customer;
 use Workbench\App\Models\Invoice;
 use Workbench\App\Models\LineItem;
+use Xentral\LaravelApi\Query\Filters\FilterOperator;
 use Xentral\LaravelApi\Query\Filters\IdCallbackFilter;
 use Xentral\LaravelApi\Query\Filters\IdFilterTarget;
+use Xentral\LaravelApi\Query\Filters\StringOperatorFilter;
 
 function lineItemsIdFilter(?ArrayObject $received = null): IdCallbackFilter
 {
@@ -118,6 +120,26 @@ describe('IdCallbackFilter on a column target', function () {
             ->and($received->getArrayCopy())->toBe([[$first->id, $second->id]]);
     });
 
+    it('excludes null rows for notIn, exactly like the column based id filter does', function () {
+        Customer::factory()->create(['is_archived' => 5]);
+        $other = Customer::factory()->create(['is_archived' => 7]);
+        Customer::factory()->create(['is_archived' => null]);
+
+        $filter = new IdCallbackFilter(
+            fn (Builder $query, array $ids) => $query->whereIn('customers.is_archived', $ids),
+            IdFilterTarget::Column,
+        );
+
+        $viaCallback = Customer::query();
+        $filter($viaCallback, ['operator' => 'notIn', 'value' => [5]], 'legacy.id');
+
+        $viaColumn = Customer::query();
+        (new StringOperatorFilter([FilterOperator::NOT_IN]))($viaColumn, ['operator' => 'notIn', 'value' => [5]], 'is_archived');
+
+        expect($viaCallback->pluck('id')->all())->toBe([$other->id])
+            ->and($viaCallback->pluck('id')->all())->toBe($viaColumn->pluck('id')->all());
+    });
+
     it('excludes every listed id for notIn on a plain column', function () {
         $excluded = Customer::factory()->create();
         $kept = Customer::factory()->create();
@@ -128,6 +150,45 @@ describe('IdCallbackFilter on a column target', function () {
         customerColumnIdFilter()($query, ['operator' => 'notIn', 'value' => [$excluded->id]], 'customer.id');
 
         expect($query->pluck('id')->all())->toBe([$keptInvoice->id]);
+    });
+});
+
+describe('IdCallbackFilter predicate grouping', function () {
+    it('keeps a callback using orWhere from widening a surrounding constraint', function () {
+        Invoice::factory()->create(['status' => 'open']);
+        $outOfScope = Invoice::factory()->create(['status' => 'paid']);
+
+        $filter = new IdCallbackFilter(
+            fn (Builder $query, array $ids) => $query
+                ->whereIn('invoices.customer_id', $ids)
+                ->orWhereIn('invoices.id', $ids),
+            IdFilterTarget::Column,
+        );
+
+        $query = Invoice::query()->where('status', 'open');
+        $filter($query, ['operator' => 'in', 'value' => [$outOfScope->id]], 'legacy.id');
+
+        expect($query->pluck('id')->all())->not->toContain($outOfScope->id);
+    });
+
+    it('groups every predicate of an anded equals list as well', function () {
+        Invoice::factory()->create(['status' => 'open']);
+        $outOfScope = Invoice::factory()->create(['status' => 'paid']);
+        $secondOutOfScope = Invoice::factory()->create(['status' => 'paid']);
+
+        $filter = new IdCallbackFilter(
+            fn (Builder $query, array $ids) => $query
+                ->whereIn('invoices.customer_id', $ids)
+                ->orWhereIn('invoices.id', $ids),
+            IdFilterTarget::Relation,
+        );
+
+        $query = Invoice::query()->where('status', 'open');
+        $filter($query, ['operator' => 'equals', 'value' => [$outOfScope->id, $secondOutOfScope->id]], 'legacy.id');
+
+        expect($query->pluck('id')->all())
+            ->not->toContain($outOfScope->id)
+            ->not->toContain($secondOutOfScope->id);
     });
 });
 

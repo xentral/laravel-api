@@ -278,6 +278,8 @@ Everything else is owned by the filter:
 - supported operators are `equals`, `notEquals`, `in` and `notIn`; anything else is a validation error
 - every id must be numeric and reaches the callback cast to `int`
 - the callback is guaranteed a non-empty list, so `notIn` can never degrade into "match everything"
+- every invocation of the callback is wrapped in its own nested `where`, so a predicate using
+  `orWhere` cannot widen the query it is applied to
 - `notEquals` and `notIn` negate the predicate, so both mean "matches none of these ids"
 - `equals` with several ids on an `IdFilterTarget::Relation` requires **all** of them and applies the
   predicate once per id, consistent with relation filters elsewhere in this package. On an

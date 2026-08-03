@@ -13,6 +13,9 @@ use Spatie\QueryBuilder\Filters\Filter;
  * The callback is handed a non-empty list of ids and constrains the query to rows
  * matching any of them. Operator handling, id validation and negation stay in this
  * filter, so a caller only writes the positive membership predicate.
+ *
+ * Each invocation of the callback is wrapped in its own nested where, so a predicate
+ * using `orWhere` cannot widen the query it is applied to.
  */
 class IdCallbackFilter implements Filter
 {
@@ -52,13 +55,23 @@ class IdCallbackFilter implements Filter
 
         if ($operator === FilterOperator::EQUALS && $this->target === IdFilterTarget::Relation && count($ids) > 1) {
             foreach ($ids as $id) {
-                ($this->apply)($query, [$id]);
+                $this->applyGrouped($query, [$id]);
             }
 
             return;
         }
 
-        ($this->apply)($query, $ids);
+        $this->applyGrouped($query, $ids);
+    }
+
+    /**
+     * @param  non-empty-list<int>  $ids
+     */
+    private function applyGrouped(Builder $query, array $ids): void
+    {
+        $query->where(function (Builder $query) use ($ids): void {
+            ($this->apply)($query, $ids);
+        });
     }
 
     private function toOperator(mixed $operator, string $property): FilterOperator
