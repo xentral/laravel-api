@@ -195,7 +195,7 @@ paths:
         -
           name: filter
           in: query
-          description: "The filter parameter is used to filter the results of the given endpoint. \n\n\n**Supported filter operators by key:** \n\n`id`: *equals*, *notEquals*, *in*, *notIn* \n\n`invoice_number`: *equals*, *notEquals*, *in*, *notIn*, *contains*, *notContains*, *startsWith*, *endsWith* \n\n`status`: *equals*, *notEquals*, *in*, *notIn* \n\n`issued_at`: *equals*, *notEquals*, *lessThan*, *lessThanOrEquals*, *greaterThan*, *greaterThanOrEquals* \n\n`due_at`: *equals*, *notEquals*, *lessThan*, *lessThanOrEquals*, *greaterThan*, *greaterThanOrEquals* \n\n`paid_at`: *equals*, *notEquals*, *lessThan*, *lessThanOrEquals*, *greaterThan*, *greaterThanOrEquals* \n\n`created_at`: *equals*, *notEquals*, *lessThan*, *lessThanOrEquals*, *greaterThan*, *greaterThanOrEquals* \n\n`updated_at`: *equals*, *notEquals*, *lessThan*, *lessThanOrEquals*, *greaterThan*, *greaterThanOrEquals*"
+          description: "The filter parameter is used to filter the results of the given endpoint. \n\n\n**Supported filter operators by key:** \n\n`id`: *equals*, *notEquals*, *in*, *notIn* \n\n`invoice_number`: *equals*, *notEquals*, *in*, *notIn*, *contains*, *notContains*, *startsWith*, *endsWith* \n\n`status`: *equals*, *notEquals*, *in*, *notIn* \n\n`issued_at`: *equals*, *notEquals*, *lessThan*, *lessThanOrEquals*, *greaterThan*, *greaterThanOrEquals*, *isNull*, *isNotNull* \n\n`due_at`: *equals*, *notEquals*, *lessThan*, *lessThanOrEquals*, *greaterThan*, *greaterThanOrEquals*, *isNull*, *isNotNull* \n\n`paid_at`: *equals*, *notEquals*, *lessThan*, *lessThanOrEquals*, *greaterThan*, *greaterThanOrEquals*, *isNull*, *isNotNull* \n\n`created_at`: *equals*, *notEquals*, *lessThan*, *lessThanOrEquals*, *greaterThan*, *greaterThanOrEquals*, *isNull*, *isNotNull* \n\n`updated_at`: *equals*, *notEquals*, *lessThan*, *lessThanOrEquals*, *greaterThan*, *greaterThanOrEquals*, *isNull*, *isNotNull*"
           required: false
           style: deepObject
           schema:
@@ -208,7 +208,7 @@ paths:
                 op:
                   description: operator
                   type: string
-                  enum: [equals, notEquals, in, notIn, contains, notContains, startsWith, endsWith, lessThan, lessThanOrEquals, greaterThan, greaterThanOrEquals]
+                  enum: [equals, notEquals, in, notIn, contains, notContains, startsWith, endsWith, lessThan, lessThanOrEquals, greaterThan, greaterThanOrEquals, isNull, isNotNull]
                 value:
                   description: 'The property value.'
                   oneOf: [{ title: String, type: string }, { title: Array, type: array, items: { type: string } }]
