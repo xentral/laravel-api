@@ -1485,3 +1485,94 @@ describe('Invoice Multiple Filters on Same Property', function () {
         $response->assertJsonCount(1, 'data');
     });
 });
+
+describe('Invoice Callback Id Filter', function () {
+    it('requires all line item ids to match for equals', function () {
+        $withBoth = Invoice::factory()->create();
+        $bothIds = LineItem::factory()->count(2)->for($withBoth)->create()->pluck('id')->all();
+
+        $withOne = Invoice::factory()->create();
+        LineItem::factory()->for($withOne)->create();
+
+        $query = buildFilterQuery([[
+            'key' => 'lineItem.id',
+            'op' => 'equals',
+            'value' => $bothIds,
+        ]]);
+
+        $response = $this->getJson("/api/v1/invoices?{$query}");
+        $response->assertOk();
+        $response->assertJsonCount(1, 'data');
+        $response->assertJsonPath('data.0.id', $withBoth->id);
+    });
+
+    it('matches any line item id for in', function () {
+        $first = Invoice::factory()->create();
+        $second = Invoice::factory()->create();
+        $ids = [
+            LineItem::factory()->for($first)->create()->id,
+            LineItem::factory()->for($second)->create()->id,
+        ];
+
+        $other = Invoice::factory()->create();
+        LineItem::factory()->for($other)->create();
+
+        $query = buildFilterQuery([[
+            'key' => 'lineItem.id',
+            'op' => 'in',
+            'value' => $ids,
+        ]]);
+
+        $response = $this->getJson("/api/v1/invoices?{$query}");
+        $response->assertOk();
+        $response->assertJsonCount(2, 'data');
+    });
+
+    it('excludes the listed line item ids for notIn', function () {
+        $excluded = Invoice::factory()->create();
+        $excludedId = LineItem::factory()->for($excluded)->create()->id;
+
+        $kept = Invoice::factory()->create();
+        LineItem::factory()->for($kept)->create();
+
+        $query = buildFilterQuery([[
+            'key' => 'lineItem.id',
+            'op' => 'notIn',
+            'value' => [$excludedId],
+        ]]);
+
+        $response = $this->getJson("/api/v1/invoices?{$query}");
+        $response->assertOk();
+        $response->assertJsonCount(1, 'data');
+        $response->assertJsonPath('data.0.id', $kept->id);
+    });
+
+    it('rejects an empty id list instead of letting notIn return everything', function () {
+        $invoice = Invoice::factory()->create();
+        LineItem::factory()->for($invoice)->create();
+
+        $query = buildFilterQuery([[
+            'key' => 'lineItem.id',
+            'op' => 'notIn',
+            'value' => [],
+        ]]);
+
+        $response = $this->getJson("/api/v1/invoices?{$query}");
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['lineItem.id']);
+    });
+
+    it('rejects a non-numeric id', function () {
+        Invoice::factory()->create();
+
+        $query = buildFilterQuery([[
+            'key' => 'lineItem.id',
+            'op' => 'in',
+            'value' => ['abc'],
+        ]]);
+
+        $response = $this->getJson("/api/v1/invoices?{$query}");
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['lineItem.id']);
+    });
+});

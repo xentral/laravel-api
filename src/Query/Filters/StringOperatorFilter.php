@@ -9,6 +9,8 @@ use Spatie\QueryBuilder\Filters\FiltersExact;
 
 class StringOperatorFilter extends FiltersExact
 {
+    use HasRepeatedFilterKeys;
+
     private const NEGATIVE_TO_POSITIVE_MAP = [
         'notIn' => 'in',
         'notEquals' => 'equals',
@@ -19,11 +21,7 @@ class StringOperatorFilter extends FiltersExact
 
     public function __invoke(Builder $query, mixed $value, string $property)
     {
-        if (isset($value[0]) && is_array($value[0])) {
-            foreach ($value as $filter) {
-                $this->__invoke($query, $filter, $property);
-            }
-
+        if ($this->applyRepeatedFilters($query, $value, $property)) {
             return;
         }
 

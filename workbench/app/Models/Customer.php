@@ -15,6 +15,7 @@ use Illuminate\Support\Carbon;
  * @property string $country
  * @property bool $is_active
  * @property int $is_verified
+ * @property int|null $is_archived
  * @property Carbon $updated_at
  * @property Carbon $created_at
  */

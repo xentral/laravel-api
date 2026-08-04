@@ -48,4 +48,18 @@ class CustomerFactory extends Factory
             'is_verified' => 0,
         ]);
     }
+
+    public function archived(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_archived' => 1,
+        ]);
+    }
+
+    public function notArchived(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_archived' => 0,
+        ]);
+    }
 }

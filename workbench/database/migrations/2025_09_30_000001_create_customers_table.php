@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('country');
             $table->boolean('is_active')->default(true);
             $table->integer('is_verified')->default(0);
+            $table->integer('is_archived')->nullable();
             $table->timestamps();
         });
     }

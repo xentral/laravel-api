@@ -21,7 +21,7 @@ A Laravel package (namespace `Xentral\LaravelApi`) providing strongly-typed PHP 
 Filtering requires **two parallel declarations** that must stay in sync:
 
 1. **OpenAPI spec layer**: `FilterParameter` with typed filter attributes (`IdFilter`, `StringFilter`, `NumberFilter`, `DateFilter`, `DateTimeFilter`, `EnumFilter`, `BooleanFilter`)
-2. **QueryBuilder layer**: `QueryFilter::identifier()`, `::string()`, `::number()`, `::date()`, `::datetime()`, `::boolean()`, `::booleanInteger()`
+2. **QueryBuilder layer**: `QueryFilter::identifier()`, `::identifierCallback()`, `::string()`, `::number()`, `::date()`, `::datetime()`, `::boolean()`, `::booleanInteger()`
 
 Both layers must declare the same filter names. API field names use camelCase; map to internal column name via the second parameter (e.g. `QueryFilter::date('documentDate', 'datum')`).
 
