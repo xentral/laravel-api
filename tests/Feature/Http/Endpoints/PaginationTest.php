@@ -487,49 +487,29 @@ describe('Pagination Links with Query String', function () {
 });
 
 describe('Pagination Meta Surface', function () {
-    it('exposes only the documented meta keys for simple pagination', function () {
+    it('exposes exactly the meta keys the spec documents', function (string $paginationType) {
+        $documented = documentedPaginationMetaKeys($paginationType);
+
         $response = $this->getJson('/api/v1/invoices', [
-            'x-pagination' => 'simple',
+            'x-pagination' => $paginationType,
         ]);
 
         $response->assertOk();
 
-        expect(array_keys($response->json('meta')))
-            ->toEqualCanonicalizing(['current_page', 'from', 'path', 'per_page', 'to']);
-    });
+        expect(array_keys($response->json('meta')))->toEqualCanonicalizing($documented);
+    })->with(['simple', 'table', 'cursor']);
 
-    it('exposes only the documented meta keys for simple pagination in camelCase', function () {
+    it('exposes exactly the meta keys the spec documents in camelCase', function (string $paginationType) {
         config(['openapi.schemas.default.config.pagination_response.casing' => 'camel']);
 
+        $documented = documentedPaginationMetaKeys($paginationType);
+
         $response = $this->getJson('/api/v1/invoices', [
-            'x-pagination' => 'simple',
+            'x-pagination' => $paginationType,
         ]);
 
         $response->assertOk();
 
-        expect(array_keys($response->json('meta')))
-            ->toEqualCanonicalizing(['currentPage', 'from', 'path', 'perPage', 'to']);
-    });
-
-    it('exposes only the documented meta keys for table pagination', function () {
-        $response = $this->getJson('/api/v1/invoices', [
-            'x-pagination' => 'table',
-        ]);
-
-        $response->assertOk();
-
-        expect(array_keys($response->json('meta')))
-            ->toEqualCanonicalizing(['current_page', 'from', 'last_page', 'path', 'per_page', 'to', 'total']);
-    });
-
-    it('exposes only the documented meta keys for cursor pagination', function () {
-        $response = $this->getJson('/api/v1/invoices', [
-            'x-pagination' => 'cursor',
-        ]);
-
-        $response->assertOk();
-
-        expect(array_keys($response->json('meta')))
-            ->toEqualCanonicalizing(['next_cursor', 'path', 'per_page', 'prev_cursor']);
-    });
+        expect(array_keys($response->json('meta')))->toEqualCanonicalizing($documented);
+    })->with(['simple', 'table', 'cursor']);
 });
