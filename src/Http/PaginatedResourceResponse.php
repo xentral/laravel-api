@@ -18,14 +18,22 @@ class PaginatedResourceResponse extends BasePaginatedResourceResponse
         return $this->convertCasing($links);
     }
 
+    /**
+     * Allowlisted so that keys Laravel adds to a paginator's `toArray()` cannot
+     * leak into the documented response surface.
+     */
     protected function meta($paginated): array
     {
-        $meta = Arr::except($paginated, [
-            'data',
-            'first_page_url',
-            'last_page_url',
-            'prev_page_url',
-            'next_page_url',
+        $meta = Arr::only($paginated, [
+            'current_page',
+            'last_page',
+            'from',
+            'to',
+            'path',
+            'per_page',
+            'total',
+            'next_cursor',
+            'prev_cursor',
         ]);
 
         return $this->convertCasing($meta);
