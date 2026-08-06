@@ -125,8 +125,8 @@ class QueryBuilder extends \Spatie\QueryBuilder\QueryBuilder
 
         return match ($paginationType) {
             PaginationType::SIMPLE => $this->simplePaginate($perPage, page: $currentPage)->withQueryString(),
-            PaginationType::TABLE => $this->paginate($perPage, page: $currentPage)->withQueryString()->withQueryString(),
-            PaginationType::CURSOR => $this->cursorPaginate($perPage)->withQueryString()->withQueryString(),
+            PaginationType::TABLE => $this->paginate($perPage, page: $currentPage)->withQueryString(),
+            PaginationType::CURSOR => $this->cursorPaginate($perPage)->withQueryString(),
         };
     }
 

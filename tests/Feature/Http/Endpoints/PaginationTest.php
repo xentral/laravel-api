@@ -485,3 +485,31 @@ describe('Pagination Links with Query String', function () {
             ->and($links['first'])->not->toBeNull();
     });
 });
+
+describe('Pagination Meta Surface', function () {
+    it('exposes exactly the meta keys the spec documents', function (string $paginationType) {
+        $documented = documentedPaginationMetaKeys($paginationType);
+
+        $response = $this->getJson('/api/v1/invoices', [
+            'x-pagination' => $paginationType,
+        ]);
+
+        $response->assertOk();
+
+        expect(array_keys($response->json('meta')))->toEqualCanonicalizing($documented);
+    })->with(['simple', 'table', 'cursor']);
+
+    it('exposes exactly the meta keys the spec documents in camelCase', function (string $paginationType) {
+        config(['openapi.schemas.default.config.pagination_response.casing' => 'camel']);
+
+        $documented = documentedPaginationMetaKeys($paginationType);
+
+        $response = $this->getJson('/api/v1/invoices', [
+            'x-pagination' => $paginationType,
+        ]);
+
+        $response->assertOk();
+
+        expect(array_keys($response->json('meta')))->toEqualCanonicalizing($documented);
+    })->with(['simple', 'table', 'cursor']);
+});
