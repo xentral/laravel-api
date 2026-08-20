@@ -156,9 +156,11 @@ class QueryBuilder extends \Spatie\QueryBuilder\QueryBuilder
     {
         $pageInfo = $this->request->query('page');
 
-        $perPage = is_array($pageInfo) && isset($pageInfo['size'])
-            ? (int) $pageInfo['size']
-            : $this->request->integer('per_page', $this->request->integer('perPage', 15));
+        $requested = is_array($pageInfo) && isset($pageInfo['size'])
+            ? $pageInfo['size']
+            : $this->request->input('per_page', $this->request->input('perPage', 15));
+
+        $perPage = is_scalar($requested) ? (int) $requested : 0;
 
         if ($perPage < 1) {
             throw InvalidPageSizeQuery::pageSizeMustBePositive($perPage);

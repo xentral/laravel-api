@@ -538,6 +538,12 @@ describe('Page Size Validation', function () {
             ->and($response->json('meta.current_page'))->toBe(2);
     });
 
+    it('rejects an array page size with 400 instead of a type error', function (string $query) {
+        $response = $this->getJson("/api/v1/invoices?{$query}");
+
+        $response->assertStatus(400);
+    })->with(['page[size][]=5', 'per_page[]=5', 'perPage[]=5']);
+
     it('accepts the boundary page size of exactly one', function (string $query) {
         $response = $this->getJson("/api/v1/invoices?{$query}");
 
