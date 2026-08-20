@@ -58,11 +58,31 @@ paths:
           required: false
           schema:
             type: integer
+            maximum: 100
+            minimum: 1
+            example: 15
+        -
+          name: 'page[size]'
+          in: query
+          description: 'Number of items per page, alternative to per_page. Default: 15, Max: 100'
+          required: false
+          schema:
+            type: integer
+            maximum: 100
+            minimum: 1
             example: 15
         -
           name: page
           in: query
           description: 'Page number.'
+          required: false
+          schema:
+            type: integer
+            example: 1
+        -
+          name: 'page[number]'
+          in: query
+          description: 'Page number, alternative to page.'
           required: false
           schema:
             type: integer
@@ -252,11 +272,31 @@ paths:
           required: false
           schema:
             type: integer
+            maximum: 100
+            minimum: 1
+            example: 15
+        -
+          name: 'page[size]'
+          in: query
+          description: 'Number of items per page, alternative to per_page. Default: 15, Max: 100'
+          required: false
+          schema:
+            type: integer
+            maximum: 100
+            minimum: 1
             example: 15
         -
           name: page
           in: query
           description: 'Page number. Only used with simple and table pagination.'
+          required: false
+          schema:
+            type: integer
+            example: 1
+        -
+          name: 'page[number]'
+          in: query
+          description: 'Page number, alternative to page. Only used with simple and table pagination.'
           required: false
           schema:
             type: integer
@@ -423,11 +463,31 @@ paths:
           required: false
           schema:
             type: integer
+            maximum: 100
+            minimum: 1
+            example: 15
+        -
+          name: 'page[size]'
+          in: query
+          description: 'Number of items per page, alternative to per_page. Default: 15, Max: 100'
+          required: false
+          schema:
+            type: integer
+            maximum: 100
+            minimum: 1
             example: 15
         -
           name: page
           in: query
           description: 'Page number.'
+          required: false
+          schema:
+            type: integer
+            example: 1
+        -
+          name: 'page[number]'
+          in: query
+          description: 'Page number, alternative to page.'
           required: false
           schema:
             type: integer

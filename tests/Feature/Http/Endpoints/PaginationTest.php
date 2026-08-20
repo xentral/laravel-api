@@ -513,3 +513,80 @@ describe('Pagination Meta Surface', function () {
         expect(array_keys($response->json('meta')))->toEqualCanonicalizing($documented);
     })->with(['simple', 'table', 'cursor']);
 });
+
+describe('Page Size Validation', function () {
+    it('rejects a page[size] of zero or less with 400 in every pagination mode', function (string $paginationType, string $size) {
+        $response = $this->getJson("/api/v1/invoices?page[size]={$size}", [
+            'x-pagination' => $paginationType,
+        ]);
+
+        $response->assertStatus(400);
+    })->with(['simple', 'table', 'cursor'])->with(['zero' => '0', 'negative' => '-1']);
+
+    it('rejects a per_page style page size of zero or less with 400', function (string $parameter) {
+        $response = $this->getJson("/api/v1/invoices?{$parameter}=-1");
+
+        $response->assertStatus(400);
+    })->with(['per_page', 'perPage']);
+
+    it('falls back to the default page size when only page[number] is provided', function () {
+        $response = $this->getJson('/api/v1/invoices?page[number]=2');
+
+        $response->assertOk();
+
+        expect($response->json('meta.per_page'))->toBe(15)
+            ->and($response->json('meta.current_page'))->toBe(2);
+    });
+
+    it('accepts the boundary page size of exactly one', function (string $query) {
+        $response = $this->getJson("/api/v1/invoices?{$query}");
+
+        $response->assertOk();
+
+        expect($response->json('meta.per_page'))->toBe(1)
+            ->and($response->json('data'))->toHaveCount(1);
+    })->with(['page[size]=1', 'per_page=1']);
+});
+
+describe('OpenAPI Page Size Parameter Bounds', function () {
+    it('documents minimum and maximum on the page size parameters of a multi-type endpoint', function () {
+        $factory = new OpenApiGeneratorFactory;
+        $generator = $factory->create(config('openapi.schemas.default'));
+
+        $data = Yaml::parse($generator->generate([workbench_dir()])->toYaml());
+
+        $parameters = $data['paths']['/api/v1/invoices']['get']['parameters'];
+
+        $perPage = collect($parameters)->firstWhere('name', 'per_page');
+        expect($perPage['schema']['minimum'])->toBe(1)
+            ->and($perPage['schema']['maximum'])->toBe(100);
+
+        $pageSize = collect($parameters)->firstWhere('name', 'page[size]');
+        expect($pageSize)->not->toBeNull()
+            ->and($pageSize['in'])->toBe('query')
+            ->and($pageSize['schema']['type'])->toBe('integer')
+            ->and($pageSize['schema']['minimum'])->toBe(1)
+            ->and($pageSize['schema']['maximum'])->toBe(100);
+
+        $pageNumber = collect($parameters)->firstWhere('name', 'page[number]');
+        expect($pageNumber)->not->toBeNull()
+            ->and($pageNumber['in'])->toBe('query')
+            ->and($pageNumber['schema']['type'])->toBe('integer');
+    });
+
+    it('documents minimum and maximum on the page size parameters of a single-type endpoint', function () {
+        $factory = new OpenApiGeneratorFactory;
+        $generator = $factory->create(config('openapi.schemas.default'));
+
+        $data = Yaml::parse($generator->generate([workbench_dir()])->toYaml());
+
+        $parameters = $data['paths']['/api/v1/customers']['get']['parameters'];
+
+        $perPage = collect($parameters)->firstWhere('name', 'per_page');
+        expect($perPage['schema']['minimum'])->toBe(1)
+            ->and($perPage['schema']['maximum'])->toBe(100);
+
+        expect(collect($parameters)->firstWhere('name', 'page[size]'))->not->toBeNull()
+            ->and(collect($parameters)->firstWhere('name', 'page[number]'))->not->toBeNull();
+    });
+});

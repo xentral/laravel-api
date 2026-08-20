@@ -243,7 +243,14 @@ class PaginationResponseProcessor
                 description: sprintf('Number of items per page. Default: %d, Max: %d', $defaultPageSize, $maxPageSize),
                 in: 'query',
                 required: false,
-                schema: new Schema(type: 'integer', example: $defaultPageSize),
+                schema: new Schema(type: 'integer', maximum: $maxPageSize, minimum: 1, example: $defaultPageSize),
+            ),
+            new Parameter(
+                name: 'page[size]',
+                description: sprintf('Number of items per page, alternative to %s. Default: %d, Max: %d', $this->convertCase('per_page'), $defaultPageSize, $maxPageSize),
+                in: 'query',
+                required: false,
+                schema: new Schema(type: 'integer', maximum: $maxPageSize, minimum: 1, example: $defaultPageSize),
             ),
         ];
 
@@ -251,6 +258,13 @@ class PaginationResponseProcessor
             $params[] = new Parameter(
                 name: 'page',
                 description: 'Page number. Only used with simple and table pagination.',
+                in: 'query',
+                required: false,
+                schema: new Schema(type: 'integer', example: 1),
+            );
+            $params[] = new Parameter(
+                name: 'page[number]',
+                description: 'Page number, alternative to page. Only used with simple and table pagination.',
                 in: 'query',
                 required: false,
                 schema: new Schema(type: 'integer', example: 1),
@@ -278,7 +292,14 @@ class PaginationResponseProcessor
                 description: sprintf('Number of items per page. Default: %d, Max: %d', $defaultPageSize, $maxPageSize),
                 in: 'query',
                 required: false,
-                schema: new Schema(type: 'integer', example: $defaultPageSize),
+                schema: new Schema(type: 'integer', maximum: $maxPageSize, minimum: 1, example: $defaultPageSize),
+            ),
+            new Parameter(
+                name: 'page[size]',
+                description: sprintf('Number of items per page, alternative to %s. Default: %d, Max: %d', $this->convertCase('per_page'), $defaultPageSize, $maxPageSize),
+                in: 'query',
+                required: false,
+                schema: new Schema(type: 'integer', maximum: $maxPageSize, minimum: 1, example: $defaultPageSize),
             ),
         ];
 
@@ -295,6 +316,13 @@ class PaginationResponseProcessor
             $params[] = new Parameter(
                 name: 'page',
                 description: 'Page number.',
+                in: 'query',
+                required: false,
+                schema: new Schema(type: 'integer', example: 1),
+            );
+            $params[] = new Parameter(
+                name: 'page[number]',
+                description: 'Page number, alternative to page.',
                 in: 'query',
                 required: false,
                 schema: new Schema(type: 'integer', example: 1),

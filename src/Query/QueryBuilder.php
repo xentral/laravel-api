@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Xentral\LaravelApi\Http\QueryBuilderRequest;
 use Xentral\LaravelApi\OpenApi\PaginationType;
+use Xentral\LaravelApi\Query\Exceptions\InvalidPageSizeQuery;
 use Xentral\LaravelApi\Query\Filters\QueryBuilderFilterCollection;
 
 /**
@@ -154,11 +155,14 @@ class QueryBuilder extends \Spatie\QueryBuilder\QueryBuilder
     private function getPageSize(int $maxPageSize): int
     {
         $pageInfo = $this->request->query('page');
-        if (is_array($pageInfo)) {
-            return min($maxPageSize, (int) $pageInfo['size']);
-        }
 
-        $perPage = $this->request->integer('per_page', $this->request->integer('perPage', 15));
+        $perPage = is_array($pageInfo) && isset($pageInfo['size'])
+            ? (int) $pageInfo['size']
+            : $this->request->integer('per_page', $this->request->integer('perPage', 15));
+
+        if ($perPage < 1) {
+            throw InvalidPageSizeQuery::pageSizeMustBePositive($perPage);
+        }
 
         return min($maxPageSize, $perPage);
     }
