@@ -9,16 +9,7 @@ class StringFilter extends FilterProperty
     public function __construct(
         public string $name,
         public ?string $type = 'string',
-        public array $operators = [
-            FilterOperator::EQUALS,
-            FilterOperator::NOT_EQUALS,
-            FilterOperator::IN,
-            FilterOperator::NOT_IN,
-            FilterOperator::CONTAINS,
-            FilterOperator::NOT_CONTAINS,
-            FilterOperator::STARTS_WITH,
-            FilterOperator::ENDS_WITH,
-        ],
+        public array $operators = FilterOperator::TEXT,
     ) {
         parent::__construct(
             name: $name,

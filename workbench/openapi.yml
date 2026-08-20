@@ -21,7 +21,7 @@ paths:
         -
           name: filter
           in: query
-          description: "The filter parameter is used to filter the results of the given endpoint. \n\n\n**Supported filter operators by key:** \n\n`id`: *equals*, *notEquals*, *in*, *notIn* \n\n`name`: *equals*, *notEquals*, *in*, *notIn*, *contains*, *notContains*, *startsWith*, *endsWith* \n\n`email`: *equals*, *notEquals*, *in*, *notIn*, *contains*, *notContains*, *startsWith*, *endsWith* \n\n`country`: *equals*, *notEquals*, *in*, *notIn*, *contains*, *notContains*, *startsWith*, *endsWith*"
+          description: "The filter parameter is used to filter the results of the given endpoint. \n\n\n**Supported filter operators by key:** \n\n`id`: *equals*, *notEquals*, *in*, *notIn*, *isNull*, *isNotNull* \n\n`name`: *equals*, *notEquals*, *in*, *notIn*, *contains*, *notContains*, *startsWith*, *endsWith*, *isNull*, *isNotNull* \n\n`email`: *equals*, *notEquals*, *in*, *notIn*, *contains*, *notContains*, *startsWith*, *endsWith*, *isNull*, *isNotNull* \n\n`country`: *equals*, *notEquals*, *in*, *notIn*, *contains*, *notContains*, *startsWith*, *endsWith*, *isNull*, *isNotNull*"
           required: false
           style: deepObject
           schema:
@@ -34,7 +34,7 @@ paths:
                 op:
                   description: operator
                   type: string
-                  enum: [equals, notEquals, in, notIn, contains, notContains, startsWith, endsWith]
+                  enum: [equals, notEquals, in, notIn, isNull, isNotNull, contains, notContains, startsWith, endsWith]
                 value:
                   description: 'The property value.'
                   oneOf: [{ title: String, type: string }, { title: Array, type: array, items: { type: string } }]
@@ -100,7 +100,7 @@ paths:
         -
           name: filter
           in: query
-          description: "The filter parameter is used to filter the results of the given endpoint. \n\n\n**Supported filter operators by key:** \n\n`country`: *equals*, *notEquals*, *in*, *notIn*, *contains*, *notContains*, *startsWith*, *endsWith*"
+          description: "The filter parameter is used to filter the results of the given endpoint. \n\n\n**Supported filter operators by key:** \n\n`country`: *equals*, *notEquals*, *in*, *notIn*, *contains*, *notContains*, *startsWith*, *endsWith*, *isNull*, *isNotNull*"
           required: false
           style: deepObject
           schema:
@@ -113,7 +113,7 @@ paths:
                 op:
                   description: operator
                   type: string
-                  enum: [equals, notEquals, in, notIn, contains, notContains, startsWith, endsWith]
+                  enum: [equals, notEquals, in, notIn, contains, notContains, startsWith, endsWith, isNull, isNotNull]
                 value:
                   description: 'The property value.'
                   oneOf: [{ title: String, type: string }, { title: Array, type: array, items: { type: string } }]
@@ -195,7 +195,7 @@ paths:
         -
           name: filter
           in: query
-          description: "The filter parameter is used to filter the results of the given endpoint. \n\n\n**Supported filter operators by key:** \n\n`id`: *equals*, *notEquals*, *in*, *notIn* \n\n`invoice_number`: *equals*, *notEquals*, *in*, *notIn*, *contains*, *notContains*, *startsWith*, *endsWith* \n\n`status`: *equals*, *notEquals*, *in*, *notIn* \n\n`issued_at`: *equals*, *notEquals*, *lessThan*, *lessThanOrEquals*, *greaterThan*, *greaterThanOrEquals*, *isNull*, *isNotNull* \n\n`due_at`: *equals*, *notEquals*, *lessThan*, *lessThanOrEquals*, *greaterThan*, *greaterThanOrEquals*, *isNull*, *isNotNull* \n\n`paid_at`: *equals*, *notEquals*, *lessThan*, *lessThanOrEquals*, *greaterThan*, *greaterThanOrEquals*, *isNull*, *isNotNull* \n\n`created_at`: *equals*, *notEquals*, *lessThan*, *lessThanOrEquals*, *greaterThan*, *greaterThanOrEquals*, *isNull*, *isNotNull* \n\n`updated_at`: *equals*, *notEquals*, *lessThan*, *lessThanOrEquals*, *greaterThan*, *greaterThanOrEquals*, *isNull*, *isNotNull*"
+          description: "The filter parameter is used to filter the results of the given endpoint. \n\n\n**Supported filter operators by key:** \n\n`id`: *equals*, *notEquals*, *in*, *notIn*, *isNull*, *isNotNull* \n\n`invoice_number`: *equals*, *notEquals*, *in*, *notIn*, *contains*, *notContains*, *startsWith*, *endsWith*, *isNull*, *isNotNull* \n\n`status`: *equals*, *notEquals*, *in*, *notIn* \n\n`issued_at`: *equals*, *notEquals*, *lessThan*, *lessThanOrEquals*, *greaterThan*, *greaterThanOrEquals*, *isNull*, *isNotNull* \n\n`due_at`: *equals*, *notEquals*, *lessThan*, *lessThanOrEquals*, *greaterThan*, *greaterThanOrEquals*, *isNull*, *isNotNull* \n\n`paid_at`: *equals*, *notEquals*, *lessThan*, *lessThanOrEquals*, *greaterThan*, *greaterThanOrEquals*, *isNull*, *isNotNull* \n\n`created_at`: *equals*, *notEquals*, *lessThan*, *lessThanOrEquals*, *greaterThan*, *greaterThanOrEquals*, *isNull*, *isNotNull* \n\n`updated_at`: *equals*, *notEquals*, *lessThan*, *lessThanOrEquals*, *greaterThan*, *greaterThanOrEquals*, *isNull*, *isNotNull*"
           required: false
           style: deepObject
           schema:
@@ -208,7 +208,7 @@ paths:
                 op:
                   description: operator
                   type: string
-                  enum: [equals, notEquals, in, notIn, contains, notContains, startsWith, endsWith, lessThan, lessThanOrEquals, greaterThan, greaterThanOrEquals, isNull, isNotNull]
+                  enum: [equals, notEquals, in, notIn, isNull, isNotNull, contains, notContains, startsWith, endsWith, lessThan, lessThanOrEquals, greaterThan, greaterThanOrEquals]
                 value:
                   description: 'The property value.'
                   oneOf: [{ title: String, type: string }, { title: Array, type: array, items: { type: string } }]
@@ -391,7 +391,7 @@ paths:
         -
           name: filter
           in: query
-          description: "The filter parameter is used to filter the results of the given endpoint. \n\n\n**Supported filter operators by key:** \n\n`id`: *equals*, *notEquals*, *in*, *notIn* \n\n`product_name`: *equals*, *notEquals*, *in*, *notIn*, *contains*, *notContains*, *startsWith*, *endsWith* \n\n`description`: *equals*, *notEquals*, *in*, *notIn*, *contains*, *notContains*, *startsWith*, *endsWith*"
+          description: "The filter parameter is used to filter the results of the given endpoint. \n\n\n**Supported filter operators by key:** \n\n`id`: *equals*, *notEquals*, *in*, *notIn*, *isNull*, *isNotNull* \n\n`product_name`: *equals*, *notEquals*, *in*, *notIn*, *contains*, *notContains*, *startsWith*, *endsWith*, *isNull*, *isNotNull* \n\n`description`: *equals*, *notEquals*, *in*, *notIn*, *contains*, *notContains*, *startsWith*, *endsWith*, *isNull*, *isNotNull*"
           required: false
           style: deepObject
           schema:
@@ -404,7 +404,7 @@ paths:
                 op:
                   description: operator
                   type: string
-                  enum: [equals, notEquals, in, notIn, contains, notContains, startsWith, endsWith]
+                  enum: [equals, notEquals, in, notIn, isNull, isNotNull, contains, notContains, startsWith, endsWith]
                 value:
                   description: 'The property value.'
                   oneOf: [{ title: String, type: string }, { title: Array, type: array, items: { type: string } }]

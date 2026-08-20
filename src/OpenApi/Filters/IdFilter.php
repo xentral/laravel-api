@@ -9,12 +9,7 @@ class IdFilter extends FilterProperty
     public function __construct(
         public string $name = 'id',
         public ?string $type = 'integer',
-        public array $operators = [
-            FilterOperator::EQUALS,
-            FilterOperator::NOT_EQUALS,
-            FilterOperator::IN,
-            FilterOperator::NOT_IN,
-        ],
+        public array $operators = FilterOperator::ID,
     ) {
         parent::__construct(
             name: $name,

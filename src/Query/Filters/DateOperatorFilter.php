@@ -11,16 +11,7 @@ class DateOperatorFilter extends FiltersExact
 {
     public function __construct(private readonly string $filterName) {}
 
-    private const ALLOWED_OPERATORS = [
-        FilterOperator::EQUALS,
-        FilterOperator::NOT_EQUALS,
-        FilterOperator::LESS_THAN,
-        FilterOperator::LESS_THAN_OR_EQUALS,
-        FilterOperator::GREATER_THAN,
-        FilterOperator::GREATER_THAN_OR_EQUALS,
-        FilterOperator::IS_NULL,
-        FilterOperator::IS_NOT_NULL,
-    ];
+    private const ALLOWED_OPERATORS = FilterOperator::COMPARABLE;
 
     public function __invoke(Builder $query, mixed $value, string $property): void
     {

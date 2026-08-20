@@ -21,12 +21,7 @@ class IdCallbackFilter implements Filter
 {
     use HasRepeatedFilterKeys;
 
-    private const SUPPORTED_OPERATORS = [
-        FilterOperator::EQUALS,
-        FilterOperator::NOT_EQUALS,
-        FilterOperator::IN,
-        FilterOperator::NOT_IN,
-    ];
+    private const SUPPORTED_OPERATORS = FilterOperator::MEMBERSHIP;
 
     /**
      * The return value of `$apply` is discarded, so a single expression arrow function
@@ -93,5 +88,10 @@ class IdCallbackFilter implements Filter
     private function printableOperator(mixed $operator): string
     {
         return is_scalar($operator) ? (string) $operator : gettype($operator);
+    }
+
+    public function allowedOperators(): array
+    {
+        return self::SUPPORTED_OPERATORS;
     }
 }

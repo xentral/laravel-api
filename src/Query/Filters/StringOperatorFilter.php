@@ -11,12 +11,6 @@ class StringOperatorFilter extends FiltersExact
 {
     use HasRepeatedFilterKeys;
 
-    private const NEGATIVE_TO_POSITIVE_MAP = [
-        'notIn' => 'in',
-        'notEquals' => 'equals',
-        'notContains' => 'contains',
-    ];
-
     public function __construct(private readonly array $allowedOperators = [], private readonly ?string $enum = null) {}
 
     public function __invoke(Builder $query, mixed $value, string $property)
@@ -49,7 +43,9 @@ class StringOperatorFilter extends FiltersExact
             ]);
 
         $operator = $value['operator'] ?? null;
-        $isNegativeOperator = $operator && isset(self::NEGATIVE_TO_POSITIVE_MAP[$operator]);
+        $filterOperator = is_string($operator) ? FilterOperator::tryFrom($operator) : null;
+        $positiveOperator = $filterOperator?->positiveForm();
+        $isNegativeOperator = $positiveOperator !== null && in_array($filterOperator, $this->allowedOperators, true);
 
         // For EQUALS with array values, create separate whereHas for each value (AND logic)
         // This ensures that e.g. filtering tags with ['demo', 'demo2'] returns only records
@@ -68,7 +64,7 @@ class StringOperatorFilter extends FiltersExact
 
         if ($isNegativeOperator) {
             $positiveValue = $value;
-            $positiveValue['operator'] = self::NEGATIVE_TO_POSITIVE_MAP[$operator];
+            $positiveValue['operator'] = $positiveOperator->value;
 
             $query->whereDoesntHave($relation, function (Builder $query) use ($property, $positiveValue) {
                 $this->relationConstraints[] = $property = $query->qualifyColumn($property);
