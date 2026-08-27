@@ -6,7 +6,7 @@ A Laravel package (namespace `Xentral\LaravelApi`) providing strongly-typed PHP 
 
 - Always extend `Xentral\LaravelApi\Http\ApiResource`, never `JsonResource` directly
 - Always use `Xentral\LaravelApi\Query\QueryBuilder::for()`, never plain Eloquent or `Spatie\QueryBuilder\QueryBuilder` directly
-- Always set `additionalProperties: false` on every `OA\Schema`
+- Always set `additionalProperties: false` on response `OA\Schema` (resources), never on request schemas — requests ignore undeclared properties
 - Always add `/** @var ModelName */ public $resource;` type annotation on resources
 - Every `OA\Schema` must specify `schema`, `required`, `properties`, `type`
 - OpenAPI `required` fields must match Laravel validation `required` rules

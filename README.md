@@ -415,6 +415,11 @@ properties of your request
 body, including their types and validation requirements. The example below demonstrates how to define a request body for
 creating a sales order.
 
+Unlike resources, request schemas stay open — do not set `additionalProperties: false` on them. A request payload is
+mapped onto the properties the endpoint declares, so a property that is not declared is never read: it is not stored
+and it does not raise an error. `additionalProperties: false` would promise a rejection that never happens. On a
+response schema it is a real promise about the shape we return, so keep it there.
+
 ```php
 <?php
 
@@ -437,7 +442,6 @@ use OpenApi\Attributes as OA;
             ])),
     ],
     type: 'object',
-    additionalProperties: false,
 )]
 class CreateSalesOrderRequest extends FormRequest
 {

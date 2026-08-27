@@ -92,7 +92,7 @@ public function view(int $id): SalesOrderResource
 
 ## Request Bodies (Validation)
 
-Use FormRequest or spatie/laravel-data Data objects. Schema `required` fields and Laravel validation rules must match. Always set `additionalProperties: false`.
+Use FormRequest or spatie/laravel-data Data objects. Schema `required` fields and Laravel validation rules must match. Never set `additionalProperties: false` on a request schema: a payload is mapped onto the properties the endpoint declares, so an undeclared key is never read — nothing is stored and no error is raised. Closing the schema would promise a rejection that does not happen.
 
 ```php
 use Illuminate\Foundation\Http\FormRequest;
@@ -121,7 +121,6 @@ use OpenApi\Attributes as OA;
         ),
     ],
     type: 'object',
-    additionalProperties: false,
 )]
 class CreateSalesOrderRequest extends FormRequest
 {
@@ -645,7 +644,7 @@ php artisan openapi:generate v1       # Generate specific schema
 
 1. **Always use QueryBuilder**: Use `Xentral\LaravelApi\Query\QueryBuilder::for()`, never plain Eloquent
 2. **Match validation to schema**: OpenAPI schema `required` fields must match Laravel validation rules
-3. **Set additionalProperties false**: Always add `additionalProperties: false` on schemas
+3. **Set additionalProperties false on responses**: Add `additionalProperties: false` on response schemas, where it is a real promise about the shape we return. Request schemas stay open — undeclared properties are ignored, not rejected
 4. **Use typed resources**: Add `/** @var ModelName */ public $resource;` for IDE support
 5. **Date formatting**: Use `->toAtomString()` for datetime, `->toDateString()` for date-only
 6. **Includes pattern**: Use `includeWhenLoaded()` for relations that should show reference ID when not loaded
