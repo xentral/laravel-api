@@ -151,4 +151,23 @@ describe('QueryFilter::enum', function () {
         expect($result->getName())->toBe('status')
             ->and($result->getInternalName())->toBe('internal_status');
     });
+
+    it('accepts a widened operator set for a nullable enum column', function () {
+        $customFilter = QueryFilter::enum('status', TestStatusEnum::class, operators: [
+            ...FilterOperator::ENUM,
+            FilterOperator::IS_NULL,
+            FilterOperator::IS_NOT_NULL,
+        ])->getFilterClass();
+
+        expect($customFilter->allowedOperators())->toEqualCanonicalizing([
+            FilterOperator::EQUALS,
+            FilterOperator::NOT_EQUALS,
+            FilterOperator::IN,
+            FilterOperator::NOT_IN,
+            FilterOperator::IS_NULL,
+            FilterOperator::IS_NOT_NULL,
+        ]);
+
+        $customFilter(Invoice::query(), ['operator' => 'isNull'], 'status');
+    });
 });

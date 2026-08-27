@@ -70,12 +70,24 @@ class QueryFilter
      * only the four operators EnumFilter documents — in particular no
      * isNull, whose empty-string branch would silently match the zero case
      * on int-backed enum columns.
+     *
+     * $operators widens that set for a nullable enum column, mirroring the
+     * operators argument the EnumFilter attribute already takes on the spec
+     * side. Add isNull/isNotNull only for a string-backed column, where
+     * "null or empty" is the intended reading — on an int-backed one it is
+     * the zero case this helper exists to prevent.
+     *
+     * @param  array<int, FilterOperator>  $operators
      */
-    public static function enum(string $name, string $enum, ?string $internalName = null): AllowedFilter
-    {
+    public static function enum(
+        string $name,
+        string $enum,
+        ?string $internalName = null,
+        array $operators = FilterOperator::ENUM,
+    ): AllowedFilter {
         return AllowedFilter::custom(
             $name,
-            new StringOperatorFilter(FilterOperator::ENUM, $enum),
+            new StringOperatorFilter($operators, $enum),
             $internalName,
         );
     }
