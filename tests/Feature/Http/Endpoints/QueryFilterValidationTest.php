@@ -114,6 +114,33 @@ describe('QueryFilter Endpoint Validation', function () {
         $response->assertStatus(422);
     });
 
+    it('rejects a string-only operator on the enum-backed status key', function () {
+        $response = $this->getJson('/api/v1/invoices?'.http_build_query([
+            'filter' => [
+                [
+                    'key' => 'status',
+                    'op' => 'contains',
+                    'value' => 'draft',
+                ],
+            ],
+        ]));
+
+        $response->assertStatus(422);
+    });
+
+    it('rejects isNull on the enum-backed status key instead of matching the zero case', function () {
+        $response = $this->getJson('/api/v1/invoices?'.http_build_query([
+            'filter' => [
+                [
+                    'key' => 'status',
+                    'op' => 'isNull',
+                ],
+            ],
+        ]));
+
+        $response->assertStatus(422);
+    });
+
     it('validates boolean field values', function () {
         // is_active is a boolean field, should validate properly
         $response = $this->getJson('/api/v1/customers?'.http_build_query([

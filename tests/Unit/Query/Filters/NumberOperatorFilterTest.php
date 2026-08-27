@@ -2,6 +2,7 @@
 
 use Illuminate\Validation\ValidationException;
 use Workbench\App\Models\Invoice;
+use Workbench\App\Models\LineItem;
 use Xentral\LaravelApi\Query\Filters\NumberOperatorFilter;
 
 describe('NumberOperatorFilter', function () {
@@ -179,4 +180,28 @@ describe('NumberOperatorFilter', function () {
             $filter($query, ['operator' => 'invalidOp', 'value' => '5'], 'total_amount');
         })->throws(ValidationException::class);
     });
+});
+
+describe('NumberOperatorFilter relation properties', function () {
+    it('inverts notEquals on a relation to rows with no matching related record', function () {
+        $invoiceWithTen = Invoice::factory()->create();
+        LineItem::factory()->for($invoiceWithTen)->create(['quantity' => 10]);
+        LineItem::factory()->for($invoiceWithTen)->create(['quantity' => 5]);
+
+        $invoiceWithFive = Invoice::factory()->create();
+        LineItem::factory()->for($invoiceWithFive)->create(['quantity' => 5]);
+
+        $filter = new NumberOperatorFilter('lineItems.quantity');
+        $query = Invoice::query();
+        $filter($query, ['operator' => 'notEquals', 'value' => '10'], 'lineItems.quantity');
+
+        expect($query->pluck('id')->toArray())
+            ->toContain($invoiceWithFive->id)
+            ->not->toContain($invoiceWithTen->id);
+    });
+
+    it('rejects an unknown operator on a relation property with a validation error', function () {
+        $filter = new NumberOperatorFilter('lineItems.quantity');
+        $filter(Invoice::query(), ['operator' => 'bogus', 'value' => '10'], 'lineItems.quantity');
+    })->throws(ValidationException::class);
 });

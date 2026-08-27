@@ -9,10 +9,7 @@ class BooleanFilter extends FilterProperty
     public function __construct(
         public string $name,
         public ?string $type = 'boolean',
-        public array $operators = [
-            FilterOperator::EQUALS,
-            FilterOperator::NOT_EQUALS,
-        ],
+        public array $operators = FilterOperator::BOOLEAN,
     ) {
         parent::__construct(
             name: $name,

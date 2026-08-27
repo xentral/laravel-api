@@ -9,20 +9,7 @@ use Spatie\QueryBuilder\Filters\FiltersExact;
 
 class NumberOperatorFilter extends FiltersExact
 {
-    private const NEGATIVE_TO_POSITIVE_MAP = [
-        'notEquals' => 'equals',
-    ];
-
-    private const ALLOWED_OPERATORS = [
-        FilterOperator::EQUALS,
-        FilterOperator::NOT_EQUALS,
-        FilterOperator::LESS_THAN,
-        FilterOperator::LESS_THAN_OR_EQUALS,
-        FilterOperator::GREATER_THAN,
-        FilterOperator::GREATER_THAN_OR_EQUALS,
-        FilterOperator::IS_NULL,
-        FilterOperator::IS_NOT_NULL,
-    ];
+    private const ALLOWED_OPERATORS = FilterOperator::COMPARABLE;
 
     public function __construct(private readonly string $filterName) {}
 
@@ -60,11 +47,13 @@ class NumberOperatorFilter extends FiltersExact
             ]);
 
         $operator = $value['operator'] ?? null;
-        $isNegativeOperator = $operator && isset(self::NEGATIVE_TO_POSITIVE_MAP[$operator]);
+        $filterOperator = is_string($operator) ? FilterOperator::tryFrom($operator) : null;
+        $positiveOperator = $filterOperator?->positiveForm();
+        $isNegativeOperator = $positiveOperator !== null && in_array($filterOperator, self::ALLOWED_OPERATORS, true);
 
         if ($isNegativeOperator) {
             $positiveValue = $value;
-            $positiveValue['operator'] = self::NEGATIVE_TO_POSITIVE_MAP[$operator];
+            $positiveValue['operator'] = $positiveOperator->value;
 
             $query->whereDoesntHave($relation, function (Builder $query) use ($property, $positiveValue) {
                 $this->relationConstraints[] = $property = $query->qualifyColumn($property);

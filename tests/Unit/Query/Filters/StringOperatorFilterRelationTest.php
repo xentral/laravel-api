@@ -1,5 +1,6 @@
 <?php declare(strict_types=1);
 
+use Illuminate\Validation\ValidationException;
 use Workbench\App\Models\Customer;
 use Workbench\App\Models\Invoice;
 use Workbench\App\Models\LineItem;
@@ -209,4 +210,44 @@ describe('StringOperatorFilter Relation Filtering', function () {
                 ->not->toContain($invoiceBeta->id);
         });
     });
+});
+
+describe('Operator validation on relation properties', function () {
+    it('rejects a negative operator the filter does not allow instead of silently inverting it', function () {
+        Customer::factory()->create(['name' => 'Acme Corp']);
+
+        // An identifier-style filter: notContains is not in the allowed set.
+        $filter = new StringOperatorFilter([
+            FilterOperator::EQUALS,
+            FilterOperator::NOT_EQUALS,
+            FilterOperator::IN,
+            FilterOperator::NOT_IN,
+        ]);
+
+        $query = Invoice::query();
+        $filter($query, ['operator' => 'notContains', 'value' => 'Acme'], 'customer.name');
+    })->throws(ValidationException::class);
+
+    it('still inverts an allowed negative operator on a relation property', function () {
+        $acme = Customer::factory()->create(['name' => 'Acme Corp']);
+        $beta = Customer::factory()->create(['name' => 'Beta Inc']);
+        $acmeInvoice = Invoice::factory()->for($acme)->create();
+        $betaInvoice = Invoice::factory()->for($beta)->create();
+
+        $filter = new StringOperatorFilter([FilterOperator::NOT_CONTAINS]);
+
+        $query = Invoice::query();
+        $filter($query, ['operator' => 'notContains', 'value' => 'Acme'], 'customer.name');
+
+        expect($query->pluck('id')->toArray())
+            ->toContain($betaInvoice->id)
+            ->not->toContain($acmeInvoice->id);
+    });
+});
+
+describe('Unknown operators on relation properties', function () {
+    it('rejects an unknown operator on a relation property with a validation error', function () {
+        $filter = new StringOperatorFilter([FilterOperator::EQUALS, FilterOperator::NOT_EQUALS]);
+        $filter(Invoice::query(), ['operator' => 'bogus', 'value' => 'x'], 'customer.name');
+    })->throws(ValidationException::class);
 });

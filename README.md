@@ -285,7 +285,9 @@ Everything else is owned by the filter:
   predicate once per id, consistent with relation filters elsewhere in this package. On an
   `IdFilterTarget::Column` it stays "any of them", because one column cannot hold two values at once
 
-Pair it with the `IdFilter` spec attribute, which exposes exactly the same four operators.
+Pair it with the `IdFilter` spec attribute passing `operators: FilterOperator::MEMBERSHIP`, so the
+spec documents exactly the four operators the callback accepts (the `IdFilter` default also covers
+`isNull`/`isNotNull`, which a callback filter does not support).
 
 ##### Reusing the filter value coercion
 

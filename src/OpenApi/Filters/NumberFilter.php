@@ -9,14 +9,7 @@ class NumberFilter extends FilterProperty
     public function __construct(
         public string $name,
         public ?string $type = 'number',
-        public array $operators = [
-            FilterOperator::EQUALS,
-            FilterOperator::NOT_EQUALS,
-            FilterOperator::LESS_THAN,
-            FilterOperator::LESS_THAN_OR_EQUALS,
-            FilterOperator::GREATER_THAN,
-            FilterOperator::GREATER_THAN_OR_EQUALS,
-        ],
+        public array $operators = FilterOperator::COMPARABLE,
     ) {
         parent::__construct(
             name: $name,

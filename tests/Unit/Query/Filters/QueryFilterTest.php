@@ -1,7 +1,10 @@
 <?php declare(strict_types=1);
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Validation\ValidationException;
 use Spatie\QueryBuilder\AllowedFilter;
+use Workbench\App\Enums\TestStatusEnum;
+use Workbench\App\Models\Invoice;
 use Xentral\LaravelApi\Query\Filters\FilterOperator;
 use Xentral\LaravelApi\Query\Filters\IdCallbackFilter;
 use Xentral\LaravelApi\Query\Filters\IdFilterTarget;
@@ -103,5 +106,68 @@ describe('QueryFilter', function () {
         $result = QueryFilter::identifierCallback('merchandiseGroup.id', $predicate, IdFilterTarget::Column);
 
         expect($result->getFilterClass())->toBeInstanceOf(IdCallbackFilter::class);
+    });
+});
+
+describe('QueryFilter::enum', function () {
+    it('carries exactly the four enum operators', function () {
+        $customFilter = QueryFilter::enum('status', TestStatusEnum::class)->getFilterClass();
+
+        expect($customFilter)->toBeInstanceOf(StringOperatorFilter::class)
+            ->and($customFilter->allowedOperators())->toEqualCanonicalizing([
+                FilterOperator::EQUALS,
+                FilterOperator::NOT_EQUALS,
+                FilterOperator::IN,
+                FilterOperator::NOT_IN,
+            ]);
+    });
+
+    it('rejects a string-only operator on an enum-backed key', function () {
+        $customFilter = QueryFilter::enum('status', TestStatusEnum::class)->getFilterClass();
+
+        $customFilter(Invoice::query(), ['operator' => 'contains', 'value' => 'act'], 'status');
+    })->throws(ValidationException::class);
+
+    it('rejects isNull on an enum-backed key instead of matching the zero case', function () {
+        $customFilter = QueryFilter::enum('status', TestStatusEnum::class)->getFilterClass();
+
+        $customFilter(Invoice::query(), ['operator' => 'isNull'], 'status');
+    })->throws(ValidationException::class);
+
+    it('resolves enum values through the legacy MAPPING like the string helper does', function () {
+        Invoice::factory()->create(['status' => 'old_value1']);
+        Invoice::factory()->create(['status' => 'old_value2']);
+
+        $query = Invoice::query();
+        $customFilter = QueryFilter::enum('status', TestStatusEnum::class)->getFilterClass();
+        $customFilter($query, ['operator' => 'equals', 'value' => 'active'], 'status');
+
+        expect($query->count())->toBe(1);
+    });
+
+    it('respects the internal name mapping', function () {
+        $result = QueryFilter::enum('status', TestStatusEnum::class, 'internal_status');
+
+        expect($result->getName())->toBe('status')
+            ->and($result->getInternalName())->toBe('internal_status');
+    });
+
+    it('accepts a widened operator set for a nullable enum column', function () {
+        $customFilter = QueryFilter::enum('status', TestStatusEnum::class, operators: [
+            ...FilterOperator::ENUM,
+            FilterOperator::IS_NULL,
+            FilterOperator::IS_NOT_NULL,
+        ])->getFilterClass();
+
+        expect($customFilter->allowedOperators())->toEqualCanonicalizing([
+            FilterOperator::EQUALS,
+            FilterOperator::NOT_EQUALS,
+            FilterOperator::IN,
+            FilterOperator::NOT_IN,
+            FilterOperator::IS_NULL,
+            FilterOperator::IS_NOT_NULL,
+        ]);
+
+        $customFilter(Invoice::query(), ['operator' => 'isNull'], 'status');
     });
 });

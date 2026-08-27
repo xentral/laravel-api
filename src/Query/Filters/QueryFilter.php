@@ -16,14 +16,7 @@ class QueryFilter
     {
         return AllowedFilter::custom(
             $name,
-            new StringOperatorFilter([
-                FilterOperator::EQUALS,
-                FilterOperator::NOT_EQUALS,
-                FilterOperator::IN,
-                FilterOperator::NOT_IN,
-                FilterOperator::IS_NULL,
-                FilterOperator::IS_NOT_NULL,
-            ]),
+            new StringOperatorFilter(FilterOperator::ID),
             $internalName,
         );
     }
@@ -67,18 +60,34 @@ class QueryFilter
     {
         return AllowedFilter::custom(
             $name,
-            new StringOperatorFilter([
-                FilterOperator::EQUALS,
-                FilterOperator::NOT_EQUALS,
-                FilterOperator::IN,
-                FilterOperator::NOT_IN,
-                FilterOperator::CONTAINS,
-                FilterOperator::NOT_CONTAINS,
-                FilterOperator::STARTS_WITH,
-                FilterOperator::ENDS_WITH,
-                FilterOperator::IS_NULL,
-                FilterOperator::IS_NOT_NULL,
-            ], $enum),
+            new StringOperatorFilter(FilterOperator::TEXT, $enum),
+            $internalName,
+        );
+    }
+
+    /**
+     * Filter for an enum-backed key. Unlike string(enum:), the key accepts
+     * only the four operators EnumFilter documents — in particular no
+     * isNull, whose empty-string branch would silently match the zero case
+     * on int-backed enum columns.
+     *
+     * $operators widens that set for a nullable enum column, mirroring the
+     * operators argument the EnumFilter attribute already takes on the spec
+     * side. Add isNull/isNotNull only for a string-backed column, where
+     * "null or empty" is the intended reading — on an int-backed one it is
+     * the zero case this helper exists to prevent.
+     *
+     * @param  array<int, FilterOperator>  $operators
+     */
+    public static function enum(
+        string $name,
+        string $enum,
+        ?string $internalName = null,
+        array $operators = FilterOperator::ENUM,
+    ): AllowedFilter {
+        return AllowedFilter::custom(
+            $name,
+            new StringOperatorFilter($operators, $enum),
             $internalName,
         );
     }
@@ -96,10 +105,7 @@ class QueryFilter
     {
         return AllowedFilter::custom(
             $name,
-            new StringOperatorFilter([
-                FilterOperator::EQUALS,
-                FilterOperator::NOT_EQUALS,
-            ]),
+            new StringOperatorFilter(FilterOperator::BOOLEAN),
             $internalName,
         );
     }

@@ -240,20 +240,20 @@ class PaginationResponseProcessor
             ),
             new Parameter(
                 name: $this->convertCase('per_page'),
-                description: sprintf('Number of items per page. Default: %d, Max: %d', $defaultPageSize, $maxPageSize),
+                description: sprintf('Number of items per page. Default: %d, Max: %d. A larger value is reduced to the maximum; omitting it or sending 0 selects the default.', $defaultPageSize, $maxPageSize),
                 in: 'query',
                 required: false,
-                schema: new Schema(type: 'integer', example: $defaultPageSize),
+                schema: new Schema(type: 'integer', minimum: 0, example: $defaultPageSize),
             ),
         ];
 
         if ($hasPageBased) {
             $params[] = new Parameter(
                 name: 'page',
-                description: 'Page number. Only used with simple and table pagination.',
+                description: 'Page number. Only used with simple and table pagination. Omitting it or sending 0 selects the first page.',
                 in: 'query',
                 required: false,
-                schema: new Schema(type: 'integer', example: 1),
+                schema: new Schema(type: 'integer', minimum: 0, example: 1),
             );
         }
         if ($hasCursor) {
@@ -275,10 +275,10 @@ class PaginationResponseProcessor
         $params = [
             new Parameter(
                 name: $this->convertCase('per_page'),
-                description: sprintf('Number of items per page. Default: %d, Max: %d', $defaultPageSize, $maxPageSize),
+                description: sprintf('Number of items per page. Default: %d, Max: %d. A larger value is reduced to the maximum; omitting it or sending 0 selects the default.', $defaultPageSize, $maxPageSize),
                 in: 'query',
                 required: false,
-                schema: new Schema(type: 'integer', example: $defaultPageSize),
+                schema: new Schema(type: 'integer', minimum: 0, example: $defaultPageSize),
             ),
         ];
 
@@ -294,10 +294,10 @@ class PaginationResponseProcessor
             // Simple and Table both use page parameter
             $params[] = new Parameter(
                 name: 'page',
-                description: 'Page number.',
+                description: 'Page number. Omitting it or sending 0 selects the first page.',
                 in: 'query',
                 required: false,
-                schema: new Schema(type: 'integer', example: 1),
+                schema: new Schema(type: 'integer', minimum: 0, example: 1),
             );
         }
 

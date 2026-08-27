@@ -31,12 +31,7 @@ class EnumFilter extends FilterProperty
     public function __construct(
         string $name,
         string|array $enumSource,
-        array $operators = [
-            FilterOperator::EQUALS,
-            FilterOperator::NOT_EQUALS,
-            FilterOperator::IN,
-            FilterOperator::NOT_IN,
-        ],
+        array $operators = FilterOperator::ENUM,
     ) {
         $enumValues = $this->resolveEnumValues($enumSource);
 
