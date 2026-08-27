@@ -19,7 +19,6 @@ use Workbench\App\Enum\InvoiceStatusEnum;
         new OA\Property(property: 'paid_at', type: 'string', format: 'date', nullable: true),
     ],
     type: 'object',
-    additionalProperties: false,
 )]
 class UpdateInvoiceRequest extends FormRequest
 {

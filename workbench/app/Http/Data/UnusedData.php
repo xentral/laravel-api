@@ -10,6 +10,5 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'name', type: 'string'),
     ],
     type: 'object',
-    additionalProperties: false,
 )]
 class UnusedData {}

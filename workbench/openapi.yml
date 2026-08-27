@@ -501,7 +501,6 @@ components:
             - 'null'
           format: date
       type: object
-      additionalProperties: false
     CustomerResource:
       required:
         - id
