@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Xentral\LaravelApi\Http\QueryBuilderRequest;
 use Xentral\LaravelApi\OpenApi\PaginationType;
+use Xentral\LaravelApi\Query\Exceptions\InvalidPageNumberQuery;
 use Xentral\LaravelApi\Query\Exceptions\InvalidPageSizeQuery;
 use Xentral\LaravelApi\Query\Filters\QueryBuilderFilterCollection;
 
@@ -154,29 +155,111 @@ class QueryBuilder extends \Spatie\QueryBuilder\QueryBuilder
 
     private function getPageSize(int $maxPageSize): int
     {
-        $pageInfo = $this->request->query('page');
+        $requested = $this->requestedPageSizes();
 
-        $requested = is_array($pageInfo) && isset($pageInfo['size'])
-            ? $pageInfo['size']
-            : $this->request->input('per_page', $this->request->input('perPage', 15));
-
-        $perPage = is_scalar($requested) ? (int) $requested : 0;
-
-        if ($perPage < 1) {
-            throw InvalidPageSizeQuery::pageSizeMustBePositive($perPage);
+        $pageSizes = [];
+        foreach ($requested as $parameter => $value) {
+            $pageSize = $this->toPageSize($parameter, $value);
+            if ($pageSize !== null) {
+                $pageSizes[$parameter] = $pageSize;
+            }
         }
 
+        if (count(array_unique($pageSizes)) > 1) {
+            throw InvalidPageSizeQuery::pageSizeIsAmbiguous($requested);
+        }
+
+        $perPage = $pageSizes === [] ? 15 : reset($pageSizes);
+
         return min($maxPageSize, $perPage);
+    }
+
+    /**
+     * The effective page size of a single sent parameter, or null when the
+     * client left it unspecified. Follows AIP-158: an omitted, empty or zero
+     * page size asks for the default and must not be an error, while a
+     * negative one must be rejected - it reached limit(-1) in table mode,
+     * which drops the LIMIT clause and returns the whole table.
+     */
+    private function toPageSize(string $parameter, mixed $value): ?int
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if (! is_scalar($value) || ! is_numeric($value)) {
+            throw InvalidPageSizeQuery::pageSizeMustBeAnInteger($parameter, $value);
+        }
+
+        $pageSize = (int) $value;
+
+        if ($pageSize < 0) {
+            throw InvalidPageSizeQuery::pageSizeMustNotBeNegative($parameter, $pageSize);
+        }
+
+        return $pageSize === 0 ? null : $pageSize;
+    }
+
+    /**
+     * The page size spellings the client actually sent, keyed by parameter name.
+     * All three are accepted, but only one effective value may be requested -
+     * otherwise the page size would depend on an undocumented precedence.
+     *
+     * @return array<string, mixed>
+     */
+    private function requestedPageSizes(): array
+    {
+        $requested = [];
+
+        $pageInfo = $this->request->query('page');
+        if (is_array($pageInfo) && array_key_exists('size', $pageInfo)) {
+            $requested['page[size]'] = $pageInfo['size'];
+        }
+
+        foreach (['per_page', 'perPage'] as $parameter) {
+            if ($this->request->has($parameter)) {
+                $requested[$parameter] = $this->request->input($parameter);
+            }
+        }
+
+        return $requested;
     }
 
     private function getCurrentPage(): int
     {
         $pageInfo = $this->request->query('page');
-        if (is_array($pageInfo)) {
-            return intval($pageInfo['number'] ?? 1);
+
+        [$parameter, $requested] = is_array($pageInfo)
+            ? ['page[number]', $pageInfo['number'] ?? null]
+            : ['page', $pageInfo];
+
+        return $this->toPageNumber($parameter, $requested) ?? 1;
+    }
+
+    /**
+     * The requested page number, or null when the client left it unspecified.
+     * Mirrors toPageSize(): an omitted, empty or zero page number asks for the
+     * first page, while a negative or malformed one is rejected instead of
+     * being silently normalised to page 1, which turns a client's paging bug
+     * into an endless re-read of the first page.
+     */
+    private function toPageNumber(string $parameter, mixed $value): ?int
+    {
+        if ($value === null || $value === '') {
+            return null;
         }
 
-        return intval($pageInfo ?? 1);
+        if (! is_scalar($value) || ! is_numeric($value)) {
+            throw InvalidPageNumberQuery::pageNumberMustBeAnInteger($parameter, $value);
+        }
+
+        $pageNumber = (int) $value;
+
+        if ($pageNumber < 0) {
+            throw InvalidPageNumberQuery::pageNumberMustNotBeNegative($parameter, $pageNumber);
+        }
+
+        return $pageNumber === 0 ? null : $pageNumber;
     }
 
     private function escapeLikePattern(string $value): string

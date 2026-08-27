@@ -54,38 +54,20 @@ paths:
         -
           name: per_page
           in: query
-          description: 'Number of items per page. Default: 15, Max: 100'
+          description: 'Number of items per page. Default: 15, Max: 100. A larger value is reduced to the maximum; omitting it or sending 0 selects the default.'
           required: false
           schema:
             type: integer
-            maximum: 100
-            minimum: 1
-            example: 15
-        -
-          name: 'page[size]'
-          in: query
-          description: 'Number of items per page, alternative to per_page. Default: 15, Max: 100'
-          required: false
-          schema:
-            type: integer
-            maximum: 100
-            minimum: 1
+            minimum: 0
             example: 15
         -
           name: page
           in: query
-          description: 'Page number.'
+          description: 'Page number. Omitting it or sending 0 selects the first page.'
           required: false
           schema:
             type: integer
-            example: 1
-        -
-          name: 'page[number]'
-          in: query
-          description: 'Page number, alternative to page.'
-          required: false
-          schema:
-            type: integer
+            minimum: 0
             example: 1
       responses:
         '200':
@@ -268,38 +250,20 @@ paths:
         -
           name: per_page
           in: query
-          description: 'Number of items per page. Default: 15, Max: 100'
+          description: 'Number of items per page. Default: 15, Max: 100. A larger value is reduced to the maximum; omitting it or sending 0 selects the default.'
           required: false
           schema:
             type: integer
-            maximum: 100
-            minimum: 1
-            example: 15
-        -
-          name: 'page[size]'
-          in: query
-          description: 'Number of items per page, alternative to per_page. Default: 15, Max: 100'
-          required: false
-          schema:
-            type: integer
-            maximum: 100
-            minimum: 1
+            minimum: 0
             example: 15
         -
           name: page
           in: query
-          description: 'Page number. Only used with simple and table pagination.'
+          description: 'Page number. Only used with simple and table pagination. Omitting it or sending 0 selects the first page.'
           required: false
           schema:
             type: integer
-            example: 1
-        -
-          name: 'page[number]'
-          in: query
-          description: 'Page number, alternative to page. Only used with simple and table pagination.'
-          required: false
-          schema:
-            type: integer
+            minimum: 0
             example: 1
         -
           name: cursor
@@ -459,38 +423,20 @@ paths:
         -
           name: per_page
           in: query
-          description: 'Number of items per page. Default: 15, Max: 100'
+          description: 'Number of items per page. Default: 15, Max: 100. A larger value is reduced to the maximum; omitting it or sending 0 selects the default.'
           required: false
           schema:
             type: integer
-            maximum: 100
-            minimum: 1
-            example: 15
-        -
-          name: 'page[size]'
-          in: query
-          description: 'Number of items per page, alternative to per_page. Default: 15, Max: 100'
-          required: false
-          schema:
-            type: integer
-            maximum: 100
-            minimum: 1
+            minimum: 0
             example: 15
         -
           name: page
           in: query
-          description: 'Page number.'
+          description: 'Page number. Omitting it or sending 0 selects the first page.'
           required: false
           schema:
             type: integer
-            example: 1
-        -
-          name: 'page[number]'
-          in: query
-          description: 'Page number, alternative to page.'
-          required: false
-          schema:
-            type: integer
+            minimum: 0
             example: 1
       responses:
         '200':
