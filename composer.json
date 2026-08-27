@@ -33,7 +33,7 @@
         "orchestra/testbench": "^10.11",
         "pestphp/pest": "^3.7",
         "phpunit/phpunit": "^11.5",
-        "xentral/laravel-testing": "^0.3.0"
+        "xentral/laravel-testing": "^0.6.2"
     },
     "autoload": {
         "psr-4": {
