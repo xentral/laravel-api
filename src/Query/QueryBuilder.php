@@ -148,16 +148,37 @@ class QueryBuilder extends \Spatie\QueryBuilder\QueryBuilder
                     ]);
                 }
 
-                // The filter class is invoked directly rather than through
-                // AllowedFilter::filter(), which would always apply to the top
-                // level builder; a branch has to land inside this closure.
-                $query->orWhere(fn (EloquentBuilder $branch) => ($allowedFilter->getFilterClass())(
+                $query->orWhere(fn (EloquentBuilder $branch) => $this->applyFilterToBranch(
                     $branch,
+                    $allowedFilter,
                     $condition['filter'],
-                    $allowedFilter->getInternalName(),
                 ));
             }
         });
+    }
+
+    /**
+     * Applies one filter to a single branch of the disjunction.
+     *
+     * AllowedFilter::filter() always writes to this builder's subject, while a
+     * branch has to land inside the nested closure. Swapping the subject for
+     * the duration of the call keeps a branch on exactly the same path as a
+     * flat filter - ignored values, null handling and all - instead of
+     * re-implementing that against the filter class.
+     *
+     * @param  EloquentBuilder<TModel>  $branch
+     * @param  array{operator: string, value: mixed}  $filterValue
+     */
+    private function applyFilterToBranch(EloquentBuilder $branch, AllowedFilter $allowedFilter, array $filterValue): void
+    {
+        $subject = $this->subject;
+        $this->subject = $branch;
+
+        try {
+            $allowedFilter->filter($this, $filterValue);
+        } finally {
+            $this->subject = $subject;
+        }
     }
 
     private function guardOrFilterGroup(FilterGroup $group): void
