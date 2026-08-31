@@ -8,10 +8,14 @@ use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
+use Spatie\QueryBuilder\AllowedFilter;
 use Xentral\LaravelApi\Http\QueryBuilderRequest;
 use Xentral\LaravelApi\OpenApi\PaginationType;
 use Xentral\LaravelApi\Query\Exceptions\InvalidPageNumberQuery;
 use Xentral\LaravelApi\Query\Exceptions\InvalidPageSizeQuery;
+use Xentral\LaravelApi\Query\Filters\FilterGroup;
+use Xentral\LaravelApi\Query\Filters\FilterGroupOperator;
 use Xentral\LaravelApi\Query\Filters\QueryBuilderFilterCollection;
 
 /**
@@ -21,6 +25,14 @@ use Xentral\LaravelApi\Query\Filters\QueryBuilderFilterCollection;
  */
 class QueryBuilder extends \Spatie\QueryBuilder\QueryBuilder
 {
+    /**
+     * Filter names barred from an or group; null while the endpoint has not
+     * opted in, which is what makes an or group a 400 there.
+     *
+     * @var list<string>|null
+     */
+    private ?array $orFilterGroupExcept = null;
+
     public function __construct(
         EloquentBuilder|Relation $subject,
         ?Request $request = null
@@ -76,6 +88,119 @@ class QueryBuilder extends \Spatie\QueryBuilder\QueryBuilder
             ->toArray();
 
         return parent::allowedFilters($filters);
+    }
+
+    /**
+     * Opt this endpoint into `or` filter groups.
+     *
+     * Must be called before allowedFilters(), because spatie applies the
+     * filters inside that call - afterwards the opt-in would come too late to
+     * be read.
+     *
+     * @param  list<string>  $except  filter names that may not appear inside an or group:
+     *                                filters that mutate query wide state such as global
+     *                                scopes, and filters whose meaning pairs several keys
+     */
+    public function allowOrFilterGroups(array $except = []): static
+    {
+        if (isset($this->allowedFilters)) {
+            throw new \LogicException('allowOrFilterGroups() must be called before allowedFilters().');
+        }
+
+        $this->orFilterGroupExcept = $except;
+
+        return $this;
+    }
+
+    protected function addFiltersToQuery(): void
+    {
+        $group = $this->requestedFilterGroup();
+
+        if ($group === null || $group->operator === FilterGroupOperator::And) {
+            // The flat form and an and group are the same conjunction, and the
+            // collapsed filters() collection already carries either one.
+            parent::addFiltersToQuery();
+
+            return;
+        }
+
+        $this->guardOrFilterGroup($group);
+
+        // Defaults for filters the request does not name are endpoint policy
+        // rather than part of the disjunction, so they keep narrowing the
+        // whole result set - outside the group.
+        $this->allowedFilters->each(function (AllowedFilter $filter) {
+            if (! $this->isFilterRequested($filter) && $filter->hasDefault()) {
+                $filter->filter($this, $filter->getDefault());
+            }
+        });
+
+        $this->getEloquentBuilder()->where(function (EloquentBuilder $query) use ($group) {
+            foreach ($group->conditions as $condition) {
+                $allowedFilter = $this->findFilter($condition['key']);
+
+                if ($allowedFilter === null) {
+                    // ensureAllFiltersExist() already rejected unknown keys unless the
+                    // consumer disabled that check - fail loudly rather than silently
+                    // widening the result set by dropping a branch.
+                    throw ValidationException::withMessages([
+                        'filter' => sprintf('Unknown filter: %s.', $condition['key']),
+                    ]);
+                }
+
+                $query->orWhere(fn (EloquentBuilder $branch) => $this->applyFilterToBranch(
+                    $branch,
+                    $allowedFilter,
+                    $condition['filter'],
+                ));
+            }
+        });
+    }
+
+    /**
+     * Applies one filter to a single branch of the disjunction.
+     *
+     * AllowedFilter::filter() always writes to this builder's subject, while a
+     * branch has to land inside the nested closure. Swapping the subject for
+     * the duration of the call keeps a branch on exactly the same path as a
+     * flat filter - ignored values, null handling and all - instead of
+     * re-implementing that against the filter class.
+     *
+     * @param  EloquentBuilder<TModel>  $branch
+     * @param  array{operator: string, value: mixed}  $filterValue
+     */
+    private function applyFilterToBranch(EloquentBuilder $branch, AllowedFilter $allowedFilter, array $filterValue): void
+    {
+        $subject = $this->subject;
+        $this->subject = $branch;
+
+        try {
+            $allowedFilter->filter($this, $filterValue);
+        } finally {
+            $this->subject = $subject;
+        }
+    }
+
+    private function guardOrFilterGroup(FilterGroup $group): void
+    {
+        if ($this->orFilterGroupExcept === null) {
+            throw ValidationException::withMessages([
+                'filter' => 'OR filter groups are not supported on this endpoint.',
+            ]);
+        }
+
+        foreach ($group->conditions as $condition) {
+            if (in_array($condition['key'], $this->orFilterGroupExcept, true)) {
+                throw ValidationException::withMessages([
+                    'filter' => sprintf('The filter %s cannot be used inside an or group.', $condition['key']),
+                ]);
+            }
+        }
+    }
+
+    private function requestedFilterGroup(): ?FilterGroup
+    {
+        return $this->request instanceof QueryBuilderRequest ? $this->request->filterGroup() : null;
     }
 
     public function allowSearch(array $columns): static

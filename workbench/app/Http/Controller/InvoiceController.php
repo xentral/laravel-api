@@ -43,7 +43,7 @@ class InvoiceController
                 new DateFilter(name: 'paid_at'),
                 new DateFilter(name: 'created_at'),
                 new DateFilter(name: 'updated_at'),
-            ]),
+            ], supportsOrGroups: true),
             new SearchParameter,
         ],
         paginationType: [PaginationType::SIMPLE, PaginationType::TABLE, PaginationType::CURSOR],
@@ -52,6 +52,7 @@ class InvoiceController
     {
         return InvoiceResource::collection(
             QueryBuilder::for(Invoice::class)
+                ->allowOrFilterGroups(except: ['lineItem.id'])
                 ->allowedFilters(
                     QueryFilter::identifier(),
                     QueryFilter::string('invoice_number'),
