@@ -52,6 +52,7 @@ class InvoiceController
     {
         return InvoiceResource::collection(
             QueryBuilder::for(Invoice::class)
+                ->allowOrFilterGroups(except: ['lineItem.id'])
                 ->allowedFilters(
                     QueryFilter::identifier(),
                     QueryFilter::string('invoice_number'),
