@@ -26,12 +26,16 @@ class FilterParameter extends Parameter
         ?array $x = null,
         ?array $attachables = null,
         bool $withCustom = false,
+        bool $supportsOrGroups = false,
     ) {
         $filters = collect($filters)
             ->flatMap(fn (mixed $f) => $f instanceof FilterSpecCollection ? $f->getFilterSpecification() : Arr::wrap($f))
             ->flatten(1);
 
-        $key = $withCustom
+        // swagger-php annotations are mutable objects the generator walks and
+        // rewrites, so a condition schema that appears in two positions has to
+        // be built twice - hence the factories rather than shared instances.
+        $key = fn (): Property => $withCustom
             ? new Property(
                 property: 'key',
                 oneOf: [
@@ -57,42 +61,79 @@ class FilterParameter extends Parameter
             collect($filter->operators)->map(fn ($op) => '*'.$op->value.'*')->implode(', ')
         ))->implode(" \n\n");
 
-        $schema = new Schema(
-            type: 'array',
-            items: new Items(
-                properties: [
-                    $key,
-                    new Property(
-                        property: 'op',
-                        description: 'operator',
-                        type: 'string',
-                        enum: $filters->pluck('operators')->flatten()->unique()->all(),
+        $condition = fn (): Items => new Items(
+            properties: [
+                $key(),
+                new Property(
+                    property: 'op',
+                    description: 'operator',
+                    type: 'string',
+                    enum: $filters->pluck('operators')->flatten()->unique()->all(),
+                ),
+                new Property(
+                    property: 'value',
+                    description: 'The property value.',
+                    oneOf: [
+                        new Schema(
+                            title: 'String',
+                            type: 'string',
+                        ),
+                        new Schema(
+                            title: 'Array',
+                            type: 'array',
+                            items: new Items(type: 'string'),
+                        ),
+                    ]
+                ),
+            ],
+            type: 'object',
+            additionalProperties: false,
+        );
+
+        $schema = $supportsOrGroups
+            ? new Schema(
+                oneOf: [
+                    new Schema(
+                        title: 'Conditions',
+                        type: 'array',
+                        items: $condition(),
                     ),
-                    new Property(
-                        property: 'value',
-                        description: 'The property value.',
-                        oneOf: [
-                            new Schema(
-                                title: 'String',
+                    new Schema(
+                        title: 'Filter group',
+                        required: ['op', 'conditions'],
+                        properties: [
+                            new Property(
+                                property: 'op',
+                                description: 'Boolean operator combining the conditions.',
                                 type: 'string',
+                                enum: ['and', 'or'],
                             ),
-                            new Schema(
-                                title: 'Array',
+                            new Property(
+                                property: 'conditions',
                                 type: 'array',
-                                items: new Items(type: 'string'),
+                                items: $condition(),
                             ),
-                        ]
+                        ],
+                        type: 'object',
+                        additionalProperties: false,
                     ),
                 ],
-                type: 'object',
-                additionalProperties: false,
-            ),
-        );
+            )
+            : new Schema(
+                type: 'array',
+                items: $condition(),
+            );
+
+        $description = "The filter parameter is used to filter the results of the given endpoint. \n\n\n**Supported filter operators by key:** \n\n".$filterAvailableOperatorDescription;
+
+        if ($supportsOrGroups) {
+            $description .= "\n\nAlternatively the filter accepts a single group object `{op, conditions}`: `or` matches records satisfying at least one condition, `and` all of them. Nested groups are not supported.";
+        }
 
         parent::__construct([
             'parameter' => Generator::UNDEFINED,
             'name' => 'filter',
-            'description' => "The filter parameter is used to filter the results of the given endpoint. \n\n\n**Supported filter operators by key:** \n\n".$filterAvailableOperatorDescription,
+            'description' => $description,
             'in' => 'query',
             'required' => false,
             'deprecated' => $deprecated ?? Generator::UNDEFINED,
