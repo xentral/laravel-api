@@ -59,21 +59,28 @@ it('returns null for the single filter object shorthand', function () {
 });
 
 it('collapses group conditions into the filters collection like the flat form', function () {
-    $flat = filterRequest([
+    // Three repeats of one key, so the second merge appends to an existing
+    // list rather than creating one.
+    $conditions = [
         ['key' => 'name', 'op' => 'contains', 'value' => 'a'],
         ['key' => 'name', 'op' => 'contains', 'value' => 'b'],
+        ['key' => 'name', 'op' => 'contains', 'value' => 'c'],
         ['key' => 'id', 'op' => 'equals', 'value' => '5'],
-    ]);
-    $group = filterRequest([
-        'op' => 'and',
-        'conditions' => [
-            ['key' => 'name', 'op' => 'contains', 'value' => 'a'],
-            ['key' => 'name', 'op' => 'contains', 'value' => 'b'],
-            ['key' => 'id', 'op' => 'equals', 'value' => '5'],
-        ],
-    ]);
+    ];
 
-    expect($group->filters()->toArray())->toBe($flat->filters()->toArray());
+    $flat = filterRequest($conditions);
+    $group = filterRequest(['op' => 'and', 'conditions' => $conditions]);
+
+    expect($group->filters()->toArray())
+        ->toBe($flat->filters()->toArray())
+        ->toBe([
+            'name' => [
+                ['operator' => 'contains', 'value' => 'a'],
+                ['operator' => 'contains', 'value' => 'b'],
+                ['operator' => 'contains', 'value' => 'c'],
+            ],
+            'id' => ['operator' => 'equals', 'value' => '5'],
+        ]);
 });
 
 it('rejects a nested group', function () {

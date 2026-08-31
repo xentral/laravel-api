@@ -230,6 +230,35 @@ contains `key`, `op`, and `value` parameters. Here are some examples:
 /api/v1/sales-orders?filter[0][key]=customer.name&filter[0][op]=contains&filter[0][value]=John
 ```
 
+##### Boolean filter groups
+
+Several filters in the list above are combined with `and`. To express `A or B` instead, send a
+single *group* object with an explicit operator rather than the flat list — either as a deepObject
+or, as below, JSON encoded:
+
+```bash
+/api/v1/sales-orders?filter={"op":"or","conditions":[{"key":"documentNumber","op":"equals","value":"12345"},{"key":"customer.name","op":"contains","value":"John"}]}
+```
+
+An `and` group is just the flat list spelled out and works everywhere. An `or` group changes how the
+query is built, so an endpoint has to opt in on both layers:
+
+```php
+QueryBuilder::for(SalesOrder::class)
+    ->allowOrFilterGroups(except: ['isDeleted'])
+    ->allowedFilters([...]);
+
+new FilterParameter([...], supportsOrGroups: true)
+```
+
+`except` names the filters that may not appear inside an `or` group: a filter lifting a global scope
+switches the whole query rather than one branch, and a filter whose meaning pairs several keys is
+not self-contained. An `or` group on an endpoint without the opt-in, an excluded filter inside one,
+and a nested group are all rejected as validation errors.
+
+Filter defaults for keys the request does not name stay outside the group, as does `search` — both
+keep narrowing the whole result set.
+
 ##### Truthy integer flags
 
 `QueryFilter::booleanInteger()` filters a legacy integer column that is semantically boolean. It

@@ -25,6 +25,14 @@ Filtering requires **two parallel declarations** that must stay in sync:
 
 Both layers must declare the same filter names. API field names use camelCase; map to internal column name via the second parameter (e.g. `QueryFilter::date('documentDate', 'datum')`).
 
+## Boolean Filter Groups
+
+- The `filter` parameter also accepts one group object `{"op": "and"|"or", "conditions": [{key, op, value}, ...]}`, as a JSON string or in deepObject form. An `and` group means what the flat filter list already means and works on every endpoint.
+- An `or` group requires the endpoint to opt in on **both** layers: `QueryBuilder::for(...)->allowOrFilterGroups(except: [...])` **before** `allowedFilters()`, and `new FilterParameter([...], supportsOrGroups: true)` on the spec side. Neither layer alone is valid.
+- Put every filter that mutates query-wide state (one that lifts a global scope) or that pairs several keys into `except` — such a filter is not a self-contained branch.
+- Filter defaults for keys the request does not name, and the `search` parameter, stay conjunctive: they narrow the whole result set outside the group.
+- Nested groups are rejected.
+
 ## Resource Helpers Quick Reference
 
 - `includeWhenLoaded(relation, ResourceClass)` — returns full resource when loaded, falls back to `reference()` (id-only)
