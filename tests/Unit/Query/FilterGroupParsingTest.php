@@ -58,6 +58,22 @@ it('returns null for the single filter object shorthand', function () {
         ->toBe(['id' => ['operator' => 'equals', 'value' => '5']]);
 });
 
+it('keeps a string keyed flat filter list out of the group path', function () {
+    // Degenerate but pre-existing: a flat list whose keys happen to be strings,
+    // one of them `conditions`. It was a conjunction before groups existed and
+    // has to stay one, which is what the `key` guard on the group shape is for.
+    $request = filterRequest([
+        'key' => ['key' => 'name', 'op' => 'contains', 'value' => 'a'],
+        'conditions' => ['key' => 'id', 'op' => 'equals', 'value' => '5'],
+    ]);
+
+    expect($request->filterGroup())->toBeNull()
+        ->and($request->filters()->toArray())->toBe([
+            'name' => ['operator' => 'contains', 'value' => 'a'],
+            'id' => ['operator' => 'equals', 'value' => '5'],
+        ]);
+});
+
 it('collapses group conditions into the filters collection like the flat form', function () {
     // Three repeats of one key, so the second merge appends to an existing
     // list rather than creating one.
@@ -98,7 +114,15 @@ it('rejects an unknown group operator', function () {
 
 it('rejects a missing group operator', function () {
     filterRequest(['conditions' => [['key' => 'id', 'op' => 'equals', 'value' => '1']]])->filterGroup();
+})->throws(ValidationException::class, 'A filter group requires an operator. Valid operators are and, or.');
+
+it('rejects a null group operator like a missing one', function () {
+    filterRequest(['op' => null, 'conditions' => [['key' => 'id', 'op' => 'equals', 'value' => '1']]])->filterGroup();
 })->throws(ValidationException::class, 'Invalid filter group operator: NULL. Valid operators are and, or.');
+
+it('rejects a non scalar group operator', function () {
+    filterRequest(['op' => ['or'], 'conditions' => [['key' => 'id', 'op' => 'equals', 'value' => '1']]])->filterGroup();
+})->throws(ValidationException::class, 'Invalid filter group operator: array. Valid operators are and, or.');
 
 it('rejects an empty conditions list', function () {
     filterRequest(['op' => 'or', 'conditions' => []])->filterGroup();

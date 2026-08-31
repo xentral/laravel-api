@@ -98,14 +98,22 @@ class QueryBuilderRequest extends \Spatie\QueryBuilder\QueryBuilderRequest
     /** @param array<mixed> $filterParts */
     private function parseGroup(array $filterParts): FilterGroup
     {
-        $operator = $filterParts['op'] ?? null;
+        $validOperators = implode(', ', array_column(FilterGroupOperator::cases(), 'value'));
+
+        if (! array_key_exists('op', $filterParts)) {
+            throw ValidationException::withMessages([
+                'filter' => 'A filter group requires an operator. Valid operators are '.$validOperators.'.',
+            ]);
+        }
+
+        $operator = $filterParts['op'];
         $groupOperator = is_string($operator) ? FilterGroupOperator::tryFrom($operator) : null;
 
         if ($groupOperator === null) {
             throw ValidationException::withMessages(['filter' => sprintf(
                 'Invalid filter group operator: %s. Valid operators are %s.',
                 is_scalar($operator) ? (string) $operator : gettype($operator),
-                implode(', ', array_column(FilterGroupOperator::cases(), 'value')),
+                $validOperators,
             )]);
         }
 

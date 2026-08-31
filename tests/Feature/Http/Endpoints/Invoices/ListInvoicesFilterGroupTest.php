@@ -172,6 +172,32 @@ describe('OR filter groups', function () {
 
         expect($result->pluck('id')->all())->toBe([$paid->id]);
     });
+
+    it('drops the default of a filter the or group names', function () {
+        $paid = Invoice::factory()->create(['invoice_number' => 'INV-100', 'status' => InvoiceStatusEnum::Paid]);
+        $sent = Invoice::factory()->create(['invoice_number' => 'INV-200', 'status' => InvoiceStatusEnum::Sent]);
+
+        // The group names status itself, so the default must not narrow the
+        // disjunction on top of the branches - that would silently filter away
+        // every branch the default does not agree with.
+        $request = Request::create('/invoices', 'GET', ['filter' => json_encode([
+            'op' => 'or',
+            'conditions' => [
+                ['key' => 'status', 'op' => 'equals', 'value' => InvoiceStatusEnum::Sent->value],
+                ['key' => 'status', 'op' => 'equals', 'value' => InvoiceStatusEnum::Paid->value],
+            ],
+        ], JSON_THROW_ON_ERROR)]);
+
+        $result = QueryBuilder::for(Invoice::class, $request)
+            ->allowOrFilterGroups()
+            ->allowedFilters(
+                QueryFilter::enum('status', InvoiceStatusEnum::class)
+                    ->default(['operator' => 'equals', 'value' => InvoiceStatusEnum::Paid->value]),
+            )
+            ->get();
+
+        expect($result->pluck('id')->sort()->values()->all())->toBe(sortedIds([$paid, $sent]));
+    });
 });
 
 describe('AND filter groups', function () {
