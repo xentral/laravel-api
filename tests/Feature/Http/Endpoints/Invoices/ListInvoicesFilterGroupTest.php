@@ -5,6 +5,7 @@ use Illuminate\Testing\TestResponse;
 use Workbench\App\Enum\InvoiceStatusEnum;
 use Workbench\App\Models\Customer;
 use Workbench\App\Models\Invoice;
+use Xentral\LaravelApi\Http\QueryBuilderRequest;
 use Xentral\LaravelApi\Query\Filters\QueryFilter;
 use Xentral\LaravelApi\Query\QueryBuilder;
 
@@ -226,6 +227,201 @@ describe('AND filter groups', function () {
     });
 });
 
+describe('Nested filter groups', function () {
+    it('expresses (A and B) or (C and D)', function () {
+        $paidAcme = Invoice::factory()->for(Customer::factory()->state(['name' => 'Acme GmbH']))
+            ->create(['status' => InvoiceStatusEnum::Paid, 'invoice_number' => 'INV-1']);
+        $sentGlobex = Invoice::factory()->for(Customer::factory()->state(['name' => 'Globex AG']))
+            ->create(['status' => InvoiceStatusEnum::Sent, 'invoice_number' => 'INV-2']);
+        Invoice::factory()->for(Customer::factory()->state(['name' => 'Acme GmbH']))
+            ->create(['status' => InvoiceStatusEnum::Sent, 'invoice_number' => 'INV-3']);
+
+        $response = $this->getJson('/api/v1/invoices?filter='.orGroup([
+            ['op' => 'and', 'conditions' => [
+                ['key' => 'customer.name', 'op' => 'equals', 'value' => 'Acme GmbH'],
+                ['key' => 'status', 'op' => 'equals', 'value' => InvoiceStatusEnum::Paid->value],
+            ]],
+            ['op' => 'and', 'conditions' => [
+                ['key' => 'customer.name', 'op' => 'equals', 'value' => 'Globex AG'],
+                ['key' => 'status', 'op' => 'equals', 'value' => InvoiceStatusEnum::Sent->value],
+            ]],
+        ]));
+
+        $response->assertOk();
+        expect(responseIds($response))->toBe(sortedIds([$paidAcme, $sentGlobex]));
+    });
+
+    it('applies an or subgroup under an and root conjunctively', function () {
+        $wanted = Invoice::factory()->create(['status' => InvoiceStatusEnum::Paid, 'invoice_number' => 'INV-100']);
+        // In the or branch but not paid, and paid but outside the or branch.
+        Invoice::factory()->create(['status' => InvoiceStatusEnum::Sent, 'invoice_number' => 'INV-200']);
+        Invoice::factory()->create(['status' => InvoiceStatusEnum::Paid, 'invoice_number' => 'INV-999']);
+
+        // status = paid AND (number = INV-100 OR number = INV-200)
+        $response = $this->getJson('/api/v1/invoices?filter='.filterGroup('and', [
+            ['key' => 'status', 'op' => 'equals', 'value' => InvoiceStatusEnum::Paid->value],
+            ['op' => 'or', 'conditions' => [
+                ['key' => 'invoice_number', 'op' => 'equals', 'value' => 'INV-100'],
+                ['key' => 'invoice_number', 'op' => 'equals', 'value' => 'INV-200'],
+            ]],
+        ]));
+
+        $response->assertOk();
+        $response->assertJsonCount(1, 'data');
+        expect($response->json('data.0.id'))->toBe($wanted->id);
+    });
+
+    it('applies an and subgroup under an or root as one branch', function () {
+        // The subgroup's conditions must combine conjunctively inside the
+        // branch; joining them with or instead would widen the whole set.
+        // Both other rows satisfy one half of the subgroup, so an or there
+        // would return all three.
+        $wanted = Invoice::factory()->for(Customer::factory()->state(['name' => 'Acme GmbH']))
+            ->create(['status' => InvoiceStatusEnum::Paid, 'invoice_number' => 'INV-1']);
+        Invoice::factory()->for(Customer::factory()->state(['name' => 'Acme GmbH']))
+            ->create(['status' => InvoiceStatusEnum::Sent, 'invoice_number' => 'INV-2']);
+        Invoice::factory()->for(Customer::factory()->state(['name' => 'Globex AG']))
+            ->create(['status' => InvoiceStatusEnum::Paid, 'invoice_number' => 'INV-3']);
+
+        $response = $this->getJson('/api/v1/invoices?filter='.orGroup([
+            ['op' => 'and', 'conditions' => [
+                ['key' => 'customer.name', 'op' => 'equals', 'value' => 'Acme GmbH'],
+                ['key' => 'status', 'op' => 'equals', 'value' => InvoiceStatusEnum::Paid->value],
+            ]],
+            ['key' => 'invoice_number', 'op' => 'equals', 'value' => 'INV-999'],
+        ]));
+
+        $response->assertOk();
+        $response->assertJsonCount(1, 'data');
+        expect($response->json('data.0.id'))->toBe($wanted->id);
+    });
+
+    it('applies a group nested to the maximum depth', function () {
+        $wanted = Invoice::factory()->create(['invoice_number' => 'INV-100']);
+        Invoice::factory()->create(['invoice_number' => 'INV-200']);
+
+        $node = ['key' => 'invoice_number', 'op' => 'equals', 'value' => 'INV-100'];
+
+        for ($level = 0; $level < QueryBuilderRequest::MAX_GROUP_DEPTH; $level++) {
+            $node = ['op' => $level % 2 === 0 ? 'or' : 'and', 'conditions' => [$node]];
+        }
+
+        $response = $this->getJson('/api/v1/invoices?filter='.urlencode(json_encode($node, JSON_THROW_ON_ERROR)));
+
+        $response->assertOk();
+        $response->assertJsonCount(1, 'data');
+        expect($response->json('data.0.id'))->toBe($wanted->id);
+    });
+
+    it('counts a row matching several nested branches once in table mode', function () {
+        // Matches both or-branches; the total must count it once.
+        Invoice::factory()->create(['status' => InvoiceStatusEnum::Paid, 'invoice_number' => 'INV-100']);
+        Invoice::factory()->create(['status' => InvoiceStatusEnum::Sent, 'invoice_number' => 'INV-200']);
+
+        $response = $this->withHeader('x-pagination', 'table')
+            ->getJson('/api/v1/invoices?filter='.orGroup([
+                ['op' => 'and', 'conditions' => [['key' => 'invoice_number', 'op' => 'equals', 'value' => 'INV-100']]],
+                ['op' => 'and', 'conditions' => [['key' => 'status', 'op' => 'equals', 'value' => InvoiceStatusEnum::Paid->value]]],
+            ]));
+
+        $response->assertOk();
+        expect($response->json('meta.total'))->toBe(1);
+    });
+
+    it('pages a nested or set with cursor pagination without gaps or duplicates', function () {
+        $first = Invoice::factory()->create(['invoice_number' => 'INV-100', 'status' => InvoiceStatusEnum::Paid]);
+        Invoice::factory()->create(['invoice_number' => 'INV-200', 'status' => InvoiceStatusEnum::Sent]);
+        $third = Invoice::factory()->create(['invoice_number' => 'INV-300', 'status' => InvoiceStatusEnum::Paid]);
+
+        $filter = orGroup([
+            ['op' => 'and', 'conditions' => [
+                ['key' => 'invoice_number', 'op' => 'equals', 'value' => 'INV-100'],
+                ['key' => 'status', 'op' => 'equals', 'value' => InvoiceStatusEnum::Paid->value],
+            ]],
+            ['op' => 'and', 'conditions' => [
+                ['key' => 'invoice_number', 'op' => 'equals', 'value' => 'INV-300'],
+                ['key' => 'status', 'op' => 'equals', 'value' => InvoiceStatusEnum::Paid->value],
+            ]],
+        ]);
+
+        $ids = [];
+        $url = '/api/v1/invoices?page[size]=1&filter='.$filter;
+        while ($url !== null) {
+            $response = $this->withHeader('x-pagination', 'cursor')->getJson($url);
+            $response->assertOk();
+            $ids = [...$ids, ...array_column($response->json('data'), 'id')];
+            $url = $response->json('links.next');
+        }
+
+        sort($ids);
+        expect($ids)->toBe(sortedIds([$first, $third]));
+    });
+
+    it('still accepts a barred filter as a direct root and condition', function () {
+        $invoice = Invoice::factory()->hasLineItems(1)->create(['invoice_number' => 'INV-1']);
+        Invoice::factory()->hasLineItems(1)->create(['invoice_number' => 'INV-2']);
+
+        $this->getJson('/api/v1/invoices?filter='.filterGroup('and', [
+            ['key' => 'lineItem.id', 'op' => 'equals', 'value' => (string) $invoice->lineItems()->first()->id],
+            ['op' => 'or', 'conditions' => [
+                ['key' => 'invoice_number', 'op' => 'equals', 'value' => 'INV-1'],
+                ['key' => 'invoice_number', 'op' => 'equals', 'value' => 'INV-2'],
+            ]],
+        ]))->assertOk()->assertJsonCount(1, 'data');
+    });
+
+    it('keeps defaults for filters named nowhere in the tree', function () {
+        $paid = Invoice::factory()->create(['invoice_number' => 'INV-100', 'status' => InvoiceStatusEnum::Paid]);
+        Invoice::factory()->create(['invoice_number' => 'INV-200', 'status' => InvoiceStatusEnum::Sent]);
+
+        // Both branches match a row; the status default the tree never names
+        // narrows the result afterwards.
+        $request = Request::create('/invoices', 'GET', ['filter' => json_encode([
+            'op' => 'or',
+            'conditions' => [
+                ['op' => 'and', 'conditions' => [['key' => 'invoice_number', 'op' => 'equals', 'value' => 'INV-100']]],
+                ['key' => 'invoice_number', 'op' => 'equals', 'value' => 'INV-200'],
+            ],
+        ], JSON_THROW_ON_ERROR)]);
+
+        $result = QueryBuilder::for(Invoice::class, $request)
+            ->allowOrFilterGroups()
+            ->allowedFilters(
+                QueryFilter::string('invoice_number'),
+                QueryFilter::enum('status', InvoiceStatusEnum::class)
+                    ->default(['operator' => 'equals', 'value' => InvoiceStatusEnum::Paid->value]),
+            )
+            ->get();
+
+        expect($result->pluck('id')->all())->toBe([$paid->id]);
+    });
+
+    it('drops the default of a filter named only inside a subgroup', function () {
+        // status is named one level down, so its default must not narrow the
+        // tree on top of the branch that already constrains it.
+        $paid = Invoice::factory()->create(['invoice_number' => 'INV-100', 'status' => InvoiceStatusEnum::Paid]);
+        $sent = Invoice::factory()->create(['invoice_number' => 'INV-200', 'status' => InvoiceStatusEnum::Sent]);
+
+        $request = Request::create('/invoices', 'GET', ['filter' => json_encode([
+            'op' => 'or',
+            'conditions' => [
+                ['op' => 'and', 'conditions' => [['key' => 'status', 'op' => 'equals', 'value' => InvoiceStatusEnum::Sent->value]]],
+                ['key' => 'status', 'op' => 'equals', 'value' => InvoiceStatusEnum::Paid->value],
+            ],
+        ], JSON_THROW_ON_ERROR)]);
+
+        $result = QueryBuilder::for(Invoice::class, $request)
+            ->allowOrFilterGroups()
+            ->allowedFilters(
+                QueryFilter::enum('status', InvoiceStatusEnum::class)
+                    ->default(['operator' => 'equals', 'value' => InvoiceStatusEnum::Paid->value]),
+            )
+            ->get();
+
+        expect($result->pluck('id')->sort()->values()->all())->toBe(sortedIds([$paid, $sent]));
+    });
+});
+
 describe('Filter group rejections', function () {
     it('rejects an or group on an endpoint without the opt-in', function () {
         // The customers list does not call allowOrFilterGroups().
@@ -254,12 +450,50 @@ describe('Filter group rejections', function () {
         ], JSON_THROW_ON_ERROR)))->assertOk()->assertJsonCount(1, 'data');
     });
 
-    it('rejects a nested group', function () {
-        $this->getJson('/api/v1/invoices?filter='.orGroup([
-            ['op' => 'and', 'conditions' => [['key' => 'invoice_number', 'op' => 'equals', 'value' => 'INV-1']]],
+    it('rejects nesting beyond the maximum depth', function () {
+        $node = ['key' => 'invoice_number', 'op' => 'equals', 'value' => 'INV-1'];
+
+        for ($level = 0; $level < QueryBuilderRequest::MAX_GROUP_DEPTH + 1; $level++) {
+            $node = ['op' => 'and', 'conditions' => [$node]];
+        }
+
+        $this->getJson('/api/v1/invoices?filter='.urlencode(json_encode($node, JSON_THROW_ON_ERROR)))
+            ->assertStatus(422)
+            ->assertJsonPath('errors.filter.0', 'Filter groups nest to at most 5 levels.');
+    });
+
+    it('rejects nesting on an endpoint without the opt-in even when every operator is and', function () {
+        $this->getJson('/api/v1/customers?filter='.filterGroup('and', [
+            ['op' => 'and', 'conditions' => [['key' => 'name', 'op' => 'equals', 'value' => 'Acme']]],
         ]))
             ->assertStatus(422)
-            ->assertJsonPath('errors.filter.0', 'Nested filter groups are not supported.');
+            ->assertJsonPath('errors.filter.0', 'Nested filter groups are not supported on this endpoint.');
+    });
+
+    it('rejects a barred filter inside a nested subgroup', function () {
+        $this->getJson('/api/v1/invoices?filter='.filterGroup('and', [
+            ['op' => 'or', 'conditions' => [
+                ['key' => 'lineItem.id', 'op' => 'equals', 'value' => '1'],
+                ['key' => 'invoice_number', 'op' => 'equals', 'value' => 'INV-1'],
+            ]],
+        ]))
+            ->assertStatus(422)
+            ->assertJsonPath('errors.filter.0', 'The filter lineItem.id cannot be used inside a nested filter group.');
+    });
+
+    it('rejects a barred filter buried several levels deep', function () {
+        // Pins the recursion in the subtree walk: a guard that only inspected
+        // the first level would let this through into a closure, where the
+        // filter silently matches nothing instead of erroring.
+        $this->getJson('/api/v1/invoices?filter='.filterGroup('and', [
+            ['op' => 'or', 'conditions' => [
+                ['op' => 'and', 'conditions' => [
+                    ['key' => 'lineItem.id', 'op' => 'equals', 'value' => '1'],
+                ]],
+            ]],
+        ]))
+            ->assertStatus(422)
+            ->assertJsonPath('errors.filter.0', 'The filter lineItem.id cannot be used inside a nested filter group.');
     });
 
     it('rejects an unknown filter key inside an or group', function () {

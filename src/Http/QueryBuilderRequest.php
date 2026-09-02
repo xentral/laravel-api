@@ -195,6 +195,29 @@ class QueryBuilderRequest extends \Spatie\QueryBuilder\QueryBuilderRequest
     }
 
     /**
+     * The filter triples among a group's direct conditions, collapsed the same
+     * way the flat filter list is. Sub-groups are skipped: they are applied in
+     * closures of their own rather than through the collapsed collection.
+     *
+     * @param  list<array{key: string, filter: array{operator: string, value: mixed}}|FilterGroup>  $conditions
+     * @return Collection<string, mixed>
+     */
+    public function collapseConditions(array $conditions): Collection
+    {
+        $filters = collect();
+
+        foreach ($conditions as $condition) {
+            if ($condition instanceof FilterGroup) {
+                continue;
+            }
+
+            $this->mergeFilterValue($filters, $condition['key'], $condition['filter']);
+        }
+
+        return $filters;
+    }
+
+    /**
      * A key that appears more than once collapses into a list of filter values,
      * which the filters apply in turn.
      *
