@@ -3,11 +3,24 @@
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Xentral\LaravelApi\Http\QueryBuilderRequest;
+use Xentral\LaravelApi\Query\Filters\FilterGroup;
 use Xentral\LaravelApi\Query\Filters\FilterGroupOperator;
 
 function filterRequest(array|string $filter): QueryBuilderRequest
 {
     return QueryBuilderRequest::fromRequest(Request::create('/products', 'GET', ['filter' => $filter]));
+}
+
+/** A chain of `$levels` and groups, the innermost one holding a single condition. */
+function nestedAndGroups(int $levels): array
+{
+    $node = ['key' => 'id', 'op' => 'equals', 'value' => '1'];
+
+    for ($level = 0; $level < $levels; $level++) {
+        $node = ['op' => 'and', 'conditions' => [$node]];
+    }
+
+    return $node;
 }
 
 it('parses a json string or group', function () {
@@ -99,14 +112,66 @@ it('collapses group conditions into the filters collection like the flat form', 
         ]);
 });
 
-it('rejects a nested group', function () {
-    filterRequest([
+it('parses a nested group into a FilterGroup tree', function () {
+    $group = filterRequest(json_encode([
         'op' => 'or',
         'conditions' => [
-            ['op' => 'and', 'conditions' => [['key' => 'id', 'op' => 'equals', 'value' => '1']]],
+            ['op' => 'and', 'conditions' => [
+                ['key' => 'name', 'op' => 'contains', 'value' => 'a'],
+                ['key' => 'id', 'op' => 'equals', 'value' => '1'],
+            ]],
+            ['key' => 'name', 'op' => 'contains', 'value' => 'b'],
         ],
-    ])->filterGroup();
-})->throws(ValidationException::class, 'Nested filter groups are not supported.');
+    ]))->filterGroup();
+
+    expect($group->operator)->toBe(FilterGroupOperator::Or)
+        ->and($group->hasSubgroups())->toBeTrue()
+        ->and($group->conditions[0])->toBeInstanceOf(FilterGroup::class)
+        ->and($group->conditions[0]->operator)->toBe(FilterGroupOperator::And)
+        ->and($group->conditions[0]->conditions)->toHaveCount(2)
+        ->and($group->conditions[1]['key'])->toBe('name');
+});
+
+it('reports a group without subgroups as flat', function () {
+    expect(filterRequest(['op' => 'or', 'conditions' => [['key' => 'id', 'op' => 'equals', 'value' => '1']]])
+        ->filterGroup()->hasSubgroups())->toBeFalse();
+});
+
+it('parses to the maximum depth and rejects one level deeper', function () {
+    expect(filterRequest(json_encode(nestedAndGroups(QueryBuilderRequest::MAX_GROUP_DEPTH)))->filterGroup())
+        ->toBeInstanceOf(FilterGroup::class);
+
+    expect(fn () => filterRequest(json_encode(nestedAndGroups(QueryBuilderRequest::MAX_GROUP_DEPTH + 1)))->filterGroup())
+        ->toThrow(ValidationException::class, 'Filter groups nest to at most 5 levels.');
+});
+
+it('flattens nested conditions into the filters collection', function () {
+    $request = filterRequest(json_encode([
+        'op' => 'or',
+        'conditions' => [
+            ['op' => 'and', 'conditions' => [['key' => 'name', 'op' => 'contains', 'value' => 'a']]],
+            ['key' => 'name', 'op' => 'contains', 'value' => 'b'],
+            ['key' => 'id', 'op' => 'equals', 'value' => '1'],
+        ],
+    ]));
+
+    expect($request->filters()->toArray())->toBe([
+        'name' => [['operator' => 'contains', 'value' => 'a'], ['operator' => 'contains', 'value' => 'b']],
+        'id' => ['operator' => 'equals', 'value' => '1'],
+    ]);
+});
+
+it('rejects a child carrying both key and conditions', function () {
+    filterRequest(json_encode(['op' => 'or', 'conditions' => [
+        ['key' => 'id', 'op' => 'equals', 'value' => '1', 'conditions' => []],
+    ]]))->filterGroup();
+})->throws(ValidationException::class, 'Invalid filter format.');
+
+it('validates the operator of a nested group', function () {
+    filterRequest(json_encode(['op' => 'or', 'conditions' => [
+        ['op' => 'xor', 'conditions' => [['key' => 'id', 'op' => 'equals', 'value' => '1']]],
+    ]]))->filterGroup();
+})->throws(ValidationException::class, 'Invalid filter group operator: xor. Valid operators are and, or.');
 
 it('rejects an unknown group operator', function () {
     filterRequest(['op' => 'xor', 'conditions' => [['key' => 'id', 'op' => 'equals', 'value' => '1']]])->filterGroup();

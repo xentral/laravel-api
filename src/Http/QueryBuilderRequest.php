@@ -8,16 +8,20 @@ use Xentral\LaravelApi\Query\Filters\FilterGroupOperator;
 
 class QueryBuilderRequest extends \Spatie\QueryBuilder\QueryBuilderRequest
 {
+    /**
+     * How deep filter groups may nest, the outermost group counting as level
+     * one. A recursive wire format is unbounded by nature, so the parser needs
+     * a limit that does not depend on the client being well behaved.
+     */
+    public const MAX_GROUP_DEPTH = 5;
+
     public function filters(): Collection
     {
         $group = $this->filterGroup();
 
         if ($group !== null) {
             $filters = collect();
-
-            foreach ($group->conditions as $condition) {
-                $this->mergeFilterValue($filters, $condition['key'], $condition['filter']);
-            }
+            $this->collectConditions($group, $filters);
 
             return $filters;
         }
@@ -96,8 +100,15 @@ class QueryBuilderRequest extends \Spatie\QueryBuilder\QueryBuilderRequest
     }
 
     /** @param array<mixed> $filterParts */
-    private function parseGroup(array $filterParts): FilterGroup
+    private function parseGroup(array $filterParts, int $depth = 1): FilterGroup
     {
+        if ($depth > self::MAX_GROUP_DEPTH) {
+            throw ValidationException::withMessages(['filter' => sprintf(
+                'Filter groups nest to at most %d levels.',
+                self::MAX_GROUP_DEPTH,
+            )]);
+        }
+
         $validOperators = implode(', ', array_column(FilterGroupOperator::cases(), 'value'));
 
         if (! array_key_exists('op', $filterParts)) {
@@ -135,7 +146,15 @@ class QueryBuilderRequest extends \Spatie\QueryBuilder\QueryBuilderRequest
 
         foreach ($conditions as $condition) {
             if (is_array($condition) && array_key_exists('conditions', $condition)) {
-                throw ValidationException::withMessages(['filter' => 'Nested filter groups are not supported.']);
+                if (array_key_exists('key', $condition)) {
+                    // Ambiguous: a triple and a group at once. Guessing which
+                    // one was meant would silently drop half the condition.
+                    throw ValidationException::withMessages(['filter' => 'Invalid filter format.']);
+                }
+
+                $parsedConditions[] = $this->parseGroup($condition, $depth + 1);
+
+                continue;
             }
 
             if (! is_array($condition)
@@ -154,6 +173,25 @@ class QueryBuilderRequest extends \Spatie\QueryBuilder\QueryBuilderRequest
         }
 
         return new FilterGroup($groupOperator, $parsedConditions);
+    }
+
+    /**
+     * Every condition in the tree, at any depth, merged into the flat filter
+     * collection the allowed filters are validated and matched against.
+     *
+     * @param  Collection<string, mixed>  $filters
+     */
+    private function collectConditions(FilterGroup $group, Collection $filters): void
+    {
+        foreach ($group->conditions as $condition) {
+            if ($condition instanceof FilterGroup) {
+                $this->collectConditions($condition, $filters);
+
+                continue;
+            }
+
+            $this->mergeFilterValue($filters, $condition['key'], $condition['filter']);
+        }
     }
 
     /**
