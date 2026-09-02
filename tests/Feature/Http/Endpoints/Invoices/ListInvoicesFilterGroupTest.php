@@ -296,6 +296,28 @@ describe('Nested filter groups', function () {
         expect($response->json('data.0.id'))->toBe($wanted->id);
     });
 
+    it('keeps a condition that follows a subgroup inside a nested and group', function () {
+        // or[ and[ or[number = INV-1, number = INV-2], status = paid ] ]
+        // The status condition sits AFTER the subgroup. Stopping the loop at
+        // the subgroup would drop it and silently widen the result.
+        $wanted = Invoice::factory()->create(['invoice_number' => 'INV-1', 'status' => InvoiceStatusEnum::Paid]);
+        Invoice::factory()->create(['invoice_number' => 'INV-2', 'status' => InvoiceStatusEnum::Sent]);
+
+        $response = $this->getJson('/api/v1/invoices?filter='.orGroup([
+            ['op' => 'and', 'conditions' => [
+                ['op' => 'or', 'conditions' => [
+                    ['key' => 'invoice_number', 'op' => 'equals', 'value' => 'INV-1'],
+                    ['key' => 'invoice_number', 'op' => 'equals', 'value' => 'INV-2'],
+                ]],
+                ['key' => 'status', 'op' => 'equals', 'value' => InvoiceStatusEnum::Paid->value],
+            ]],
+        ]));
+
+        $response->assertOk();
+        $response->assertJsonCount(1, 'data');
+        expect($response->json('data.0.id'))->toBe($wanted->id);
+    });
+
     it('applies a group nested to the maximum depth', function () {
         $wanted = Invoice::factory()->create(['invoice_number' => 'INV-100']);
         Invoice::factory()->create(['invoice_number' => 'INV-200']);
@@ -531,6 +553,28 @@ describe('Filter group rejections', function () {
             ['op' => 'or', 'conditions' => [
                 ['key' => 'lineItem.id', 'op' => 'equals', 'value' => '1'],
                 ['key' => 'invoice_number', 'op' => 'equals', 'value' => 'INV-1'],
+            ]],
+        ]))
+            ->assertStatus(422)
+            ->assertJsonPath('errors.filter.0', 'The filter lineItem.id cannot be used inside a nested filter group.');
+    });
+
+    it('rejects a barred filter that follows a subgroup at an or root', function () {
+        // The barred triple sits AFTER the subgroup; a guard that stopped
+        // walking at the subgroup would let it through into a closure.
+        $this->getJson('/api/v1/invoices?filter='.orGroup([
+            ['op' => 'and', 'conditions' => [['key' => 'invoice_number', 'op' => 'equals', 'value' => 'INV-1']]],
+            ['key' => 'lineItem.id', 'op' => 'equals', 'value' => '1'],
+        ]))
+            ->assertStatus(422)
+            ->assertJsonPath('errors.filter.0', 'The filter lineItem.id cannot be used inside an or group.');
+    });
+
+    it('rejects a barred filter that follows a subgroup inside a nested group', function () {
+        $this->getJson('/api/v1/invoices?filter='.filterGroup('and', [
+            ['op' => 'or', 'conditions' => [
+                ['op' => 'and', 'conditions' => [['key' => 'invoice_number', 'op' => 'equals', 'value' => 'INV-1']]],
+                ['key' => 'lineItem.id', 'op' => 'equals', 'value' => '1'],
             ]],
         ]))
             ->assertStatus(422)
