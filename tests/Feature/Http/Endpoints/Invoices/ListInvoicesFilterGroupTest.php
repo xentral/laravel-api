@@ -313,6 +313,62 @@ describe('Nested filter groups', function () {
         expect($response->json('data.0.id'))->toBe($wanted->id);
     });
 
+    it('keeps an and subgroup conjunctive against its own sub-group', function () {
+        // or[ and[ status = paid, or[number = INV-1, number = INV-2] ] ]
+        // Joining the inner group to its sibling with or instead of and would
+        // return all three rows.
+        $wanted = Invoice::factory()->create(['status' => InvoiceStatusEnum::Paid, 'invoice_number' => 'INV-1']);
+        Invoice::factory()->create(['status' => InvoiceStatusEnum::Sent, 'invoice_number' => 'INV-2']);
+        Invoice::factory()->create(['status' => InvoiceStatusEnum::Paid, 'invoice_number' => 'INV-9']);
+
+        $response = $this->getJson('/api/v1/invoices?filter='.orGroup([
+            ['op' => 'and', 'conditions' => [
+                ['key' => 'status', 'op' => 'equals', 'value' => InvoiceStatusEnum::Paid->value],
+                ['op' => 'or', 'conditions' => [
+                    ['key' => 'invoice_number', 'op' => 'equals', 'value' => 'INV-1'],
+                    ['key' => 'invoice_number', 'op' => 'equals', 'value' => 'INV-2'],
+                ]],
+            ]],
+        ]));
+
+        $response->assertOk();
+        $response->assertJsonCount(1, 'data');
+        expect($response->json('data.0.id'))->toBe($wanted->id);
+    });
+
+    it('applies the direct conditions of an and root exactly like the flat list', function () {
+        // Decision behind the split path: only sub-groups go through closures,
+        // because a filter that writes query wide state - lifting a global
+        // scope, say - silently no-ops inside one. Pinning the SQL is what
+        // keeps that guarantee from being refactored away; the behavioural
+        // consequence is exercised on the endpoints that own such a filter.
+        $conditions = [
+            ['key' => 'invoice_number', 'op' => 'equals', 'value' => 'INV-1'],
+            ['key' => 'status', 'op' => 'equals', 'value' => InvoiceStatusEnum::Paid->value],
+        ];
+
+        $build = fn (array $filter) => QueryBuilder::for(
+            Invoice::class,
+            Request::create('/invoices', 'GET', ['filter' => json_encode($filter, JSON_THROW_ON_ERROR)]),
+        )
+            ->allowOrFilterGroups()
+            ->allowedFilters(
+                QueryFilter::string('invoice_number'),
+                QueryFilter::enum('status', InvoiceStatusEnum::class),
+            );
+
+        $flat = $build($conditions)->toSql();
+        $grouped = $build(['op' => 'and', 'conditions' => [
+            ...$conditions,
+            ['op' => 'or', 'conditions' => [
+                ['key' => 'invoice_number', 'op' => 'equals', 'value' => 'INV-2'],
+                ['key' => 'invoice_number', 'op' => 'equals', 'value' => 'INV-3'],
+            ]],
+        ]])->toSql();
+
+        expect($grouped)->toStartWith($flat);
+    });
+
     it('counts a row matching several nested branches once in table mode', function () {
         // Matches both or-branches; the total must count it once.
         Invoice::factory()->create(['status' => InvoiceStatusEnum::Paid, 'invoice_number' => 'INV-100']);
