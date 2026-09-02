@@ -43,7 +43,7 @@ class InvoiceController
                 new DateFilter(name: 'paid_at'),
                 new DateFilter(name: 'created_at'),
                 new DateFilter(name: 'updated_at'),
-            ], supportsOrGroups: true),
+            ], supportsOrGroups: true, groupSchemaName: 'InvoiceFilter'),
             new SearchParameter,
         ],
         paginationType: [PaginationType::SIMPLE, PaginationType::TABLE, PaginationType::CURSOR],
