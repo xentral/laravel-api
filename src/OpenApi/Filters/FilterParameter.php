@@ -10,6 +10,8 @@ use OpenApi\Attributes\Property;
 use OpenApi\Attributes\Schema;
 use OpenApi\Attributes\XmlContent;
 use OpenApi\Generator;
+use Xentral\LaravelApi\Http\QueryBuilderRequest;
+use Xentral\LaravelApi\OpenApi\PostProcessors\FilterGroupComponentsProcessor;
 
 #[\Attribute(\Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD | \Attribute::TARGET_PROPERTY | \Attribute::TARGET_PARAMETER | \Attribute::IS_REPEATABLE)]
 class FilterParameter extends Parameter
@@ -27,7 +29,12 @@ class FilterParameter extends Parameter
         ?array $attachables = null,
         bool $withCustom = false,
         bool $supportsOrGroups = false,
+        ?string $groupSchemaName = null,
     ) {
+        if ($groupSchemaName !== null && ! $supportsOrGroups) {
+            throw new \InvalidArgumentException('groupSchemaName is only meaningful together with supportsOrGroups: true.');
+        }
+
         $filters = collect($filters)
             ->flatMap(fn (mixed $f) => $f instanceof FilterSpecCollection ? $f->getFilterSpecification() : Arr::wrap($f))
             ->flatten(1);
@@ -61,34 +68,63 @@ class FilterParameter extends Parameter
             collect($filter->operators)->map(fn ($op) => '*'.$op->value.'*')->implode(', ')
         ))->implode(" \n\n");
 
+        $conditionProperties = fn (): array => [
+            $key(),
+            new Property(
+                property: 'op',
+                description: 'operator',
+                type: 'string',
+                // unique() keeps the original keys, so dropping duplicates
+                // would leave gaps and serialise the enum as a map.
+                enum: $filters->pluck('operators')->flatten()->unique()->values()->all(),
+            ),
+            new Property(
+                property: 'value',
+                description: 'The property value.',
+                oneOf: [
+                    new Schema(
+                        title: 'String',
+                        type: 'string',
+                    ),
+                    new Schema(
+                        title: 'Array',
+                        type: 'array',
+                        items: new Items(type: 'string'),
+                    ),
+                ]
+            ),
+        ];
+
         $condition = fn (): Items => new Items(
-            properties: [
-                $key(),
-                new Property(
-                    property: 'op',
-                    description: 'operator',
-                    type: 'string',
-                    enum: $filters->pluck('operators')->flatten()->unique()->all(),
-                ),
-                new Property(
-                    property: 'value',
-                    description: 'The property value.',
-                    oneOf: [
-                        new Schema(
-                            title: 'String',
-                            type: 'string',
-                        ),
-                        new Schema(
-                            title: 'Array',
-                            type: 'array',
-                            items: new Items(type: 'string'),
-                        ),
-                    ]
-                ),
-            ],
+            properties: $conditionProperties(),
             type: 'object',
             additionalProperties: false,
         );
+
+        // A group that may contain groups has to refer to itself, which an
+        // inline schema cannot do - hence the named components an endpoint
+        // opts into. Without a name the 0.19.0 output is kept unchanged.
+        $group = fn (): Schema => $groupSchemaName !== null
+            ? new Schema(ref: '#/components/schemas/'.$groupSchemaName.'Group')
+            : new Schema(
+                title: 'Filter group',
+                required: ['op', 'conditions'],
+                properties: [
+                    new Property(
+                        property: 'op',
+                        description: 'Boolean operator combining the conditions.',
+                        type: 'string',
+                        enum: ['and', 'or'],
+                    ),
+                    new Property(
+                        property: 'conditions',
+                        type: 'array',
+                        items: $condition(),
+                    ),
+                ],
+                type: 'object',
+                additionalProperties: false,
+            );
 
         $schema = $supportsOrGroups
             ? new Schema(
@@ -98,25 +134,7 @@ class FilterParameter extends Parameter
                         type: 'array',
                         items: $condition(),
                     ),
-                    new Schema(
-                        title: 'Filter group',
-                        required: ['op', 'conditions'],
-                        properties: [
-                            new Property(
-                                property: 'op',
-                                description: 'Boolean operator combining the conditions.',
-                                type: 'string',
-                                enum: ['and', 'or'],
-                            ),
-                            new Property(
-                                property: 'conditions',
-                                type: 'array',
-                                items: $condition(),
-                            ),
-                        ],
-                        type: 'object',
-                        additionalProperties: false,
-                    ),
+                    $group(),
                 ],
             )
             : new Schema(
@@ -124,10 +142,17 @@ class FilterParameter extends Parameter
                 items: $condition(),
             );
 
+        if ($groupSchemaName !== null) {
+            FilterGroupComponentsProcessor::register($groupSchemaName, $conditionProperties());
+        }
+
         $description = "The filter parameter is used to filter the results of the given endpoint. \n\n\n**Supported filter operators by key:** \n\n".$filterAvailableOperatorDescription;
 
         if ($supportsOrGroups) {
-            $description .= "\n\nAlternatively the filter accepts a single group object `{op, conditions}`: `or` matches records satisfying at least one condition, `and` all of them. Nested groups are not supported.";
+            $description .= "\n\nAlternatively the filter accepts a single group object `{op, conditions}`: `or` matches records satisfying at least one condition, `and` all of them. ";
+            $description .= $groupSchemaName !== null
+                ? sprintf('A condition may itself be such a group, nesting to at most %d levels.', QueryBuilderRequest::MAX_GROUP_DEPTH)
+                : 'Nested groups are not supported.';
         }
 
         parent::__construct([

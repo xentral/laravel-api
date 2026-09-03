@@ -253,11 +253,41 @@ new FilterParameter([...], supportsOrGroups: true)
 
 `except` names the filters that may not appear inside an `or` group: a filter lifting a global scope
 switches the whole query rather than one branch, and a filter whose meaning pairs several keys is
-not self-contained. An `or` group on an endpoint without the opt-in, an excluded filter inside one,
-and a nested group are all rejected as validation errors.
+not self-contained. An `or` group on an endpoint without the opt-in and an excluded filter inside one
+are rejected as validation errors.
+
+A condition may itself be a group, so a mixed expression such as `(A and B) or (C and D)` is a single
+request:
+
+```bash
+/api/v1/sales-orders?filter={"op":"or","conditions":[{"op":"and","conditions":[{"key":"customer.name","op":"equals","value":"Acme GmbH"},{"key":"status","op":"equals","value":"paid"}]},{"op":"and","conditions":[{"key":"customer.name","op":"equals","value":"Globex AG"},{"key":"status","op":"equals","value":"sent"}]}]}
+```
+
+Groups nest to at most `QueryBuilderRequest::MAX_GROUP_DEPTH` (5) levels, the outermost group
+counting as level one; anything deeper is a validation error. Nesting rides on the same opt-in
+whatever the operators are — a group holding a sub-group on an endpoint that never called
+`allowOrFilterGroups()` is rejected even when every operator is `and`, so an endpoint that did not
+opt in keeps exactly the contract it had.
+
+An excluded filter stays usable as a *direct condition of a top-level `and` group*, and in the flat
+list. Those are the only positions applied on the outer builder; inside a sub-group the query runs in
+a closure, where lifting a global scope silently does nothing, so an excluded key below the top level
+is rejected rather than quietly ignored.
+
+On the spec side an opted-in endpoint also names its component schemas:
+
+```php
+new FilterParameter([...], supportsOrGroups: true, groupSchemaName: 'SalesOrderFilter')
+```
+
+That emits `SalesOrderFilterCondition` and `SalesOrderFilterGroup` into `components/schemas` and
+points the parameter at the group, whose `conditions` refer back to both — the recursion the wire
+format needs. The depth cap lives in the description and is enforced at runtime, since a bounded
+schema cannot express it without unrolling.
 
 Filter defaults for keys the request does not name stay outside the group, as does `search` — both
-keep narrowing the whole result set.
+keep narrowing the whole result set. A key named anywhere in the tree, at any depth, counts as named
+and keeps its default from being applied.
 
 ##### Truthy integer flags
 

@@ -197,7 +197,7 @@ paths:
         -
           name: filter
           in: query
-          description: "The filter parameter is used to filter the results of the given endpoint. \n\n\n**Supported filter operators by key:** \n\n`id`: *equals*, *notEquals*, *in*, *notIn*, *isNull*, *isNotNull* \n\n`invoice_number`: *equals*, *notEquals*, *in*, *notIn*, *contains*, *notContains*, *startsWith*, *endsWith*, *isNull*, *isNotNull* \n\n`status`: *equals*, *notEquals*, *in*, *notIn* \n\n`issued_at`: *equals*, *notEquals*, *lessThan*, *lessThanOrEquals*, *greaterThan*, *greaterThanOrEquals*, *isNull*, *isNotNull* \n\n`due_at`: *equals*, *notEquals*, *lessThan*, *lessThanOrEquals*, *greaterThan*, *greaterThanOrEquals*, *isNull*, *isNotNull* \n\n`paid_at`: *equals*, *notEquals*, *lessThan*, *lessThanOrEquals*, *greaterThan*, *greaterThanOrEquals*, *isNull*, *isNotNull* \n\n`created_at`: *equals*, *notEquals*, *lessThan*, *lessThanOrEquals*, *greaterThan*, *greaterThanOrEquals*, *isNull*, *isNotNull* \n\n`updated_at`: *equals*, *notEquals*, *lessThan*, *lessThanOrEquals*, *greaterThan*, *greaterThanOrEquals*, *isNull*, *isNotNull*\n\nAlternatively the filter accepts a single group object `{op, conditions}`: `or` matches records satisfying at least one condition, `and` all of them. Nested groups are not supported."
+          description: "The filter parameter is used to filter the results of the given endpoint. \n\n\n**Supported filter operators by key:** \n\n`id`: *equals*, *notEquals*, *in*, *notIn*, *isNull*, *isNotNull* \n\n`invoice_number`: *equals*, *notEquals*, *in*, *notIn*, *contains*, *notContains*, *startsWith*, *endsWith*, *isNull*, *isNotNull* \n\n`status`: *equals*, *notEquals*, *in*, *notIn* \n\n`issued_at`: *equals*, *notEquals*, *lessThan*, *lessThanOrEquals*, *greaterThan*, *greaterThanOrEquals*, *isNull*, *isNotNull* \n\n`due_at`: *equals*, *notEquals*, *lessThan*, *lessThanOrEquals*, *greaterThan*, *greaterThanOrEquals*, *isNull*, *isNotNull* \n\n`paid_at`: *equals*, *notEquals*, *lessThan*, *lessThanOrEquals*, *greaterThan*, *greaterThanOrEquals*, *isNull*, *isNotNull* \n\n`created_at`: *equals*, *notEquals*, *lessThan*, *lessThanOrEquals*, *greaterThan*, *greaterThanOrEquals*, *isNull*, *isNotNull* \n\n`updated_at`: *equals*, *notEquals*, *lessThan*, *lessThanOrEquals*, *greaterThan*, *greaterThanOrEquals*, *isNull*, *isNotNull*\n\nAlternatively the filter accepts a single group object `{op, conditions}`: `or` matches records satisfying at least one condition, `and` all of them. A condition may itself be such a group, nesting to at most 5 levels."
           required: false
           style: deepObject
           schema:
@@ -210,15 +210,7 @@ paths:
                   type: object
                   additionalProperties: false
               -
-                title: 'Filter group'
-                required:
-                  - op
-                  - conditions
-                properties:
-                  op: { description: 'Boolean operator combining the conditions.', type: string, enum: [and, or] }
-                  conditions: { type: array, items: { properties: { key: { type: string, enum: [id, invoice_number, status, issued_at, due_at, paid_at, created_at, updated_at] }, op: { description: operator, type: string, enum: [equals, notEquals, in, notIn, isNull, isNotNull, contains, notContains, startsWith, endsWith, lessThan, lessThanOrEquals, greaterThan, greaterThanOrEquals] }, value: { description: 'The property value.', oneOf: [{ title: String, type: string }, { title: Array, type: array, items: { type: string } }] } }, type: object, additionalProperties: false } }
-                type: object
-                additionalProperties: false
+                $ref: '#/components/schemas/InvoiceFilterGroup'
         -
           name: search
           in: query
@@ -551,6 +543,74 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/InvoiceResource'
+      type: object
+      additionalProperties: false
+    InvoiceFilterCondition:
+      title: Condition
+      properties:
+        key:
+          type: string
+          enum:
+            - id
+            - invoice_number
+            - status
+            - issued_at
+            - due_at
+            - paid_at
+            - created_at
+            - updated_at
+        op:
+          description: operator
+          type: string
+          enum:
+            - equals
+            - notEquals
+            - in
+            - notIn
+            - isNull
+            - isNotNull
+            - contains
+            - notContains
+            - startsWith
+            - endsWith
+            - lessThan
+            - lessThanOrEquals
+            - greaterThan
+            - greaterThanOrEquals
+        value:
+          description: 'The property value.'
+          oneOf:
+            -
+              title: String
+              type: string
+            -
+              title: Array
+              type: array
+              items:
+                type: string
+      type: object
+      additionalProperties: false
+    InvoiceFilterGroup:
+      title: 'Filter group'
+      description: 'A boolean group of filter conditions. A condition may be a group itself, nesting to at most 5 levels.'
+      required:
+        - op
+        - conditions
+      properties:
+        op:
+          description: 'Boolean operator combining the conditions.'
+          type: string
+          enum:
+            - and
+            - or
+        conditions:
+          type: array
+          items:
+            oneOf:
+              -
+                $ref: '#/components/schemas/InvoiceFilterCondition'
+              -
+                $ref: '#/components/schemas/InvoiceFilterGroup'
       type: object
       additionalProperties: false
     InvoiceResource:

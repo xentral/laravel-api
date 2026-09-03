@@ -29,9 +29,11 @@ Both layers must declare the same filter names. API field names use camelCase; m
 
 - The `filter` parameter also accepts one group object `{"op": "and"|"or", "conditions": [{key, op, value}, ...]}`, as a JSON string or in deepObject form. An `and` group means what the flat filter list already means and works on every endpoint.
 - An `or` group requires the endpoint to opt in on **both** layers: `QueryBuilder::for(...)->allowOrFilterGroups(except: [...])` **before** `allowedFilters()`, and `new FilterParameter([...], supportsOrGroups: true)` on the spec side. Neither layer alone is valid.
-- Put every filter that mutates query-wide state (one that lifts a global scope) or that pairs several keys into `except` — such a filter is not a self-contained branch.
-- Filter defaults for keys the request does not name, and the `search` parameter, stay conjunctive: they narrow the whole result set outside the group.
-- Nested groups are rejected.
+- A condition may itself be a group, so `(A and B) or (C and D)` is one request. Groups nest to at most `QueryBuilderRequest::MAX_GROUP_DEPTH` (5) levels, the outermost group counting as level one; deeper is a validation error.
+- **Nesting rides on the same opt-in**, whatever the operators are: a group holding a sub-group on an endpoint that never called `allowOrFilterGroups()` is rejected, even when every operator is `and`.
+- Opted-in endpoints also pass `groupSchemaName:` to `FilterParameter` (e.g. `groupSchemaName: 'ProductFilter'`), which emits `{name}Condition` / `{name}Group` components and points the parameter at the recursive `$ref`. Without it the spec still declares the old single-level group.
+- Put every filter that mutates query-wide state (one that lifts a global scope) or that pairs several keys into `except` — such a filter is not a self-contained branch. Those filters stay usable as **direct conditions of a top-level `and` group** (and in the flat list); anywhere below that they are rejected, because only the top level is applied on the outer builder.
+- Filter defaults for keys the request does not name, and the `search` parameter, stay conjunctive: they narrow the whole result set outside the group. A key named anywhere in the tree, at any depth, counts as named.
 
 ## Resource Helpers Quick Reference
 

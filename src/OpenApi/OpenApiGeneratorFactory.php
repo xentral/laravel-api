@@ -16,6 +16,7 @@ use Xentral\LaravelApi\OpenApi\PostProcessors\CustomCleanUnusedComponents;
 use Xentral\LaravelApi\OpenApi\PostProcessors\DeprecationsProcessor;
 use Xentral\LaravelApi\OpenApi\PostProcessors\ExpandEnumsProcessor;
 use Xentral\LaravelApi\OpenApi\PostProcessors\FeatureFlagProcessor;
+use Xentral\LaravelApi\OpenApi\PostProcessors\FilterGroupComponentsProcessor;
 use Xentral\LaravelApi\OpenApi\PostProcessors\OperationIdProcessor;
 use Xentral\LaravelApi\OpenApi\PostProcessors\PaginationResponseProcessor;
 use Xentral\LaravelApi\OpenApi\PostProcessors\ProblemsProcessor;
@@ -40,6 +41,9 @@ class OpenApiGeneratorFactory
         $generator->getProcessorPipeline()->remove(CleanUnusedComponents::class);
         // Add our custom CleanUnusedComponents that preserves security schemes
         $generator->getProcessorPipeline()->add(new SummaryPostProcessor);
+        // Before the cleanup, so the components it writes are already in
+        // place when unused ones are collected, and before the sort.
+        $generator->getProcessorPipeline()->add(new FilterGroupComponentsProcessor);
         $generator->getProcessorPipeline()->add(new CustomCleanUnusedComponents);
         $generator->getProcessorPipeline()->add(new OperationIdProcessor);
         $generator->getProcessorPipeline()->add(new TokenScopeProcessor);

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 use Spatie\QueryBuilder\AllowedFilter;
 use Xentral\LaravelApi\Http\QueryBuilderRequest;
@@ -116,45 +117,143 @@ class QueryBuilder extends \Spatie\QueryBuilder\QueryBuilder
     {
         $group = $this->requestedFilterGroup();
 
-        if ($group === null || $group->operator === FilterGroupOperator::And) {
-            // The flat form and an and group are the same conjunction, and the
-            // collapsed filters() collection already carries either one.
+        if ($group === null || (! $group->hasSubgroups() && $group->operator === FilterGroupOperator::And)) {
+            // The flat form and a subgroup free and group are the same
+            // conjunction, and the collapsed filters() collection already
+            // carries either one.
             parent::addFiltersToQuery();
 
             return;
         }
 
-        $this->guardOrFilterGroup($group);
+        $this->guardFilterGroupTree($group);
 
-        // Defaults for filters the request does not name are endpoint policy
-        // rather than part of the disjunction, so they keep narrowing the
-        // whole result set - outside the group.
-        $this->allowedFilters->each(function (AllowedFilter $filter) {
+        // Defaults for filters the request names nowhere in the tree are
+        // endpoint policy rather than part of the expression, so they keep
+        // narrowing the whole result set - outside the group.
+        $this->applyDefaultsForUnrequestedFilters();
+
+        if ($group->operator === FilterGroupOperator::And) {
+            // Direct conditions of an and root keep the flat application path,
+            // so repeated key pairing and filters that write query wide state
+            // behave exactly as they do without a group. Only sub-groups need
+            // a closure of their own.
+            $this->applyRequestedFilters($this->collapseDirectConditions($group));
+
+            foreach ($group->conditions as $condition) {
+                if ($condition instanceof FilterGroup) {
+                    $this->getEloquentBuilder()->where(
+                        fn (EloquentBuilder $branch) => $this->applyGroupToBranch($branch, $condition)
+                    );
+                }
+            }
+
+            return;
+        }
+
+        $this->getEloquentBuilder()->where(
+            fn (EloquentBuilder $query) => $this->applyDisjunction($query, $group)
+        );
+    }
+
+    /**
+     * @param  EloquentBuilder<TModel>  $branch
+     */
+    private function applyGroupToBranch(EloquentBuilder $branch, FilterGroup $group): void
+    {
+        if ($group->operator === FilterGroupOperator::And) {
+            $this->applyConjunction($branch, $group);
+
+            return;
+        }
+
+        $branch->where(fn (EloquentBuilder $query) => $this->applyDisjunction($query, $group));
+    }
+
+    /**
+     * @param  EloquentBuilder<TModel>  $branch
+     */
+    private function applyConjunction(EloquentBuilder $branch, FilterGroup $group): void
+    {
+        foreach ($group->conditions as $condition) {
+            if ($condition instanceof FilterGroup) {
+                $branch->where(fn (EloquentBuilder $sub) => $this->applyGroupToBranch($sub, $condition));
+
+                continue;
+            }
+
+            // Every filter wraps its own application in a nested where, so a
+            // triple can be applied straight onto the branch.
+            $this->applyFilterToBranch($branch, $this->requireFilter($condition['key']), $condition['filter']);
+        }
+    }
+
+    /**
+     * @param  EloquentBuilder<TModel>  $query
+     */
+    private function applyDisjunction(EloquentBuilder $query, FilterGroup $group): void
+    {
+        foreach ($group->conditions as $condition) {
+            $query->orWhere(fn (EloquentBuilder $branch) => $condition instanceof FilterGroup
+                ? $this->applyGroupToBranch($branch, $condition)
+                : $this->applyFilterToBranch($branch, $this->requireFilter($condition['key']), $condition['filter']));
+        }
+    }
+
+    /**
+     * The requested filters, applied in the order the endpoint declared them.
+     *
+     * Mirrors the requested half of the parent's filter loop but reads the
+     * values from a given collection rather than the whole request, so an and
+     * root can apply just its direct conditions. Defaults are applied
+     * separately - a filter named anywhere in the tree has none applied.
+     *
+     * @param  Collection<string, mixed>  $requested
+     */
+    private function applyRequestedFilters(Collection $requested): void
+    {
+        $this->allowedFilters->each(function (AllowedFilter $filter) use ($requested): void {
+            if ($requested->has($filter->getName())) {
+                $filter->filter($this, $requested->get($filter->getName()));
+            }
+        });
+    }
+
+    private function applyDefaultsForUnrequestedFilters(): void
+    {
+        $this->allowedFilters->each(function (AllowedFilter $filter): void {
             if (! $this->isFilterRequested($filter) && $filter->hasDefault()) {
                 $filter->filter($this, $filter->getDefault());
             }
         });
+    }
 
-        $this->getEloquentBuilder()->where(function (EloquentBuilder $query) use ($group) {
-            foreach ($group->conditions as $condition) {
-                $allowedFilter = $this->findFilter($condition['key']);
+    /**
+     * @return Collection<string, mixed>
+     */
+    private function collapseDirectConditions(FilterGroup $group): Collection
+    {
+        $request = $this->request;
 
-                if ($allowedFilter === null) {
-                    // ensureAllFiltersExist() already rejected unknown keys unless the
-                    // consumer disabled that check - fail loudly rather than silently
-                    // widening the result set by dropping a branch.
-                    throw ValidationException::withMessages([
-                        'filter' => sprintf('Unknown filter: %s.', $condition['key']),
-                    ]);
-                }
+        return $request instanceof QueryBuilderRequest
+            ? $request->collapseConditions($group->conditions)
+            : collect();
+    }
 
-                $query->orWhere(fn (EloquentBuilder $branch) => $this->applyFilterToBranch(
-                    $branch,
-                    $allowedFilter,
-                    $condition['filter'],
-                ));
-            }
-        });
+    private function requireFilter(string $name): AllowedFilter
+    {
+        $allowedFilter = $this->findFilter($name);
+
+        if ($allowedFilter === null) {
+            // ensureAllFiltersExist() already rejected unknown keys unless the
+            // consumer disabled that check - fail loudly rather than silently
+            // widening the result set by dropping a branch.
+            throw ValidationException::withMessages([
+                'filter' => sprintf('Unknown filter: %s.', $name),
+            ]);
+        }
+
+        return $allowedFilter;
     }
 
     /**
@@ -181,18 +280,62 @@ class QueryBuilder extends \Spatie\QueryBuilder\QueryBuilder
         }
     }
 
-    private function guardOrFilterGroup(FilterGroup $group): void
+    /**
+     * Nesting rides on the same opt-in as or groups, so an endpoint that never
+     * opted in keeps exactly the contract it had before groups could nest.
+     *
+     * A barred filter is one that writes query wide state or pairs several
+     * keys. Only the direct conditions of an and root are applied on the
+     * top level builder, which is the one place such a filter still means what
+     * it says; inside a closure it would silently match everything or nothing.
+     */
+    private function guardFilterGroupTree(FilterGroup $group): void
     {
-        if ($this->orFilterGroupExcept === null) {
+        $barred = $this->orFilterGroupExcept;
+
+        if ($barred === null) {
             throw ValidationException::withMessages([
-                'filter' => 'OR filter groups are not supported on this endpoint.',
+                'filter' => $group->operator === FilterGroupOperator::Or
+                    ? 'OR filter groups are not supported on this endpoint.'
+                    : 'Nested filter groups are not supported on this endpoint.',
             ]);
         }
 
+        $rootIsConjunction = $group->operator === FilterGroupOperator::And;
+
         foreach ($group->conditions as $condition) {
-            if (in_array($condition['key'], $this->orFilterGroupExcept, true)) {
+            if ($condition instanceof FilterGroup) {
+                $this->guardBarredFiltersInSubtree($condition, $barred);
+
+                continue;
+            }
+
+            if (! $rootIsConjunction && in_array($condition['key'], $barred, true)) {
                 throw ValidationException::withMessages([
                     'filter' => sprintf('The filter %s cannot be used inside an or group.', $condition['key']),
+                ]);
+            }
+        }
+    }
+
+    /**
+     * @param  list<string>  $barred
+     */
+    private function guardBarredFiltersInSubtree(FilterGroup $group, array $barred): void
+    {
+        foreach ($group->conditions as $condition) {
+            if ($condition instanceof FilterGroup) {
+                $this->guardBarredFiltersInSubtree($condition, $barred);
+
+                continue;
+            }
+
+            if (in_array($condition['key'], $barred, true)) {
+                throw ValidationException::withMessages([
+                    'filter' => sprintf(
+                        'The filter %s cannot be used inside a nested filter group.',
+                        $condition['key'],
+                    ),
                 ]);
             }
         }
