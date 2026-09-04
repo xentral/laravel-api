@@ -13,20 +13,94 @@ function generatedSpec(): array
     return Yaml::parse($generator->generate([workbench_dir()])->toYaml());
 }
 
-it('emits a group component that refers to itself', function () {
+/**
+ * Every `$ref` target reachable inside one schema, as component names.
+ *
+ * @return list<string>
+ */
+function referencedComponents(array $schema): array
+{
+    $names = [];
+    array_walk_recursive($schema, function (mixed $value, mixed $key) use (&$names): void {
+        if ($key === '$ref' && is_string($value)) {
+            $names[] = substr($value, strlen('#/components/schemas/'));
+        }
+    });
+
+    return $names;
+}
+
+function groupComponentName(int $level): string
+{
+    return $level === 1 ? 'InvoiceFilterGroup' : sprintf('InvoiceFilterGroupDepth%d', $level);
+}
+
+it('emits one group component per nesting level, each referring to the next', function () {
     $schemas = generatedSpec()['components']['schemas'];
 
-    expect($schemas)->toHaveKeys(['InvoiceFilterCondition', 'InvoiceFilterGroup']);
+    for ($level = 1; $level < QueryBuilderRequest::MAX_GROUP_DEPTH; $level++) {
+        $group = $schemas[groupComponentName($level)];
 
-    $group = $schemas['InvoiceFilterGroup'];
+        expect($group['required'])->toBe(['op', 'conditions'])
+            ->and($group['additionalProperties'])->toBeFalse()
+            ->and($group['properties']['op']['enum'])->toBe(['and', 'or'])
+            ->and($group['properties']['conditions']['items']['oneOf'])->toBe([
+                ['$ref' => '#/components/schemas/InvoiceFilterCondition'],
+                ['$ref' => '#/components/schemas/'.groupComponentName($level + 1)],
+            ]);
+    }
+});
 
-    expect($group['required'])->toBe(['op', 'conditions'])
-        ->and($group['additionalProperties'])->toBeFalse()
-        ->and($group['properties']['op']['enum'])->toBe(['and', 'or'])
-        ->and($group['properties']['conditions']['items']['oneOf'])->toBe([
-            ['$ref' => '#/components/schemas/InvoiceFilterCondition'],
-            ['$ref' => '#/components/schemas/InvoiceFilterGroup'],
-        ]);
+it('accepts conditions only at the deepest level', function () {
+    $schemas = generatedSpec()['components']['schemas'];
+    $deepest = $schemas[groupComponentName(QueryBuilderRequest::MAX_GROUP_DEPTH)];
+
+    expect($deepest['properties']['conditions']['items'])->toBe(['$ref' => '#/components/schemas/InvoiceFilterCondition'])
+        ->and($schemas)->not->toHaveKey(groupComponentName(QueryBuilderRequest::MAX_GROUP_DEPTH + 1));
+});
+
+it('emits exactly as many group levels as the runtime cap allows', function () {
+    $groups = array_filter(
+        array_keys(generatedSpec()['components']['schemas']),
+        fn (string $name) => str_starts_with($name, 'InvoiceFilterGroup'),
+    );
+
+    expect($groups)->toHaveCount(QueryBuilderRequest::MAX_GROUP_DEPTH);
+});
+
+it('emits no reference cycle below the parameter', function () {
+    // The publish pipeline dereferences the spec into a plain object tree; a
+    // cycle anywhere below the parameter makes that tree unserialisable. The
+    // walk starts at the component the parameter refers to, so a cycle among
+    // unrelated workbench resources does not enter into it.
+    $schemas = generatedSpec()['components']['schemas'];
+    $edges = array_map(referencedComponents(...), $schemas);
+
+    $onPath = [];
+    $done = [];
+    $cycles = [];
+    $walk = function (string $name, array $path) use (&$walk, &$onPath, &$done, &$cycles, $edges): void {
+        if (isset($done[$name])) {
+            return;
+        }
+        if (isset($onPath[$name])) {
+            $cycles[] = implode(' -> ', [...$path, $name]);
+
+            return;
+        }
+
+        $onPath[$name] = true;
+        foreach ($edges[$name] ?? [] as $target) {
+            $walk($target, [...$path, $name]);
+        }
+        unset($onPath[$name]);
+        $done[$name] = true;
+    };
+
+    $walk('InvoiceFilterGroup', []);
+
+    expect($cycles)->toBe([])
+        ->and($done)->toHaveKeys([groupComponentName(QueryBuilderRequest::MAX_GROUP_DEPTH), 'InvoiceFilterCondition']);
 });
 
 it('keeps the condition component out of the enum map trap', function () {
@@ -38,7 +112,7 @@ it('keeps the condition component out of the enum map trap', function () {
         ->and(array_is_list($condition['properties']['key']['enum']))->toBeTrue();
 });
 
-it('points the opted in parameter at the group component', function () {
+it('points the opted in parameter at the top level group component', function () {
     $parameters = generatedSpec()['paths']['/api/v1/invoices']['get']['parameters'];
     $filter = collect($parameters)->firstWhere('name', 'filter');
 

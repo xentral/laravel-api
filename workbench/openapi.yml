@@ -610,7 +610,95 @@ components:
               -
                 $ref: '#/components/schemas/InvoiceFilterCondition'
               -
-                $ref: '#/components/schemas/InvoiceFilterGroup'
+                $ref: '#/components/schemas/InvoiceFilterGroupDepth2'
+      type: object
+      additionalProperties: false
+    InvoiceFilterGroupDepth2:
+      title: 'Filter group, level 2'
+      description: 'A filter group nested at level 2 of at most 5.'
+      required:
+        - op
+        - conditions
+      properties:
+        op:
+          description: 'Boolean operator combining the conditions.'
+          type: string
+          enum:
+            - and
+            - or
+        conditions:
+          type: array
+          items:
+            oneOf:
+              -
+                $ref: '#/components/schemas/InvoiceFilterCondition'
+              -
+                $ref: '#/components/schemas/InvoiceFilterGroupDepth3'
+      type: object
+      additionalProperties: false
+    InvoiceFilterGroupDepth3:
+      title: 'Filter group, level 3'
+      description: 'A filter group nested at level 3 of at most 5.'
+      required:
+        - op
+        - conditions
+      properties:
+        op:
+          description: 'Boolean operator combining the conditions.'
+          type: string
+          enum:
+            - and
+            - or
+        conditions:
+          type: array
+          items:
+            oneOf:
+              -
+                $ref: '#/components/schemas/InvoiceFilterCondition'
+              -
+                $ref: '#/components/schemas/InvoiceFilterGroupDepth4'
+      type: object
+      additionalProperties: false
+    InvoiceFilterGroupDepth4:
+      title: 'Filter group, level 4'
+      description: 'A filter group nested at level 4 of at most 5.'
+      required:
+        - op
+        - conditions
+      properties:
+        op:
+          description: 'Boolean operator combining the conditions.'
+          type: string
+          enum:
+            - and
+            - or
+        conditions:
+          type: array
+          items:
+            oneOf:
+              -
+                $ref: '#/components/schemas/InvoiceFilterCondition'
+              -
+                $ref: '#/components/schemas/InvoiceFilterGroupDepth5'
+      type: object
+      additionalProperties: false
+    InvoiceFilterGroupDepth5:
+      title: 'Filter group, level 5'
+      description: 'A filter group at the deepest level, 5; its conditions cannot be groups.'
+      required:
+        - op
+        - conditions
+      properties:
+        op:
+          description: 'Boolean operator combining the conditions.'
+          type: string
+          enum:
+            - and
+            - or
+        conditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/InvoiceFilterCondition'
       type: object
       additionalProperties: false
     InvoiceResource:
