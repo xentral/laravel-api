@@ -12,11 +12,20 @@ use Xentral\LaravelApi\Http\QueryBuilderRequest;
 /**
  * Writes the component schemas a nesting filter parameter refers to.
  *
- * A filter group may contain groups, so its schema has to refer to itself -
- * which an inline parameter schema cannot do. FilterParameter therefore emits a
- * `$ref` and registers the condition schema it built here, and this processor
- * turns each registration into the `{name}Condition` / `{name}Group` pair the
- * `$ref` resolves against.
+ * A filter group may contain groups, which an inline parameter schema cannot
+ * express. FilterParameter therefore emits a `$ref` and registers the condition
+ * schema it built here, and this processor turns each registration into
+ * `{name}Condition` plus a chain of group components: `{name}Group` for the top
+ * level, `{name}GroupDepth2` down to `{name}GroupDepth{MAX_GROUP_DEPTH}` below
+ * it. Every level refers to the condition schema and to the next level only,
+ * and the deepest level accepts conditions alone.
+ *
+ * The chain is deliberately acyclic. A group schema that referred to itself
+ * would describe the wire format in one line, but tooling that dereferences a
+ * spec into a plain object tree - the publish pipeline does - cannot serialise
+ * a cycle. Unrolling to the runtime cap keeps the published spec a tree and
+ * makes the depth limit visible in the schema itself; the runtime enforces the
+ * same cap, from the same constant.
  *
  * The registry is static because attributes are constructed while the analyser
  * scans, long before any processor runs; it is emptied once written so a second
@@ -60,8 +69,7 @@ class FilterGroupComponentsProcessor
 
                 // Registering puts the schema and everything under it into the
                 // annotation tree. Without that the unused component cleanup
-                // never sees the `$ref` the group makes to its condition and
-                // drops that component again.
+                // never sees the `$ref`s between the levels and drops them.
                 $analysis->addAnnotation($schema, $context);
                 $schemas[] = $schema;
             }
@@ -76,7 +84,7 @@ class FilterGroupComponentsProcessor
      */
     private function componentsFor(string $name, array $conditionProperties): array
     {
-        return [
+        $schemas = [
             new Schema(
                 schema: $name.'Condition',
                 title: 'Condition',
@@ -84,35 +92,63 @@ class FilterGroupComponentsProcessor
                 type: 'object',
                 additionalProperties: false,
             ),
-            new Schema(
-                schema: $name.'Group',
-                title: 'Filter group',
-                description: sprintf(
+        ];
+
+        for ($level = 1; $level <= QueryBuilderRequest::MAX_GROUP_DEPTH; $level++) {
+            $schemas[] = $this->groupSchema($name, $level);
+        }
+
+        return $schemas;
+    }
+
+    /**
+     * The group component for one nesting level; the outermost group is level one.
+     */
+    private function groupSchema(string $name, int $level): Schema
+    {
+        $conditionRef = new Schema(ref: Components::COMPONENTS_PREFIX.'schemas/'.$name.'Condition');
+
+        if ($level === QueryBuilderRequest::MAX_GROUP_DEPTH) {
+            $description = sprintf('A filter group at the deepest level, %d; its conditions cannot be groups.', $level);
+            $items = new Items(ref: $conditionRef->ref);
+        } else {
+            $description = $level === 1
+                ? sprintf(
                     'A boolean group of filter conditions. A condition may be a group itself, nesting to at most %d levels.',
                     QueryBuilderRequest::MAX_GROUP_DEPTH,
+                )
+                : sprintf('A filter group nested at level %d of at most %d.', $level, QueryBuilderRequest::MAX_GROUP_DEPTH);
+            $items = new Items(oneOf: [
+                $conditionRef,
+                new Schema(ref: Components::COMPONENTS_PREFIX.'schemas/'.$this->groupComponentName($name, $level + 1)),
+            ]);
+        }
+
+        return new Schema(
+            schema: $this->groupComponentName($name, $level),
+            title: $level === 1 ? 'Filter group' : sprintf('Filter group, level %d', $level),
+            description: $description,
+            required: ['op', 'conditions'],
+            properties: [
+                new Property(
+                    property: 'op',
+                    description: 'Boolean operator combining the conditions.',
+                    type: 'string',
+                    enum: ['and', 'or'],
                 ),
-                required: ['op', 'conditions'],
-                properties: [
-                    new Property(
-                        property: 'op',
-                        description: 'Boolean operator combining the conditions.',
-                        type: 'string',
-                        enum: ['and', 'or'],
-                    ),
-                    new Property(
-                        property: 'conditions',
-                        type: 'array',
-                        items: new Items(
-                            oneOf: [
-                                new Schema(ref: Components::COMPONENTS_PREFIX.'schemas/'.$name.'Condition'),
-                                new Schema(ref: Components::COMPONENTS_PREFIX.'schemas/'.$name.'Group'),
-                            ],
-                        ),
-                    ),
-                ],
-                type: 'object',
-                additionalProperties: false,
-            ),
-        ];
+                new Property(
+                    property: 'conditions',
+                    type: 'array',
+                    items: $items,
+                ),
+            ],
+            type: 'object',
+            additionalProperties: false,
+        );
+    }
+
+    private function groupComponentName(string $name, int $level): string
+    {
+        return $level === 1 ? $name.'Group' : sprintf('%sGroupDepth%d', $name, $level);
     }
 }

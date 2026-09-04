@@ -280,10 +280,14 @@ On the spec side an opted-in endpoint also names its component schemas:
 new FilterParameter([...], supportsOrGroups: true, groupSchemaName: 'SalesOrderFilter')
 ```
 
-That emits `SalesOrderFilterCondition` and `SalesOrderFilterGroup` into `components/schemas` and
-points the parameter at the group, whose `conditions` refer back to both — the recursion the wire
-format needs. The depth cap lives in the description and is enforced at runtime, since a bounded
-schema cannot express it without unrolling.
+That emits `SalesOrderFilterCondition` plus one group component per nesting level into
+`components/schemas` — `SalesOrderFilterGroup` for the top level, `SalesOrderFilterGroupDepth2` down
+to `SalesOrderFilterGroupDepth5` below it — and points the parameter at the top level. Each level's
+`conditions` refer to the condition schema and to the next level only, and the deepest level accepts
+conditions alone, so the schema bounds the depth structurally and never refers to itself. The chain
+is unrolled on purpose: a self-referencing `$ref` describes the wire format in one line, but tooling
+that dereferences a spec into a plain object tree cannot serialise the cycle. The runtime enforces
+the same cap from the same constant.
 
 Filter defaults for keys the request does not name stay outside the group, as does `search` — both
 keep narrowing the whole result set. A key named anywhere in the tree, at any depth, counts as named
