@@ -520,11 +520,11 @@ describe('Invoice Date Filters', function () {
         $response->assertJsonCount(2, 'data');
     });
 
-    it('can filter invoices by paid_at not equals', function () {
+    it('can filter invoices by paid_at not equals, keeping the unpaid one', function () {
         $date = today();
         Invoice::factory()->paid()->create(['paid_at' => $date]);
-        Invoice::factory()->paid()->count(2)->create(['paid_at' => $date->copy()->addDays(5)]);
-        Invoice::factory()->draft()->count(1)->create(['paid_at' => null]);
+        $later = Invoice::factory()->paid()->count(2)->create(['paid_at' => $date->copy()->addDays(5)]);
+        $unpaid = Invoice::factory()->draft()->create(['paid_at' => null]);
 
         $query = buildFilterQuery([[
             'key' => 'paid_at',
@@ -534,7 +534,8 @@ describe('Invoice Date Filters', function () {
         $response = $this->getJson("/api/v1/invoices?{$query}");
 
         $response->assertOk();
-        $response->assertJsonCount(2, 'data');
+        expect(collect($response->json('data'))->pluck('id')->sort()->values()->all())
+            ->toBe($later->pluck('id')->push($unpaid->id)->sort()->values()->all());
     });
 });
 

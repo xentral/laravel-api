@@ -968,6 +968,47 @@ describe('LineItem String Null Filters (Legacy Empty String Support)', function 
     });
 });
 
+describe('LineItem String Negations Keep Unset Values', function () {
+    it('keeps a null and an empty description under a negation', function (string $operator, string|array $value) {
+        $invoice = Invoice::factory()->create();
+        $null = LineItem::factory()->for($invoice)->create(['description' => null]);
+        $empty = LineItem::factory()->for($invoice)->create(['description' => '']);
+        $other = LineItem::factory()->for($invoice)->create(['description' => 'Spare part']);
+        LineItem::factory()->for($invoice)->create(['description' => 'Widget with warranty']);
+
+        $query = buildFilterQuery([['key' => 'description', 'op' => $operator, 'value' => $value]]);
+        $response = $this->getJson("/api/v1/invoices/{$invoice->id}/line-items?{$query}");
+
+        $response->assertOk();
+        expect(collect($response->json('data'))->pluck('id')->sort()->values()->all())
+            ->toBe(collect([$null->id, $empty->id, $other->id])->sort()->values()->all());
+    })->with([
+        'notEquals' => ['notEquals', 'Widget with warranty'],
+        'notEquals with a list' => ['notEquals', ['Widget with warranty', 'Gadget']],
+        'notIn' => ['notIn', ['Widget with warranty']],
+        'notContains' => ['notContains', 'Widget'],
+        'notContains with a list' => ['notContains', ['Widget', 'Gadget']],
+    ]);
+
+    it('does not add null descriptions to a positive operator', function (string $operator, string|array $value) {
+        $invoice = Invoice::factory()->create();
+        LineItem::factory()->for($invoice)->create(['description' => null]);
+        $widget = LineItem::factory()->for($invoice)->create(['description' => 'Widget with warranty']);
+
+        $query = buildFilterQuery([['key' => 'description', 'op' => $operator, 'value' => $value]]);
+        $response = $this->getJson("/api/v1/invoices/{$invoice->id}/line-items?{$query}");
+
+        $response->assertOk();
+        expect(collect($response->json('data'))->pluck('id')->all())->toBe([$widget->id]);
+    })->with([
+        'equals' => ['equals', 'Widget with warranty'],
+        'in' => ['in', ['Widget with warranty']],
+        'contains' => ['contains', 'Widget'],
+        'startsWith' => ['startsWith', 'Widget'],
+        'endsWith' => ['endsWith', 'warranty'],
+    ]);
+});
+
 describe('LineItem Edge Cases', function () {
     it('returns empty result when no line items match filter', function () {
         $invoice = Invoice::factory()->hasLineItems(3)->create();

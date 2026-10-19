@@ -161,6 +161,11 @@ class NumberOperatorFilter extends FiltersExact
                     $query->where($query->qualifyColumn($property), '>=', $filterValues);
                     break;
             }
+
+            // A row without a value is not equal to the given number, so notEquals keeps it.
+            if ($operator === FilterOperator::NOT_EQUALS) {
+                $query->orWhereNull($query->qualifyColumn($property));
+            }
         });
     }
 

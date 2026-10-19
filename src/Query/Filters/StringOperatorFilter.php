@@ -7,6 +7,11 @@ use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 use Spatie\QueryBuilder\Filters\FiltersExact;
 
+/**
+ * Text, id and enum keys, whose payload shows a NULL column as null: isNull matches it and the
+ * negations keep it. A flag the payload renders as false belongs to BooleanIntegerFilter, and a
+ * column whose cast renders NULL as a value does not fit this filter's negations.
+ */
 class StringOperatorFilter extends FiltersExact
 {
     use HasRepeatedFilterKeys;
@@ -219,6 +224,12 @@ class StringOperatorFilter extends FiltersExact
                 case FilterOperator::GREATER_THAN_OR_EQUALS:
                     $query->where($query->qualifyColumn($property), '>=', $value);
                     break;
+            }
+
+            // isNull reads NULL as "not set", so a negation has to keep it: SQL's NOT, NOT IN and
+            // NOT LIKE evaluate to unknown on NULL and would drop the row, while they keep ''.
+            if (in_array($operator, [FilterOperator::NOT_EQUALS, FilterOperator::NOT_IN, FilterOperator::NOT_CONTAINS], true)) {
+                $query->orWhereNull($query->qualifyColumn($property));
             }
         });
 

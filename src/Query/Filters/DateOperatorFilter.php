@@ -155,6 +155,11 @@ class DateOperatorFilter extends FiltersExact
                     $query->whereDate($query->qualifyColumn($property), '>=', $filterValue);
                     break;
             }
+
+            // A row without a date is not on the given day, so notEquals keeps it.
+            if ($operator === FilterOperator::NOT_EQUALS) {
+                $query->orWhereNull($query->qualifyColumn($property));
+            }
         });
     }
 

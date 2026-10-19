@@ -167,6 +167,11 @@ class DateTimeOperatorFilter extends FiltersExact
                         break;
                 }
             }
+
+            // A row without a value is not at the given moment, so notEquals keeps it.
+            if ($operator === FilterOperator::NOT_EQUALS) {
+                $query->orWhereNull($column);
+            }
         });
     }
 
