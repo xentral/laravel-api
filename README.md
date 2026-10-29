@@ -230,6 +230,24 @@ contains `key`, `op`, and `value` parameters. Here are some examples:
 /api/v1/sales-orders?filter[0][key]=customer.name&filter[0][op]=contains&filter[0][value]=John
 ```
 
+##### Unset values and relations
+
+A text column is unset when it holds `NULL` or `''`, and every operator reads both alike: a `NULL`
+row matches exactly when `''` would. So `isNull` matches both, `notEquals 'x'` keeps both, and
+`notEquals ''` drops both. Number and date filters keep `NULL` rows under `notEquals`.
+
+A dotted key such as `lineItems.number` filters through a relation, and each condition is checked
+against the related rows on its own, so two conditions can be met by different rows:
+
+| Operator | A parent matches when |
+|---|---|
+| `equals`, `in`, `contains`, `startsWith`, `endsWith`, comparisons, `isNotNull` | some related row matches |
+| `notEquals`, `notIn`, `notContains` | no related row matches the positive operator |
+| `isNull` | no related row carries a value |
+
+A parent without related rows therefore matches the negations and `isNull`, and nothing else.
+On a text or id key, `equals` with several values needs a matching related row for each value.
+
 ##### Boolean filter groups
 
 Several filters in the list above are combined with `and`. To express `A or B` instead, send a
@@ -295,9 +313,9 @@ and keeps its default from being applied.
 
 ##### Truthy integer flags
 
-`QueryFilter::booleanInteger()` filters a legacy integer column that is semantically boolean. It
-matches by *truthiness*, not by an exact `1`, because consumers expose such a column as
-`(bool) $row->column`:
+`QueryFilter::booleanInteger()` filters a legacy integer column that is semantically boolean, and
+`QueryFilter::boolean()` uses the same filter. It matches by *truthiness*, not by an exact `1`,
+because consumers expose such a column as `(bool) $row->column`:
 
 | Filter | SQL |
 |---|---|
