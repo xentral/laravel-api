@@ -67,13 +67,12 @@ class DateTimeOperatorFilter extends FiltersExact
                 $query->where(function (Builder $query) use ($operator, $relationName, $relationProperty) {
                     switch ($operator) {
                         case FilterOperator::IS_NULL:
-                            $query->whereHas($relationName, function (Builder $query) use ($relationProperty) {
-                                $query->where(function (Builder $query) use ($relationProperty) {
-                                    $column = $query->qualifyColumn($relationProperty);
-                                    $query->whereNull($column)
-                                        ->orWhere($column, self::LEGACY_ZERO_DATETIME)
-                                        ->orWhere($column, self::LEGACY_ZERO_DATE);
-                                });
+                            // The complement of isNotNull: no related row carries a moment.
+                            $query->whereDoesntHave($relationName, function (Builder $query) use ($relationProperty) {
+                                $column = $query->qualifyColumn($relationProperty);
+                                $query->whereNotNull($column)
+                                    ->where($column, '!=', self::LEGACY_ZERO_DATETIME)
+                                    ->where($column, '!=', self::LEGACY_ZERO_DATE);
                             });
                             break;
                         case FilterOperator::IS_NOT_NULL:

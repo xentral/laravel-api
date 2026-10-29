@@ -65,12 +65,11 @@ class DateOperatorFilter extends FiltersExact
                 $query->where(function (Builder $query) use ($operator, $relationName, $relationProperty) {
                     switch ($operator) {
                         case FilterOperator::IS_NULL:
-                            $query->whereHas($relationName, function (Builder $query) use ($relationProperty) {
-                                $query->where(function (Builder $query) use ($relationProperty) {
-                                    $query->whereNull($query->qualifyColumn($relationProperty))
-                                        ->orWhere($query->qualifyColumn($relationProperty), '0000-00-00 00:00:00')
-                                        ->orWhere($query->qualifyColumn($relationProperty), '0000-00-00');
-                                });
+                            // The complement of isNotNull: no related row carries a date.
+                            $query->whereDoesntHave($relationName, function (Builder $query) use ($relationProperty) {
+                                $query->whereNotNull($query->qualifyColumn($relationProperty))
+                                    ->where($query->qualifyColumn($relationProperty), '!=', '0000-00-00 00:00:00')
+                                    ->where($query->qualifyColumn($relationProperty), '!=', '0000-00-00');
                             });
                             break;
                         case FilterOperator::IS_NOT_NULL:

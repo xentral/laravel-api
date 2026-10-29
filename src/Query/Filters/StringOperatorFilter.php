@@ -111,11 +111,10 @@ class StringOperatorFilter extends FiltersExact
                 $query->where(function (Builder $query) use ($operator, $relationName, $relationProperty) {
                     switch ($operator) {
                         case FilterOperator::IS_NULL:
-                            $query->whereHas($relationName, function (Builder $query) use ($relationProperty) {
-                                $query->where(function (Builder $query) use ($relationProperty) {
-                                    $query->whereNull($query->qualifyColumn($relationProperty))
-                                        ->orWhere($query->qualifyColumn($relationProperty), '');
-                                });
+                            // The complement of isNotNull: no related row carries a value.
+                            $query->whereDoesntHave($relationName, function (Builder $query) use ($relationProperty) {
+                                $query->whereNotNull($query->qualifyColumn($relationProperty))
+                                    ->where($query->qualifyColumn($relationProperty), '!=', '');
                             });
                             break;
                         case FilterOperator::IS_NOT_NULL:

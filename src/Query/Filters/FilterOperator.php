@@ -80,8 +80,9 @@ enum FilterOperator: string
     /**
      * The positive counterpart of a negated operator, used to express a
      * negative filter on a relation as whereDoesntHave(positive form).
-     * Returns null for operators that are not negations (isNotNull is
-     * handled by its own null-semantics branch, never by inversion).
+     * Returns null for operators that are not negations. isNull and
+     * isNotNull stay out: each filter's null-semantics branch handles them,
+     * and on a relation answers isNull as whereDoesntHave(isNotNull).
      */
     public function positiveForm(): ?self
     {
