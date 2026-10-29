@@ -129,6 +129,23 @@ describe('Date negation through a relation', function () {
         'date' => [DateOperatorFilter::class],
         'datetime' => [DateTimeOperatorFilter::class],
     ]);
+
+    it('skips the filter on an empty value, as it does on a column', function (string $filter, string $value) {
+        $withInvoice = Customer::factory()->create();
+        Invoice::factory()->for($withInvoice)->create(['paid_at' => '2026-01-15 10:00:00']);
+        $withoutInvoice = Customer::factory()->create();
+
+        $query = Customer::query();
+        (new $filter('invoices.paidAt'))($query, ['operator' => 'notEquals', 'value' => $value], 'invoices.paid_at');
+
+        expect($query->pluck('id')->sort()->values()->all())->toBe([$withInvoice->id, $withoutInvoice->id]);
+    })->with([
+        'date' => [DateOperatorFilter::class],
+        'datetime' => [DateTimeOperatorFilter::class],
+    ])->with([
+        'empty string' => [''],
+        'zero' => ['0'],
+    ]);
 });
 
 /**

@@ -232,9 +232,10 @@ contains `key`, `op`, and `value` parameters. Here are some examples:
 
 ##### Unset values and relations
 
-A text column is unset when it holds `NULL` or `''`, and every operator reads both alike: a `NULL`
-row matches exactly when `''` would. So `isNull` matches both, `notEquals 'x'` keeps both, and
-`notEquals ''` drops both. Number and date filters keep `NULL` rows under `notEquals`.
+A text column is unset when it holds `NULL` or `''`, and the equality, set and containment
+operators read both alike: a `NULL` row matches exactly when `''` would. So `isNull` matches both,
+`notEquals 'x'` keeps both, and `notEquals ''` drops both. The comparisons such as `lessThan` never
+match a `NULL` row. Number and date filters keep `NULL` rows under `notEquals`.
 
 A dotted key such as `lineItems.number` filters through a relation, and each condition is checked
 against the related rows on its own, so two conditions can be met by different rows:
@@ -317,13 +318,17 @@ and keeps its default from being applied.
 `QueryFilter::boolean()` uses the same filter. It matches by *truthiness*, not by an exact `1`,
 because consumers expose such a column as `(bool) $row->column`:
 
-| Filter | SQL |
+| Filter | SQL on a column |
 |---|---|
 | `equals true`, `notEquals false` | `column > 0` |
 | `equals false`, `notEquals true` | `(column = 0 or column is null)` |
 
 `false` deliberately matches `NULL`. A `NULL` is rendered as `false` in the payload, so a filter
 skipping those rows would contradict what the API returns for them.
+
+On a dotted key the two spellings of a row part ways, as in the relation table above: `equals false`
+needs some related row to be falsy, while `notEquals true` needs no related row to be truthy, so a
+parent without related rows matches only the negation.
 
 Accepted values are `true`, `1`, `'1'`, `'true'` and `false`, `0`, `'0'`, `'false'`; anything else is
 a validation error. Only `equals` and `notEquals` are supported.

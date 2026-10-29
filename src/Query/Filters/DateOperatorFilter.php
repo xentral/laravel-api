@@ -30,6 +30,10 @@ class DateOperatorFilter extends FiltersExact
             return;
         }
 
+        if (empty($value['value'] ?? null)) {
+            return;
+        }
+
         if ($this->isRelationProperty($query, $property)) {
             $this->withRelationConstraint($query, $value, $property);
 
@@ -133,10 +137,6 @@ class DateOperatorFilter extends FiltersExact
                 });
             }
 
-            return;
-        }
-
-        if (empty($value['value'])) {
             return;
         }
 
