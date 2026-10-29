@@ -3,6 +3,7 @@ declare(strict_types=1);
 namespace Xentral\LaravelApi\Query\Filters;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 use Spatie\QueryBuilder\Filters\FiltersExact;
 
@@ -54,6 +55,34 @@ class BooleanIntegerFilter extends FiltersExact
         $query->where(function (Builder $query) use ($column): void {
             $query->where($column, 0)->orWhereNull($column);
         });
+    }
+
+    /**
+     * notEquals through a relation means no related row matches the value, as in the operator
+     * filters, so a parent without related rows matches it.
+     */
+    protected function withRelationConstraint(Builder $query, mixed $value, string $property): void
+    {
+        [$relation, $property] = collect(explode('.', $property))
+            ->pipe(fn (Collection $parts) => [
+                $parts->except([count($parts) - 1])->implode('.'),
+                $parts->last(),
+            ]);
+
+        $isNegated = is_array($value) && ($value['operator'] ?? null) === 'notEquals';
+        $condition = $isNegated ? array_merge($value, ['operator' => 'equals']) : $value;
+        $constraint = function (Builder $query) use ($property, $condition): void {
+            $this->relationConstraints[] = $property = $query->qualifyColumn($property);
+            $this->__invoke($query, $condition, $property);
+        };
+
+        if ($isNegated) {
+            $query->whereDoesntHave($relation, $constraint);
+
+            return;
+        }
+
+        $query->whereHas($relation, $constraint);
     }
 
     /**

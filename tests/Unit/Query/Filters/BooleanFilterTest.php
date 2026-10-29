@@ -2,6 +2,7 @@
 
 use Workbench\App\Models\Customer;
 use Workbench\App\Models\Invoice;
+use Workbench\App\Models\LineItem;
 use Xentral\LaravelApi\Query\Filters\BooleanIntegerFilter;
 use Xentral\LaravelApi\Query\Filters\QueryFilter;
 
@@ -39,5 +40,25 @@ describe('Boolean filter', function () {
         (new BooleanIntegerFilter('customer.isActive'))($query, ['operator' => 'equals', 'value' => 'true'], 'customer.is_active');
 
         expect($query->pluck('id')->all())->toBe([$activeInvoice->id]);
+    });
+
+    it('matches notEquals through a relation only when no related row is truthy', function () {
+        $invoices = [];
+        foreach (['mixed' => [3, 0], 'off' => [0], 'none' => []] as $name => $quantities) {
+            $invoice = Invoice::factory()->create();
+            foreach ($quantities as $quantity) {
+                LineItem::factory()->for($invoice)->create(['quantity' => $quantity]);
+            }
+            $invoices[$name] = $invoice->id;
+        }
+
+        $query = Invoice::query();
+        (new BooleanIntegerFilter('lineItems.quantity'))($query, ['operator' => 'notEquals', 'value' => 'true'], 'lineItems.quantity');
+
+        expect($query->pluck('id')->sort()->values()->all())->toBe([$invoices['off'], $invoices['none']]);
+    });
+
+    it('keeps the internal name the boolean helper is given', function () {
+        expect(QueryFilter::boolean('isArchived', 'is_archived')->getInternalName())->toBe('is_archived');
     });
 });

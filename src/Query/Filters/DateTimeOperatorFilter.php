@@ -4,6 +4,7 @@ namespace Xentral\LaravelApi\Query\Filters;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 use Spatie\QueryBuilder\Filters\FiltersExact;
 
@@ -40,6 +41,40 @@ class DateTimeOperatorFilter extends FiltersExact
         }
 
         $this->applyFilter($query, $value, $property);
+    }
+
+    /**
+     * notEquals through a relation means no related row is at the moment, as in the string and
+     * number filters, so a parent without related rows matches it.
+     */
+    protected function withRelationConstraint(Builder $query, mixed $value, string $property): void
+    {
+        [$relation, $property] = collect(explode('.', $property))
+            ->pipe(fn (Collection $parts) => [
+                $parts->except([count($parts) - 1])->implode('.'),
+                $parts->last(),
+            ]);
+
+        $operator = $value['operator'] ?? null;
+        $filterOperator = is_string($operator) ? FilterOperator::tryFrom($operator) : null;
+        $positiveOperator = $filterOperator?->positiveForm();
+
+        if ($positiveOperator !== null && in_array($filterOperator, self::ALLOWED_OPERATORS, true)) {
+            $positiveValue = $value;
+            $positiveValue['operator'] = $positiveOperator->value;
+
+            $query->whereDoesntHave($relation, function (Builder $query) use ($property, $positiveValue) {
+                $this->relationConstraints[] = $property = $query->qualifyColumn($property);
+                $this->applyFilter($query, $positiveValue, $property);
+            });
+
+            return;
+        }
+
+        $query->whereHas($relation, function (Builder $query) use ($property, $value) {
+            $this->relationConstraints[] = $property = $query->qualifyColumn($property);
+            $this->applyFilter($query, $value, $property);
+        });
     }
 
     private function applyFilter(Builder $query, array $value, string $property): void

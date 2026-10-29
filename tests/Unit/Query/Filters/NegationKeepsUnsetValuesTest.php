@@ -108,3 +108,70 @@ describe('Id negation', function () {
         'notIn' => ['notIn', [5]],
     ]);
 });
+
+describe('Date negation through a relation', function () {
+    it('matches only a parent none of whose related rows is on the date', function (string $filter) {
+        $customers = [];
+        foreach (['matching' => ['2026-01-15 10:00:00', null], 'other' => ['2026-01-16 10:00:00'], 'unset' => [null], 'none' => []] as $name => $paidAt) {
+            $customer = Customer::factory()->create();
+            foreach ($paidAt as $moment) {
+                Invoice::factory()->for($customer)->create(['paid_at' => $moment]);
+            }
+            $customers[$name] = $customer->id;
+        }
+
+        $query = Customer::query();
+        (new $filter('invoices.paidAt'))($query, ['operator' => 'notEquals', 'value' => '2026-01-15'], 'invoices.paid_at');
+
+        expect($query->pluck('id')->sort()->values()->all())
+            ->toBe(collect(['other', 'unset', 'none'])->map(fn (string $name) => $customers[$name])->sort()->values()->all());
+    })->with([
+        'date' => [DateOperatorFilter::class],
+        'datetime' => [DateTimeOperatorFilter::class],
+    ]);
+});
+
+/**
+ * The NULL a negation keeps belongs to the condition, not to the whole query: a query already
+ * narrowed to one parent must not pick up another parent's unset rows.
+ */
+describe('Negation on a narrowed query', function () {
+    it('keeps only the unset text of the narrowed rows', function () {
+        $narrowed = Invoice::factory()->create();
+        $unset = LineItem::factory()->for($narrowed)->create(['description' => null]);
+        LineItem::factory()->for($narrowed)->create(['description' => 'Gift wrap']);
+        LineItem::factory()->for(Invoice::factory()->create())->create(['description' => null]);
+
+        $query = LineItem::query()->where('invoice_id', $narrowed->id);
+        (new StringOperatorFilter(FilterOperator::TEXT))($query, ['operator' => 'notEquals', 'value' => 'Gift wrap'], 'description');
+
+        expect($query->pluck('id')->all())->toBe([$unset->id]);
+    });
+
+    it('keeps only the unset number of the narrowed rows', function () {
+        $narrowed = Invoice::factory()->create();
+        $unset = LineItem::factory()->for($narrowed)->create(['discount_percent' => null]);
+        LineItem::factory()->for($narrowed)->create(['discount_percent' => 10]);
+        LineItem::factory()->for(Invoice::factory()->create())->create(['discount_percent' => null]);
+
+        $query = LineItem::query()->where('invoice_id', $narrowed->id);
+        (new NumberOperatorFilter('discountPercent'))($query, ['operator' => 'notEquals', 'value' => 10], 'discount_percent');
+
+        expect($query->pluck('id')->all())->toBe([$unset->id]);
+    });
+
+    it('keeps only the unset date of the narrowed rows', function (string $filter) {
+        $narrowed = Customer::factory()->create();
+        $unset = Invoice::factory()->for($narrowed)->create(['paid_at' => null]);
+        Invoice::factory()->for($narrowed)->create(['paid_at' => '2026-01-15 10:00:00']);
+        Invoice::factory()->for(Customer::factory()->create())->create(['paid_at' => null]);
+
+        $query = Invoice::query()->where('customer_id', $narrowed->id);
+        (new $filter('paidAt'))($query, ['operator' => 'notEquals', 'value' => '2026-01-15'], 'paid_at');
+
+        expect($query->pluck('id')->all())->toBe([$unset->id]);
+    })->with([
+        'date' => [DateOperatorFilter::class],
+        'datetime' => [DateTimeOperatorFilter::class],
+    ]);
+});
