@@ -175,3 +175,38 @@ describe('Negation on a narrowed query', function () {
         'datetime' => [DateTimeOperatorFilter::class],
     ]);
 });
+
+/**
+ * An unset text is stored as NULL or as '', and isNull reads both as unset. So every operator reads
+ * them alike too: a NULL row matches exactly when the '' row does.
+ */
+describe('Empty text and NULL alike', function () {
+    it('matches a NULL text exactly when it matches an empty one', function (string $operator, string|array $value, array $expected) {
+        $invoice = Invoice::factory()->create();
+        $rows = [
+            'set' => LineItem::factory()->for($invoice)->create(['description' => 'Gift wrap']),
+            'empty' => LineItem::factory()->for($invoice)->create(['description' => '']),
+            'null' => LineItem::factory()->for($invoice)->create(['description' => null]),
+        ];
+
+        $query = LineItem::query();
+        (new StringOperatorFilter(FilterOperator::TEXT))($query, ['operator' => $operator, 'value' => $value], 'description');
+
+        expect($query->pluck('id')->sort()->values()->all())
+            ->toBe(collect($expected)->map(fn (string $name) => $rows[$name]->id)->sort()->values()->all());
+    })->with([
+        'equals a value' => ['equals', 'Gift wrap', ['set']],
+        'equals the empty text' => ['equals', '', ['empty', 'null']],
+        'notEquals a value' => ['notEquals', 'Gift wrap', ['empty', 'null']],
+        'notEquals the empty text' => ['notEquals', '', ['set']],
+        'in, the empty text among the values' => ['in', ['', 'Gift wrap'], ['set', 'empty', 'null']],
+        'notIn, the empty text among the values' => ['notIn', ['', 'Engraving'], ['set']],
+        'notIn without the empty text' => ['notIn', ['Engraving'], ['set', 'empty', 'null']],
+        'contains the empty text' => ['contains', '', ['set', 'empty', 'null']],
+        'notContains a value' => ['notContains', 'wrap', ['empty', 'null']],
+        'notContains the empty text' => ['notContains', '', []],
+        'startsWith the empty text' => ['startsWith', '', ['set', 'empty', 'null']],
+        'endsWith a value' => ['endsWith', 'wrap', ['set']],
+        'endsWith the empty text' => ['endsWith', '', ['set', 'empty', 'null']],
+    ]);
+});

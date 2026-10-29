@@ -225,9 +225,17 @@ class StringOperatorFilter extends FiltersExact
                     break;
             }
 
-            // isNull reads NULL as "not set", so a negation has to keep it: SQL's NOT, NOT IN and
-            // NOT LIKE evaluate to unknown on NULL and would drop the row, while they keep ''.
-            if (in_array($operator, [FilterOperator::NOT_EQUALS, FilterOperator::NOT_IN, FilterOperator::NOT_CONTAINS], true)) {
+            // isNull reads NULL as "not set", the same as '', so a NULL row matches exactly when '' does.
+            // SQL alone never matches it: no comparison holds for NULL, and NOT, NOT IN and NOT LIKE
+            // evaluate to unknown on it.
+            $values = Arr::wrap($value);
+            $emptyMatches = match ($operator) {
+                FilterOperator::EQUALS, FilterOperator::IN, FilterOperator::CONTAINS, FilterOperator::STARTS_WITH, FilterOperator::ENDS_WITH => in_array('', $values, true),
+                FilterOperator::NOT_EQUALS, FilterOperator::NOT_IN, FilterOperator::NOT_CONTAINS => ! in_array('', $values, true),
+                default => false,
+            };
+
+            if ($emptyMatches) {
                 $query->orWhereNull($query->qualifyColumn($property));
             }
         });
