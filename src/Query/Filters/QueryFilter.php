@@ -16,7 +16,7 @@ class QueryFilter
     {
         return AllowedFilter::custom(
             $name,
-            new StringOperatorFilter(FilterOperator::ID),
+            new StringOperatorFilter(FilterOperator::ID, filterName: $name),
             $internalName,
         );
     }
@@ -34,7 +34,7 @@ class QueryFilter
     {
         return AllowedFilter::custom(
             $name,
-            new IdCallbackFilter(\Closure::fromCallable($apply), $target),
+            new IdCallbackFilter(\Closure::fromCallable($apply), $target, $name),
         );
     }
 
@@ -60,7 +60,7 @@ class QueryFilter
     {
         return AllowedFilter::custom(
             $name,
-            new StringOperatorFilter(FilterOperator::TEXT, $enum),
+            new StringOperatorFilter(FilterOperator::TEXT, $enum, $name),
             $internalName,
         );
     }
@@ -87,7 +87,7 @@ class QueryFilter
     ): AllowedFilter {
         return AllowedFilter::custom(
             $name,
-            new StringOperatorFilter($operators, $enum),
+            new StringOperatorFilter($operators, $enum, $name),
             $internalName,
         );
     }
@@ -125,7 +125,7 @@ class QueryFilter
 
         return AllowedFilter::custom(
             $name,
-            new StringOperatorFilter($operators, $enum),
+            new StringOperatorFilter($operators, $enum, $name),
             $internalName,
         );
     }

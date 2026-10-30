@@ -37,6 +37,7 @@ class IdCallbackFilter implements Filter
     public function __construct(
         private readonly Closure $apply,
         private readonly IdFilterTarget $target,
+        private readonly ?string $filterName = null,
     ) {}
 
     public function __invoke(Builder $query, mixed $value, string $property): void
@@ -45,8 +46,9 @@ class IdCallbackFilter implements Filter
             return;
         }
 
-        $operator = $this->toOperator($value['operator'] ?? 'equals', $property);
-        $ids = FilterValue::toIds($value['value'] ?? null, $property);
+        $violationKey = $this->filterName ?? $property;
+        $operator = $this->toOperator($value['operator'] ?? 'equals', $violationKey);
+        $ids = FilterValue::toIds($value['value'] ?? null, $violationKey);
 
         if ($operator === FilterOperator::NOT_EQUALS || $operator === FilterOperator::NOT_IN) {
             $query->whereNot(function (Builder $query) use ($ids): void {

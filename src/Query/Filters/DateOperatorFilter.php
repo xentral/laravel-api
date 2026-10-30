@@ -83,13 +83,13 @@ class DateOperatorFilter extends FiltersExact
             $operator = FilterOperator::from($value['operator']);
         } catch (\Throwable) {
             throw ValidationException::withMessages([
-                $property => "Unsupported filter operator: {$value['operator']}. Valid operators are ".implode(', ', array_map(fn ($v) => $v->value, self::ALLOWED_OPERATORS)),
+                $this->filterName => "Unsupported filter operator: {$value['operator']}. Valid operators are ".implode(', ', array_map(fn ($v) => $v->value, self::ALLOWED_OPERATORS)),
             ]);
         }
 
         if (! in_array($operator, self::ALLOWED_OPERATORS, true)) {
             throw ValidationException::withMessages([
-                $property => "Unsupported filter operator: {$operator->value}. Valid operators are ".implode(', ', array_map(fn ($v) => $v->value, self::ALLOWED_OPERATORS)),
+                $this->filterName => "Unsupported filter operator: {$operator->value}. Valid operators are ".implode(', ', array_map(fn ($v) => $v->value, self::ALLOWED_OPERATORS)),
             ]);
         }
 

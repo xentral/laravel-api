@@ -230,6 +230,11 @@ contains `key`, `op`, and `value` parameters. Here are some examples:
 /api/v1/sales-orders?filter[0][key]=customer.name&filter[0][op]=contains&filter[0][value]=John
 ```
 
+A rejected filter answers with a validation error keyed on the key the client sent, even when the
+key reads another column (`documentNumber` on `belegnr`) or a relation. A filter class built
+directly, outside the `QueryFilter` factories, only knows its column unless it is given the public
+name as well.
+
 ##### Unset values and relations
 
 A text column is unset when it holds `NULL` or `''`, and the equality, set and containment

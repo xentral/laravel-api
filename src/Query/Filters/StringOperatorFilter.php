@@ -16,7 +16,17 @@ class StringOperatorFilter extends FiltersExact
 {
     use HasRepeatedFilterKeys;
 
-    public function __construct(private readonly array $allowedOperators = [], private readonly ?string $enum = null) {}
+    /**
+     * @param  list<FilterOperator>  $allowedOperators
+     * @param  class-string|null  $enum
+     * @param  string|null  $filterName  the key the client sends, which a violation is keyed on; without it the
+     *                                   column the filter reads is all a violation can name
+     */
+    public function __construct(
+        private readonly array $allowedOperators = [],
+        private readonly ?string $enum = null,
+        private readonly ?string $filterName = null,
+    ) {}
 
     public function __invoke(Builder $query, mixed $value, string $property)
     {
@@ -88,11 +98,11 @@ class StringOperatorFilter extends FiltersExact
         try {
             $operator = FilterOperator::from($value['operator']);
         } catch (\Throwable) {
-            throw ValidationException::withMessages([$property => "Unsupported filter operator: {$value['operator']}. Valid operators are ".implode(', ', array_map(fn ($v) => $v->value, $this->allowedOperators))]);
+            throw ValidationException::withMessages([$this->violationKey($property) => "Unsupported filter operator: {$value['operator']}. Valid operators are ".implode(', ', array_map(fn ($v) => $v->value, $this->allowedOperators))]);
         }
 
         if (! $skipValidation && ! in_array($operator, $this->allowedOperators, true)) {
-            throw ValidationException::withMessages([$property => "Unsupported filter operator: {$operator->value}. Valid operators are ".implode(', ', array_map(fn ($v) => $v->value, $this->allowedOperators))]);
+            throw ValidationException::withMessages([$this->violationKey($property) => "Unsupported filter operator: {$operator->value}. Valid operators are ".implode(', ', array_map(fn ($v) => $v->value, $this->allowedOperators))]);
         }
 
         // IS_NULL and IS_NOT_NULL don't require a value
@@ -267,7 +277,7 @@ class StringOperatorFilter extends FiltersExact
 
             if ($mappedValue === null) {
                 throw ValidationException::withMessages([
-                    $property => 'Invalid value: '.$value.'. Valid values are: '.implode(', ', array_map(fn ($v) => $v instanceof \BackedEnum ? $v->value : $v->name, $this->enum::cases())),
+                    $this->violationKey($property) => 'Invalid value: '.$value.'. Valid values are: '.implode(', ', array_map(fn ($v) => $v instanceof \BackedEnum ? $v->value : $v->name, $this->enum::cases())),
                 ]);
             }
 
@@ -279,7 +289,7 @@ class StringOperatorFilter extends FiltersExact
 
         if (! in_array($value, $validValues, true)) {
             throw ValidationException::withMessages([
-                $property => 'Invalid value: '.$value.'. Valid values are: '.implode(', ', $validValues),
+                $this->violationKey($property) => 'Invalid value: '.$value.'. Valid values are: '.implode(', ', $validValues),
             ]);
         }
 
@@ -294,5 +304,10 @@ class StringOperatorFilter extends FiltersExact
     public function enum(): ?string
     {
         return $this->enum;
+    }
+
+    private function violationKey(string $property): string
+    {
+        return $this->filterName ?? $property;
     }
 }
