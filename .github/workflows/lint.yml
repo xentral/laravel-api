@@ -14,12 +14,19 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: 8.3
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+      - name: Cache composer downloads
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: composer-${{ runner.os }}-8.3-${{ hashFiles('composer.json') }}
+          restore-keys: composer-${{ runner.os }}-8.3-
       - name: Install dependencies
         run: composer install
-      - name: Run laravel pint
+      - name: Run pint and rector
         run: composer lint
-      - name: Run rector
-        run: composer rector
       - uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: Apply pint changes

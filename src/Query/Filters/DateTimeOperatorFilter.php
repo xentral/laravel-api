@@ -12,11 +12,11 @@ class DateTimeOperatorFilter extends FiltersExact
 {
     public function __construct(private readonly string $filterName) {}
 
-    private const LEGACY_ZERO_DATETIME = '0000-00-00 00:00:00';
+    private const string LEGACY_ZERO_DATETIME = '0000-00-00 00:00:00';
 
-    private const LEGACY_ZERO_DATE = '0000-00-00';
+    private const string LEGACY_ZERO_DATE = '0000-00-00';
 
-    private const ALLOWED_OPERATORS = FilterOperator::COMPARABLE;
+    private const array ALLOWED_OPERATORS = FilterOperator::COMPARABLE;
 
     public function __invoke(Builder $query, mixed $value, string $property): void
     {

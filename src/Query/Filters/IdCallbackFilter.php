@@ -26,7 +26,7 @@ class IdCallbackFilter implements Filter
 {
     use HasRepeatedFilterKeys;
 
-    private const SUPPORTED_OPERATORS = FilterOperator::MEMBERSHIP;
+    private const array SUPPORTED_OPERATORS = FilterOperator::MEMBERSHIP;
 
     /**
      * The return value of `$apply` is discarded, so a single expression arrow function

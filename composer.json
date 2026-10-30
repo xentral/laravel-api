@@ -16,11 +16,11 @@
         }
     ],
     "require": {
-        "php": "^8.2",
-        "illuminate/console": "^10.0|^11.0|^12.0",
-        "illuminate/http": "^10.0|^11.0|^12.0",
-        "illuminate/support": "^10.0|^11.0|^12.0",
-        "illuminate/validation": "^10.0|^11.0|^12.0",
+        "php": "^8.3",
+        "illuminate/console": "^12.0",
+        "illuminate/http": "^12.0",
+        "illuminate/support": "^12.0",
+        "illuminate/validation": "^12.0",
         "spatie/laravel-data": "^4.17",
         "spatie/laravel-query-builder": "^6.3",
         "swagger-api/swagger-ui": "^5.21",
@@ -31,10 +31,9 @@
         "laravel/boost": "^1.0",
         "laravel/pint": "^1.8",
         "orchestra/testbench": "^10.11",
-        "pestphp/pest": "^3.7",
-        "phpstan/phpstan": "~2.2.0",
-        "phpunit/phpunit": "^11.5",
-        "xentral/laravel-testing": "^0.6.2"
+        "pestphp/pest": "^4.0",
+        "phpunit/phpunit": "^12.5",
+        "xentral/laravel-testing": "^0.6.3"
     },
     "autoload": {
         "psr-4": {
@@ -77,6 +76,9 @@
         "sort-packages": true,
         "allow-plugins": {
             "pestphp/pest-plugin": true
+        },
+        "audit": {
+            "abandoned": "report"
         }
     },
     "extra": {
