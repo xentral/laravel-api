@@ -31,10 +31,9 @@
         "laravel/boost": "^1.0",
         "laravel/pint": "^1.8",
         "orchestra/testbench": "^10.11",
-        "pestphp/pest": "^3.7",
-        "phpstan/phpstan": "~2.2.0",
-        "phpunit/phpunit": "^11.5",
-        "xentral/laravel-testing": "^0.6.2"
+        "pestphp/pest": "^4.0",
+        "phpunit/phpunit": "^12.5",
+        "xentral/laravel-testing": "^0.6.3"
     },
     "autoload": {
         "psr-4": {
