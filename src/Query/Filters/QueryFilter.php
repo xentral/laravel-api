@@ -101,13 +101,13 @@ class QueryFilter
         );
     }
 
+    /**
+     * A flag is matched the way the payload shows it, which casts NULL to false: comparing the
+     * column with true or false would leave NULL out of both.
+     */
     public static function boolean(string $name, ?string $internalName = null): AllowedFilter
     {
-        return AllowedFilter::custom(
-            $name,
-            new StringOperatorFilter(FilterOperator::BOOLEAN),
-            $internalName,
-        );
+        return self::booleanInteger($name, $internalName);
     }
 
     public static function booleanInteger(string $name, ?string $internalName = null): AllowedFilter

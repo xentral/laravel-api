@@ -7,6 +7,11 @@ use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 use Spatie\QueryBuilder\Filters\FiltersExact;
 
+/**
+ * Text, id and enum keys, whose payload shows a NULL column as null: isNull matches it and the
+ * negations keep it. A flag the payload renders as false belongs to BooleanIntegerFilter, and a
+ * column whose cast renders NULL as a value does not fit this filter's negations.
+ */
 class StringOperatorFilter extends FiltersExact
 {
     use HasRepeatedFilterKeys;
@@ -106,11 +111,10 @@ class StringOperatorFilter extends FiltersExact
                 $query->where(function (Builder $query) use ($operator, $relationName, $relationProperty) {
                     switch ($operator) {
                         case FilterOperator::IS_NULL:
-                            $query->whereHas($relationName, function (Builder $query) use ($relationProperty) {
-                                $query->where(function (Builder $query) use ($relationProperty) {
-                                    $query->whereNull($query->qualifyColumn($relationProperty))
-                                        ->orWhere($query->qualifyColumn($relationProperty), '');
-                                });
+                            // The complement of isNotNull: no related row carries a value.
+                            $query->whereDoesntHave($relationName, function (Builder $query) use ($relationProperty) {
+                                $query->whereNotNull($query->qualifyColumn($relationProperty))
+                                    ->where($query->qualifyColumn($relationProperty), '!=', '');
                             });
                             break;
                         case FilterOperator::IS_NOT_NULL:
@@ -219,6 +223,20 @@ class StringOperatorFilter extends FiltersExact
                 case FilterOperator::GREATER_THAN_OR_EQUALS:
                     $query->where($query->qualifyColumn($property), '>=', $value);
                     break;
+            }
+
+            // isNull reads NULL as "not set", the same as '', so a NULL row matches exactly when '' does.
+            // SQL alone never matches it: no comparison holds for NULL, and NOT, NOT IN and NOT LIKE
+            // evaluate to unknown on it.
+            $values = Arr::wrap($value);
+            $emptyMatches = match ($operator) {
+                FilterOperator::EQUALS, FilterOperator::IN, FilterOperator::CONTAINS, FilterOperator::STARTS_WITH, FilterOperator::ENDS_WITH => in_array('', $values, true),
+                FilterOperator::NOT_EQUALS, FilterOperator::NOT_IN, FilterOperator::NOT_CONTAINS => ! in_array('', $values, true),
+                default => false,
+            };
+
+            if ($emptyMatches) {
+                $query->orWhereNull($query->qualifyColumn($property));
             }
         });
 

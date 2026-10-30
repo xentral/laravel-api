@@ -16,6 +16,11 @@ use Spatie\QueryBuilder\Filters\Filter;
  *
  * Each invocation of the callback is wrapped in its own nested where, so a predicate
  * using `orWhere` cannot widen the query it is applied to.
+ *
+ * A negation wraps the callback in NOT. On a column target a row whose column is NULL
+ * therefore stays out of notEquals and notIn, while the column based id filter keeps
+ * it: the callback names no column the filter could test for NULL. Point a column
+ * target only at a column that never holds NULL.
  */
 class IdCallbackFilter implements Filter
 {

@@ -96,8 +96,9 @@ class NumberOperatorFilter extends FiltersExact
                 $query->where(function (Builder $query) use ($operator, $relationName, $relationProperty) {
                     switch ($operator) {
                         case FilterOperator::IS_NULL:
-                            $query->whereHas($relationName, function (Builder $query) use ($relationProperty) {
-                                $query->whereNull($query->qualifyColumn($relationProperty));
+                            // The complement of isNotNull: no related row carries a value.
+                            $query->whereDoesntHave($relationName, function (Builder $query) use ($relationProperty) {
+                                $query->whereNotNull($query->qualifyColumn($relationProperty));
                             });
                             break;
                         case FilterOperator::IS_NOT_NULL:
@@ -160,6 +161,11 @@ class NumberOperatorFilter extends FiltersExact
                 case FilterOperator::GREATER_THAN_OR_EQUALS:
                     $query->where($query->qualifyColumn($property), '>=', $filterValues);
                     break;
+            }
+
+            // A row without a value is not equal to the given number, so notEquals keeps it.
+            if ($operator === FilterOperator::NOT_EQUALS) {
+                $query->orWhereNull($query->qualifyColumn($property));
             }
         });
     }

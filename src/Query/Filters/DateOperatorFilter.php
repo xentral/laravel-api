@@ -4,6 +4,7 @@ namespace Xentral\LaravelApi\Query\Filters;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 use Spatie\QueryBuilder\Filters\FiltersExact;
 
@@ -29,6 +30,10 @@ class DateOperatorFilter extends FiltersExact
             return;
         }
 
+        if (empty($value['value'] ?? null)) {
+            return;
+        }
+
         if ($this->isRelationProperty($query, $property)) {
             $this->withRelationConstraint($query, $value, $property);
 
@@ -36,6 +41,40 @@ class DateOperatorFilter extends FiltersExact
         }
 
         $this->applyFilter($query, $value, $property);
+    }
+
+    /**
+     * notEquals through a relation means no related row is on the date, as in the string and number
+     * filters, so a parent without related rows matches it.
+     */
+    protected function withRelationConstraint(Builder $query, mixed $value, string $property): void
+    {
+        [$relation, $property] = collect(explode('.', $property))
+            ->pipe(fn (Collection $parts) => [
+                $parts->except([count($parts) - 1])->implode('.'),
+                $parts->last(),
+            ]);
+
+        $operator = $value['operator'] ?? null;
+        $filterOperator = is_string($operator) ? FilterOperator::tryFrom($operator) : null;
+        $positiveOperator = $filterOperator?->positiveForm();
+
+        if ($positiveOperator !== null && in_array($filterOperator, self::ALLOWED_OPERATORS, true)) {
+            $positiveValue = $value;
+            $positiveValue['operator'] = $positiveOperator->value;
+
+            $query->whereDoesntHave($relation, function (Builder $query) use ($property, $positiveValue) {
+                $this->relationConstraints[] = $property = $query->qualifyColumn($property);
+                $this->applyFilter($query, $positiveValue, $property);
+            });
+
+            return;
+        }
+
+        $query->whereHas($relation, function (Builder $query) use ($property, $value) {
+            $this->relationConstraints[] = $property = $query->qualifyColumn($property);
+            $this->applyFilter($query, $value, $property);
+        });
     }
 
     private function applyFilter(Builder $query, array $value, string $property): void
@@ -65,12 +104,11 @@ class DateOperatorFilter extends FiltersExact
                 $query->where(function (Builder $query) use ($operator, $relationName, $relationProperty) {
                     switch ($operator) {
                         case FilterOperator::IS_NULL:
-                            $query->whereHas($relationName, function (Builder $query) use ($relationProperty) {
-                                $query->where(function (Builder $query) use ($relationProperty) {
-                                    $query->whereNull($query->qualifyColumn($relationProperty))
-                                        ->orWhere($query->qualifyColumn($relationProperty), '0000-00-00 00:00:00')
-                                        ->orWhere($query->qualifyColumn($relationProperty), '0000-00-00');
-                                });
+                            // The complement of isNotNull: no related row carries a date.
+                            $query->whereDoesntHave($relationName, function (Builder $query) use ($relationProperty) {
+                                $query->whereNotNull($query->qualifyColumn($relationProperty))
+                                    ->where($query->qualifyColumn($relationProperty), '!=', '0000-00-00 00:00:00')
+                                    ->where($query->qualifyColumn($relationProperty), '!=', '0000-00-00');
                             });
                             break;
                         case FilterOperator::IS_NOT_NULL:
@@ -99,10 +137,6 @@ class DateOperatorFilter extends FiltersExact
                 });
             }
 
-            return;
-        }
-
-        if (empty($value['value'])) {
             return;
         }
 
@@ -154,6 +188,11 @@ class DateOperatorFilter extends FiltersExact
                 case FilterOperator::GREATER_THAN_OR_EQUALS:
                     $query->whereDate($query->qualifyColumn($property), '>=', $filterValue);
                     break;
+            }
+
+            // A row without a date is not on the given day, so notEquals keeps it.
+            if ($operator === FilterOperator::NOT_EQUALS) {
+                $query->orWhereNull($query->qualifyColumn($property));
             }
         });
     }

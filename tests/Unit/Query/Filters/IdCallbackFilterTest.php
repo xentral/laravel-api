@@ -120,10 +120,10 @@ describe('IdCallbackFilter on a column target', function () {
             ->and($received->getArrayCopy())->toBe([[$first->id, $second->id]]);
     });
 
-    it('excludes null rows for notIn, exactly like the column based id filter does', function () {
+    it('leaves null rows out of notIn on a column target, where the column based id filter keeps them', function () {
         Customer::factory()->create(['is_archived' => 5]);
         $other = Customer::factory()->create(['is_archived' => 7]);
-        Customer::factory()->create(['is_archived' => null]);
+        $unset = Customer::factory()->create(['is_archived' => null]);
 
         $filter = new IdCallbackFilter(
             fn (Builder $query, array $ids) => $query->whereIn('customers.is_archived', $ids),
@@ -137,7 +137,7 @@ describe('IdCallbackFilter on a column target', function () {
         (new StringOperatorFilter([FilterOperator::NOT_IN]))($viaColumn, ['operator' => 'notIn', 'value' => [5]], 'is_archived');
 
         expect($viaCallback->pluck('id')->all())->toBe([$other->id])
-            ->and($viaCallback->pluck('id')->all())->toBe($viaColumn->pluck('id')->all());
+            ->and($viaColumn->pluck('id')->sort()->values()->all())->toBe([$other->id, $unset->id]);
     });
 
     it('excludes every listed id for notIn on a plain column', function () {
