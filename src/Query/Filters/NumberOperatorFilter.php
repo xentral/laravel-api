@@ -9,7 +9,7 @@ use Spatie\QueryBuilder\Filters\FiltersExact;
 
 class NumberOperatorFilter extends FiltersExact
 {
-    private const ALLOWED_OPERATORS = FilterOperator::COMPARABLE;
+    private const array ALLOWED_OPERATORS = FilterOperator::COMPARABLE;
 
     public function __construct(private readonly string $filterName) {}
 
