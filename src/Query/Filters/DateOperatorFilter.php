@@ -30,6 +30,10 @@ class DateOperatorFilter extends FiltersExact
             return;
         }
 
+        if (is_array($value)) {
+            $this->toOperator($value['operator'] ?? null);
+        }
+
         if (empty($value['value'] ?? null)) {
             return;
         }
@@ -79,19 +83,7 @@ class DateOperatorFilter extends FiltersExact
 
     private function applyFilter(Builder $query, array $value, string $property): void
     {
-        try {
-            $operator = FilterOperator::from($value['operator']);
-        } catch (\Throwable) {
-            throw ValidationException::withMessages([
-                $this->filterName => "Unsupported filter operator: {$value['operator']}. Valid operators are ".implode(', ', array_map(fn ($v) => $v->value, self::ALLOWED_OPERATORS)),
-            ]);
-        }
-
-        if (! in_array($operator, self::ALLOWED_OPERATORS, true)) {
-            throw ValidationException::withMessages([
-                $this->filterName => "Unsupported filter operator: {$operator->value}. Valid operators are ".implode(', ', array_map(fn ($v) => $v->value, self::ALLOWED_OPERATORS)),
-            ]);
-        }
+        $operator = $this->toOperator($value['operator'] ?? null);
 
         // IS_NULL and IS_NOT_NULL don't require a value
         if (in_array($operator, [FilterOperator::IS_NULL, FilterOperator::IS_NOT_NULL])) {
@@ -212,5 +204,24 @@ class DateOperatorFilter extends FiltersExact
     public function allowedOperators(): array
     {
         return self::ALLOWED_OPERATORS;
+    }
+
+    /**
+     * Rejects an operator the key does not support before anything else is looked at, so a request
+     * without a value is answered the same way as one with a value.
+     */
+    private function toOperator(mixed $operator): FilterOperator
+    {
+        $parsed = is_string($operator) ? FilterOperator::tryFrom($operator) : null;
+
+        if ($parsed === null || ! in_array($parsed, self::ALLOWED_OPERATORS, true)) {
+            $printable = is_scalar($operator) ? (string) $operator : gettype($operator);
+
+            throw ValidationException::withMessages([
+                $this->filterName => "Unsupported filter operator: {$printable}. Valid operators are ".implode(', ', array_map(fn ($v) => $v->value, self::ALLOWED_OPERATORS)),
+            ]);
+        }
+
+        return $parsed;
     }
 }
