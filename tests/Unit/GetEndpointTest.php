@@ -110,3 +110,33 @@ it('leaves the include parameter without description and extension when no inclu
         ->and($include->description)->toBe(Generator::UNDEFINED)
         ->and($include->x)->toBe(Generator::UNDEFINED);
 });
+
+it('treats an include with an empty scope list as not gated', function () {
+    $endpoint = new GetEndpoint(
+        path: '/users/{id}',
+        resource: '#/components/schemas/User',
+        description: 'Get user',
+        includes: ['salesPrices' => 'salesPrice:read', 'files' => []],
+    );
+
+    $include = includeParameter($endpoint);
+
+    expect($include->schema->items->enum)->toBe(['salesPrices', 'files'])
+        ->and($include->x)->toBe(['include-scopes' => ['salesPrices' => ['salesPrice:read']]])
+        ->and($include->description)->toBe('`salesPrices` requires the scope `salesPrice:read`.');
+});
+
+it('leaves the include parameter untouched when every scope list is empty', function () {
+    $endpoint = new GetEndpoint(
+        path: '/users/{id}',
+        resource: '#/components/schemas/User',
+        description: 'Get user',
+        includes: ['files' => []],
+    );
+
+    $include = includeParameter($endpoint);
+
+    expect($include->schema->items->enum)->toBe(['files'])
+        ->and($include->description)->toBe(Generator::UNDEFINED)
+        ->and($include->x)->toBe(Generator::UNDEFINED);
+});

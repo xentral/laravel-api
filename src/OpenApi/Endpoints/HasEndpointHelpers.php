@@ -129,7 +129,7 @@ trait HasEndpointHelpers
     {
         $scopes = [];
         foreach ($includes as $key => $value) {
-            if (is_string($key)) {
+            if (is_string($key) && Arr::wrap($value) !== []) {
                 $scopes[$key] = array_values(Arr::wrap($value));
             }
         }
