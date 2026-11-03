@@ -12,6 +12,9 @@ class ListEndpoint extends Get
 {
     use HasEndpointHelpers;
 
+    /**
+     * @param  array<int|string, string|list<string>>  $includes  A string key names an include that requires the scope(s) it maps to
+     */
     public function __construct(
         string $path,
         string $resource,

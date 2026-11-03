@@ -12,6 +12,7 @@ class GetEndpoint extends Get
 
     /**
      * @param  MediaType[]  $additionalMediaTypes  Additional content types to include in the 200 response (e.g., application/pdf)
+     * @param  array<int|string, string|list<string>>  $includes  A string key names an include that requires the scope(s) it maps to
      */
     public function __construct(
         string $path,

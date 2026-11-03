@@ -98,7 +98,7 @@ class InvoiceController
         path: '/api/v1/invoices/{id}',
         resource: InvoiceResource::class,
         description: 'Get invoice',
-        includes: ['customer', 'lineItems'],
+        includes: ['customer' => 'customer:read', 'lineItems'],
         additionalMediaTypes: [new PdfMediaType],
     )]
     public function show(Request $request, int $id): InvoiceResource|Response

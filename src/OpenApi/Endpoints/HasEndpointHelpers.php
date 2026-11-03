@@ -96,19 +96,59 @@ trait HasEndpointHelpers
             );
         }
         if (! empty($includes)) {
-            $parameters[] = new Parameter(
+            $include = new Parameter(
                 name: 'include',
                 in: 'query',
                 required: false,
                 schema: new Schema(
                     type: 'array',
-                    items: new Items(type: 'string', enum: $includes),
+                    items: new Items(type: 'string', enum: array_map(
+                        fn (int|string $key, string|array $value) => is_string($key) ? $key : $value,
+                        array_keys($includes),
+                        $includes,
+                    )),
                 ),
                 explode: false,
             );
+            $includeScopes = $this->includeScopes($includes);
+            if ($includeScopes !== []) {
+                $include->description = $this->describeIncludeScopes($includeScopes);
+                $include->x = ['include-scopes' => $includeScopes];
+            }
+            $parameters[] = $include;
         }
 
         return $parameters;
+    }
+
+    /**
+     * @param  array<int|string, string|list<string>>  $includes  a string key names an include gated by the scope(s) it maps to
+     * @return array<string, list<string>>
+     */
+    private function includeScopes(array $includes): array
+    {
+        $scopes = [];
+        foreach ($includes as $key => $value) {
+            if (is_string($key)) {
+                $scopes[$key] = array_values(Arr::wrap($value));
+            }
+        }
+
+        return $scopes;
+    }
+
+    /** @param  array<string, list<string>>  $includeScopes */
+    private function describeIncludeScopes(array $includeScopes): string
+    {
+        $sentences = [];
+        foreach ($includeScopes as $include => $scopes) {
+            $list = implode(', ', array_map(fn (string $scope) => "`{$scope}`", $scopes));
+            $sentences[] = count($scopes) === 1
+                ? "`{$include}` requires the scope {$list}."
+                : "`{$include}` requires the scopes {$list}.";
+        }
+
+        return implode(' ', $sentences);
     }
 
     protected function createMissingPathParameters(string $path, array $parameters): array

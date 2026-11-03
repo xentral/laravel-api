@@ -2,6 +2,7 @@
 
 use OpenApi\Attributes\MediaType;
 use OpenApi\Attributes\Schema;
+use OpenApi\Generator;
 use Xentral\LaravelApi\OpenApi\Endpoints\GetEndpoint;
 use Xentral\LaravelApi\OpenApi\Responses\PdfMediaType;
 
@@ -78,4 +79,34 @@ it('supports multiple additional media types', function () {
 
     $contentTypes = array_map(fn ($content) => $content->mediaType, $successResponse->content);
     expect($contentTypes)->toBe(['application/json', 'application/pdf', 'text/csv']);
+});
+
+it('renders a scoped include into the enum, the description and x-include-scopes', function () {
+    $endpoint = new GetEndpoint(
+        path: '/users/{id}',
+        resource: '#/components/schemas/User',
+        description: 'Get user',
+        includes: ['project', 'salesPrices' => 'salesPrice:read', 'files' => ['files:read', 'other:read']],
+    );
+
+    $include = includeParameter($endpoint);
+
+    expect($include->schema->items->enum)->toBe(['project', 'salesPrices', 'files'])
+        ->and($include->x)->toBe(['include-scopes' => ['salesPrices' => ['salesPrice:read'], 'files' => ['files:read', 'other:read']]])
+        ->and($include->description)->toBe('`salesPrices` requires the scope `salesPrice:read`. `files` requires the scopes `files:read`, `other:read`.');
+});
+
+it('leaves the include parameter without description and extension when no include is scoped', function () {
+    $endpoint = new GetEndpoint(
+        path: '/users/{id}',
+        resource: '#/components/schemas/User',
+        description: 'Get user',
+        includes: ['project', 'lineItems'],
+    );
+
+    $include = includeParameter($endpoint);
+
+    expect($include->schema->items->enum)->toBe(['project', 'lineItems'])
+        ->and($include->description)->toBe(Generator::UNDEFINED)
+        ->and($include->x)->toBe(Generator::UNDEFINED);
 });
