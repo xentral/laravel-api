@@ -344,6 +344,7 @@ paths:
         -
           name: include
           in: query
+          description: '`customer` requires the scope `customer:read`.'
           required: false
           explode: false
           schema:
@@ -353,6 +354,9 @@ paths:
               enum:
                 - customer
                 - lineItems
+          x-include-scopes:
+            customer:
+              - 'customer:read'
       responses:
         '200':
           description: 'Get invoice'

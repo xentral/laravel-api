@@ -217,6 +217,48 @@ use Xentral\LaravelApi\Query\QueryBuilder;
     }
 ```
 
+#### Includes
+
+The `includes` argument lists the relations a client may request with `?include=`. A plain entry
+is open to every caller of the endpoint. A string key names an include that requires a token
+scope; its value is that scope, or a list of scopes when the include needs all of them:
+
+```php
+#[ListEndpoint(
+    path: '/api/v1/sales-orders',
+    resource: SalesOrderResource::class,
+    description: 'Paginated list of sales orders',
+    includes: ['customer', 'positions', 'files' => 'files:read'],
+)]
+```
+
+Every name still lands in the `enum` of the `include` parameter. A scoped include additionally
+renders one sentence per gated include into the parameter's `description` and the scopes into an
+`x-include-scopes` extension, so tooling can read the gate without parsing the text:
+
+```yaml
+-
+  name: include
+  in: query
+  description: '`files` requires the scope `files:read`.'
+  required: false
+  explode: false
+  schema:
+    type: array
+    items:
+      type: string
+      enum:
+        - customer
+        - positions
+        - files
+  x-include-scopes:
+    files:
+      - 'files:read'
+```
+
+The attribute only documents the scope. Enforcing it at runtime is the application's job, for
+example where it registers its allowed includes.
+
 #### Filtering
 
 This package leverages the `spatie/laravel-query-builder` package to provide an intuitive filter implementation.

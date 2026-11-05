@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 
 use Illuminate\Support\Str;
+use OpenApi\Attributes\Parameter;
 use Symfony\Component\Yaml\Yaml;
 use Xentral\LaravelApi\OpenApi\OpenApiGeneratorFactory;
 use Xentral\LaravelApi\Tests\TestCase;
@@ -19,6 +20,13 @@ function buildFilterQuery(array $filters): string
     }, $filters);
 
     return http_build_query(['filter' => json_encode($normalizedFilters)]);
+}
+
+function includeParameter(object $endpoint): Parameter
+{
+    $parameters = array_values(array_filter($endpoint->parameters, fn ($parameter) => $parameter->name === 'include'));
+
+    return $parameters[0];
 }
 
 function workbench_dir(): string
