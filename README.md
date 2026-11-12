@@ -464,7 +464,7 @@ This package provides flexible pagination options that can be configured per end
 
 **Stable Order**
 
-`apiPaginate()` appends the model's qualified primary key (ascending) as the last `ORDER BY` for all three types, so rows that share a sort value keep one order across pages and no row is skipped or repeated. It is not appended when the query already orders by the key, or when it is grouped, distinct or a union.
+`apiPaginate()` appends the model's qualified primary key as the last `ORDER BY` for all three types, in the direction of the last order (ascending when there is none), so rows that share a sort value keep one order across pages and no row is skipped or repeated. It is not appended when the query already orders by the key, or when it is grouped, distinct or a union.
 
 ##### Dynamic Pagination Control
 

@@ -405,7 +405,9 @@ class QueryBuilder extends \Spatie\QueryBuilder\QueryBuilder
     /**
      * Rows that share every sort value have no defined order, so a page boundary
      * inside such a run skips or repeats rows. The model key as the last order
-     * makes the order total. Left alone are queries whose rows are not single
+     * makes the order total. It takes the direction of the order before it, so
+     * an index on the sort column still serves the query; after a raw order or
+     * none it is ascending. Left alone are queries whose rows are not single
      * model rows (grouped, distinct, union), where the key is not a valid order.
      */
     private function orderByModelKeyAsTiebreaker(): void
@@ -432,7 +434,10 @@ class QueryBuilder extends \Spatie\QueryBuilder\QueryBuilder
             }
         }
 
-        $builder->orderBy($qualifiedKeyName);
+        $orders = $query->orders ?? [];
+        $lastOrder = $orders === [] ? [] : $orders[array_key_last($orders)];
+
+        $builder->orderBy($qualifiedKeyName, ($lastOrder['direction'] ?? 'asc') === 'desc' ? 'desc' : 'asc');
     }
 
     private function getRequestedPaginationType(): PaginationType
