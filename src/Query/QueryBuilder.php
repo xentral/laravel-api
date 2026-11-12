@@ -393,11 +393,46 @@ class QueryBuilder extends \Spatie\QueryBuilder\QueryBuilder
         $requestedType = $this->getRequestedPaginationType();
         $paginationType = $this->validatePaginationType($requestedType, $allowedTypes);
 
+        $this->orderByModelKeyAsTiebreaker();
+
         return match ($paginationType) {
             PaginationType::SIMPLE => $this->simplePaginate($perPage, page: $currentPage)->withQueryString(),
             PaginationType::TABLE => $this->paginate($perPage, page: $currentPage)->withQueryString(),
             PaginationType::CURSOR => $this->cursorPaginate($perPage)->withQueryString(),
         };
+    }
+
+    /**
+     * Rows that share every sort value have no defined order, so a page boundary
+     * inside such a run skips or repeats rows. The model key as the last order
+     * makes the order total. Left alone are queries whose rows are not single
+     * model rows (grouped, distinct, union), where the key is not a valid order.
+     */
+    private function orderByModelKeyAsTiebreaker(): void
+    {
+        $builder = $this->getEloquentBuilder();
+        $query = $builder->getQuery();
+        $model = $builder->getModel();
+        $keyName = $model->getKeyName();
+
+        if (! is_string($keyName) || $keyName === '') {
+            return;
+        }
+
+        if ($query->groups !== null || $query->distinct !== false || $query->unions !== null) {
+            return;
+        }
+
+        $qualifiedKeyName = $model->qualifyColumn($keyName);
+
+        foreach ($query->orders ?? [] as $order) {
+            $column = $order['column'] ?? null;
+            if (is_string($column) && in_array($column, [$keyName, $qualifiedKeyName], true)) {
+                return;
+            }
+        }
+
+        $builder->orderBy($qualifiedKeyName);
     }
 
     private function getRequestedPaginationType(): PaginationType

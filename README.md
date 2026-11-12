@@ -462,6 +462,10 @@ This package provides flexible pagination options that can be configured per end
 - Provides: `per_page`, `path`, `next_cursor`, `prev_cursor`, and cursor-based navigation links
 - Uses database cursors for consistent results even when data changes
 
+**Stable Order**
+
+`apiPaginate()` appends the model's qualified primary key (ascending) as the last `ORDER BY` for all three types, so rows that share a sort value keep one order across pages and no row is skipped or repeated. It is not appended when the query already orders by the key, or when it is grouped, distinct or a union.
+
 ##### Dynamic Pagination Control
 
 For endpoints that support multiple pagination types, clients can control the pagination format using the `x-pagination` header:
