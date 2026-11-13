@@ -284,6 +284,11 @@ operators read both alike: a `NULL` row matches exactly when `''` would. So `isN
 `notEquals 'x'` keeps both, and `notEquals ''` drops both. The comparisons such as `lessThan` never
 match a `NULL` row. Number and date filters keep `NULL` rows under `notEquals`.
 
+An id key built with `QueryFilter::identifier()` is unset where `ApiResource::reference()` renders
+`null`: on `NULL`, `''` and a zero, whether the column stores it as the number `0` or the text
+`'0'`. `isNull` matches those rows and `isNotNull` every other one. A text or enum key keeps `'0'`
+as a value.
+
 A dotted key such as `lineItems.number` filters through a relation, and each condition is checked
 against the related rows on its own, so two conditions can be met by different rows:
 
@@ -421,6 +426,29 @@ Everything else is owned by the filter:
 Pair it with the `IdFilter` spec attribute passing `operators: FilterOperator::MEMBERSHIP`, so the
 spec documents exactly the four operators the callback accepts (the `IdFilter` default also covers
 `isNull`/`isNotNull`, which a callback filter does not support).
+
+##### Id filters on a resolved reference
+
+`QueryFilter::identifier()` answers `isNull` and `isNotNull` for the stored column, which fits a key
+rendered through `includeWhenLoaded()` or `reference()`: the payload shows `{id}` for every stored
+id, including one whose row is gone.
+
+A key whose payload always renders the reference from the loaded relation shows `null` for such a
+dangling id. Build that key with `QueryFilter::reference()`, naming the relation:
+
+```php
+QueryFilter::reference('partialDelivery.splitFrom.id', 'partialDeliveryOrigin'),
+```
+
+| Operator | A record matches when |
+|---|---|
+| `isNotNull` | the relation resolves, under the global scopes of the related model |
+| `isNull` | it does not: no id is stored, or the stored id has no row |
+| `equals`, `notEquals`, `in`, `notIn` | the stored foreign key matches, as with `identifier()` |
+
+The foreign key is read off the relation, so the relation has to be a `BelongsTo` of the filtered
+model; anything else throws a `LogicException`. The accepted operators are the `IdFilter` default,
+so pair it with a plain `new IdFilter(name: ...)`.
 
 ##### Reusing the filter value coercion
 
