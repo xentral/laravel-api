@@ -3,6 +3,7 @@ namespace Xentral\LaravelApi\Http;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Collection;
+use Xentral\LaravelApi\Query\Filters\IdentifierFilter;
 
 abstract class ApiResource extends JsonResource
 {
@@ -37,6 +38,15 @@ abstract class ApiResource extends JsonResource
         );
     }
 
+    /**
+     * Renders the foreign key of a relation that is not loaded. A key PHP reads as false, which is
+     * NULL, '', '0' and 0, is no reference. IdentifierFilter::UNSET_VALUES is the same set on the
+     * filter side, so change the two together.
+     *
+     * @see IdentifierFilter
+     *
+     * @return array{id: string}|null
+     */
     protected function reference(string $relation): ?array
     {
         $foreignKey = $this->resource->$relation()->getForeignKeyName();

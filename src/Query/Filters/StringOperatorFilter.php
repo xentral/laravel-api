@@ -124,13 +124,13 @@ class StringOperatorFilter extends FiltersExact
                             // The complement of isNotNull: no related row carries a value.
                             $query->whereDoesntHave($relationName, function (Builder $query) use ($relationProperty) {
                                 $query->whereNotNull($query->qualifyColumn($relationProperty))
-                                    ->where($query->qualifyColumn($relationProperty), '!=', '');
+                                    ->whereNotIn($query->qualifyColumn($relationProperty), $this->unsetValues());
                             });
                             break;
                         case FilterOperator::IS_NOT_NULL:
                             $query->whereHas($relationName, function (Builder $query) use ($relationProperty) {
                                 $query->whereNotNull($query->qualifyColumn($relationProperty))
-                                    ->where($query->qualifyColumn($relationProperty), '!=', '');
+                                    ->whereNotIn($query->qualifyColumn($relationProperty), $this->unsetValues());
                             });
                             break;
                     }
@@ -140,11 +140,11 @@ class StringOperatorFilter extends FiltersExact
                     switch ($operator) {
                         case FilterOperator::IS_NULL:
                             $query->whereNull($query->qualifyColumn($property))
-                                ->orWhere($query->qualifyColumn($property), '');
+                                ->orWhereIn($query->qualifyColumn($property), $this->unsetValues());
                             break;
                         case FilterOperator::IS_NOT_NULL:
                             $query->whereNotNull($query->qualifyColumn($property))
-                                ->where($query->qualifyColumn($property), '!=', '');
+                                ->whereNotIn($query->qualifyColumn($property), $this->unsetValues());
                             break;
                     }
                 });
@@ -294,6 +294,17 @@ class StringOperatorFilter extends FiltersExact
         }
 
         return $value;
+    }
+
+    /**
+     * The stored values that, like NULL, mean the key holds no value: what isNull matches and
+     * isNotNull leaves out.
+     *
+     * @return list<string>
+     */
+    protected function unsetValues(): array
+    {
+        return [''];
     }
 
     public function allowedOperators(): array

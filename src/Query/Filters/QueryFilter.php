@@ -12,12 +12,38 @@ class QueryFilter
         public ?string $internalName = null,
     ) {}
 
+    /**
+     * Filters an id column. isNull matches what ApiResource::reference() renders as null, which is
+     * NULL, '' and a zero in either spelling, and isNotNull is its complement.
+     *
+     * @see IdentifierFilter
+     */
     public static function identifier(string $name = 'id', ?string $internalName = null): AllowedFilter
     {
         return AllowedFilter::custom(
             $name,
-            new StringOperatorFilter(FilterOperator::ID, filterName: $name),
+            new IdentifierFilter($name),
             $internalName,
+        );
+    }
+
+    /**
+     * Filters an id key whose payload always renders the reference from the loaded relation.
+     *
+     * isNotNull matches the records whose `$relation` resolves and isNull every other one, a
+     * stored id whose row is gone included. The membership operators match on the foreign key of
+     * `$relation`, which has to be a BelongsTo relation of the filtered model.
+     *
+     * A key rendered through includeWhenLoaded() or reference() shows a dangling id in its payload
+     * and belongs to identifier().
+     *
+     * @see ReferenceFilter
+     */
+    public static function reference(string $name, string $relation): AllowedFilter
+    {
+        return AllowedFilter::custom(
+            $name,
+            new ReferenceFilter($relation, $name),
         );
     }
 
